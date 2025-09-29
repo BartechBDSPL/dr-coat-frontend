@@ -1,0 +1,129 @@
+# Put Away Process Documentation
+
+This document outlines the steps for the **Put Away** process, including scanning or selecting locations, validating barcodes, and performing the final Put Away action.
+
+---
+
+## 1. Accessing the Put Away Page
+
+### 1.1: After logging in, the **FG Material Movement Menu** appears.
+
+### 1.2. Navigate to Put Away Page
+
+- **Step 1.2.1:** In the menu, select the **Put Away** option.
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image0.jpeg" alt="FG Material Movement Menu" width="250px"/>
+ 
+- **Step 1.2.2:** The **Put Away** page opens.
+
+---
+
+## 2. Select or Scan Location
+
+### 2.1 Scan Location
+- Use the scanner to scan the location in the designated **Location** field.
+
+### 2.2 Select Location
+- Click on the **location icon** near the Location field to access the **Location Suggestion Page**.
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image1.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+- On the **Location Suggestion Page**, a table displays available locations.
+
+- Double-tap the desired location in the table to select it.
+
+   <img src="/DOCS_IMAGE/hht-Put-away/image2.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+- The selected location's unique code is displayed in the **Location** field on the **Put Away** page.
+
+### 2.3. Validate Scanned or Selected Location
+
+- If the location is valid, a message "**Valid Location**" appears, and the **Location** field is disabled.
+
+   <img src="/DOCS_IMAGE/hht-Put-away/image3.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+- If the location is invalid, an error message "**Invalid Location Scan, Not found in WH Location Master**" appears, and the **Location** field remains enabled.
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image4.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+### 2.4. Refresh Location
+
+- To change the location after validation, click on the **refresh icon** near the **Location** field. The field will be cleared and enabled for scanning or selection.
+
+---
+
+## 3. Scan Material Code
+
+- Once the location is validated, the cursor moves automatically to the **Scan Material** field.
+
+- Use the scanner to scan the box or pallet number in the designated **Scan Material** field.
+
+### 3.1 Material Inward Status Check
+- If the **Material Inward** status is pending:
+  - The system prevents the Put Away process and displays an error message in red:
+    **"Scan Pallet Barcode Material Inward not done, Please Inward and then try"**.
+
+    <img src="/DOCS_IMAGE/hht-Put-away/image7.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+### 3.2 Successful Scan
+- If the scanned box number is valid:
+  - A green message appears: **"Barcode Scanned Successfully!"**.
+  - Hidden fields become visible.
+
+- Data related to the scanned box number is fetched and displayed in the relevant fields and table below, including:
+  - **Order Number**
+  - **Batch**
+  - **Material**
+  - **Material Description**
+  - **Quantity**
+  - **Production Plant**
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image5.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+## 4. Error Messages for Scanning
+
+### 4.1 **Invalid Barcode:** If the box number is invalid, a red error message appears:
+  **"Invalid Barcode Scan. Not Found in the FG Label Printing..!"**
+
+   <img src="/DOCS_IMAGE/hht-Put-away/image8.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+### 4.2 **Duplicate Scan:** If the box number is scanned more than once, the system displays:
+  **"Duplicate - Serial Number already Scanned."**
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image9.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+###  4.2: Material Already Put Away
+- If the material is already put away:
+  - The system displays the message:  **"Scan pallet Barcode Already All Material put away done on Location."**  
+    Date, and time details are displayed accordingly.
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image12.jpeg" alt="FG Material Movement Menu" width="250px"/>
+---
+
+## 5. Remove Scanned Serial Number
+
+- To remove a scanned serial number:
+  1. Check the checkbox for the serial number to be removed.
+  2. Scan the serial number again.
+
+- A blue message appears: **"Serial number is removed."**
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image6.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+## 6. Perform Put Away Action
+
+- After verifying the scanned data, click the **Put** button.
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image10.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+- A success message appears: **"Successfully Put Away Done For the Raw Material."**
+
+  <img src="/DOCS_IMAGE/hht-Put-away/image13.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+This concludes the detailed process for the Put Away operation. For further assistance, contact the support team.

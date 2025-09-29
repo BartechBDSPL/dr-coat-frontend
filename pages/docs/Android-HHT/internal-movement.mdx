@@ -1,0 +1,137 @@
+# FG Material Movement Process Documentation
+
+This document outlines the detailed steps for the FG (Finished Goods) Material Movement process, including Internal Movement operations. It provides a comprehensive guide for scanning locations, validating materials, handling errors, and transferring goods.
+
+---
+
+## 1. FG Material Movement Menu
+
+- Upon login, the **FG Material Movement** menu is displayed.
+- Navigate to the **Internal Movement** option.
+  
+  <img src="/DOCS_IMAGE/hht-Internal-Transfer/image0.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+## 2. Internal Movement Page
+
+- Click on **Internal Movement** to open the **Internal Movement Page**.
+
+  <img src="/DOCS_IMAGE/hht-Internal-Transfer/image1.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+## 3. Scanning Pick Location
+
+### **Step 3.1:** Use the scanner to scan the **Pick Location** in the `Scan Pick Location` field.
+### **Step 3.2:** The system validates the scanned location:
+  - **Valid Location:** Displays the message "**Location valid**". The field gets disabled, and the cursor moves to the `Scan Material` field.
+
+  <img src="/DOCS_IMAGE/hht-Internal-Transfer/image2.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - **Invalid Location:** Displays the error message "**Invalid location scan. Not found in WH location master**".
+
+  <img src="/DOCS_IMAGE/hht-Internal-Transfer/image3.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+### **Step 3.3:** If needed, click the **Refresh Button** near the `Scan Pick Location` field to clear the input and scan a new location.
+
+---
+
+## 4. Scanning Material
+
+### **Step 4.1:** After validating the Pick Location, scan the **Box Number** or **Pallet Number** in the `Scan Material` field using the scanner.
+### **Step 4.2:** The system performs validations:
+
+  - **Pending Put Away Status:**
+    - If the **Put Away** status is pending, the system prevents the process and displays the message:
+      > "**Scan Pallet Barcode Material Put Away are pending, not able to do the internal transfer.**"
+
+      <img src="/DOCS_IMAGE/hht-Internal-Transfer/image8.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - **Valid Box Number:**
+    - Displays the message "**Scanned Material Successfully!**" in green.
+    - Hidden fields are displayed automatically, showing data related to the scanned box.
+    - Relevant fields such as **Order Number**, **Batch**, **Material**, **Material Description**, **Quantity**, **Production Plant** are populated.
+    - The cursor focuses on the `Put Location` field.
+
+      <img src="/DOCS_IMAGE/hht-Internal-Transfer/image5.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - **Invalid Box Number:**
+    - Displays the error message:
+      > "**Invalid Barcode Scan. Not Found in the FG Label Printing..!**"
+
+      <img src="/DOCS_IMAGE/hht-Internal-Transfer/image9.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - **Duplicate Scan:**
+    - If the box number is scanned more than once, the system shows:
+      > "**Duplicate - Serial Number already scanned.**"
+
+      <img src="/DOCS_IMAGE/hht-Internal-Transfer/image6.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - **Different Location:**
+    - If the material is located at a different location, the system displays:
+      > "**Scan Pallet Barcode is available on another location, not able to transfer. Current location: [Location Name]**"
+
+      <img src="/DOCS_IMAGE/hht-Internal-Transfer/image4.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+## 5. Removing Scanned Serial Number
+
+- To remove a scanned serial number:
+  - Check the checkbox for the serial number.
+  - Scan the serial number again.
+  - The system displays the message in blue:
+    > "**Serial number is removed.**"
+
+    <img src="/DOCS_IMAGE/hht-Internal-Transfer/image7.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+## 6. Scanning or Selecting Put Location
+
+### **Step 6.1:** Use the scanner to scan the `Put Location` or click on the **Location Icon** near the field to open the **Location Suggestion Page**.
+  
+  - **Location Suggestion Page:**
+    - Displays a table with available locations.
+    - Double-tap on the desired location to select it.
+    - The unique location code is displayed in the `Put Location` field.
+
+       <img src="/DOCS_IMAGE/hht-Internal-Transfer/image10.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+### **Step 6.2:** The system validates the `Put Location`:
+
+  - **Valid Location:**
+    - Displays the message "**Valid location**".
+
+       <img src="/DOCS_IMAGE/hht-Internal-Transfer/image11.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - **Pick Location Same as put Location:**
+    - Displays the message:
+      > "**Location cannot be the same.**"
+
+      <img src="/DOCS_IMAGE/hht-Internal-Transfer/image12.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - **Blank Location:**
+    - If no location is selected and click on Transfer Button, displays the error:
+      > "**Pick Location cannot be blank.**"
+
+      <img src="/DOCS_IMAGE/hht-Internal-Transfer/image13.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+## 7. Completing the Transfer
+
+### **Step 7.1:** After validating all data, click the **Transfer** button.
+
+   <img src="/DOCS_IMAGE/hht-Internal-Transfer/image14.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+### **Step 7.2:** The system processes the transfer and displays the success message:
+  > "**Transfer Successful!**"
+
+  <img src="/DOCS_IMAGE/hht-Internal-Transfer/image15.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+
+This concludes the detailed process for the Internal Movement operation. For further assistance, contact the support team.

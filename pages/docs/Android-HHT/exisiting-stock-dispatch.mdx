@@ -1,0 +1,79 @@
+# Existing Stock Dispatch Process Documentation
+
+This document outlines the step-by-step process for dispatching stock using the **Existing Stock Dispatch** module. It details the procedure of warehouse selection, pallet code validation, quantity dispatching, and post-dispatch behavior.
+
+---
+
+## 1. Open the Existing Stock Dispatch Module
+
+- Navigate to the **Existing Stock Dispatch** module in the application.
+- This module is used for recording the dispatch of stock from specific warehouse bins.
+
+![image1](/DOCS_IMAGE/existing-stock-dispatch/Image1.jpeg)
+
+---
+
+## 2. Select the Warehouse
+
+- **Step 2.1:** From the dropdown, select the appropriate **Warehouse Name** where the stock is being dispatched from.
+
+![image2](/DOCS_IMAGE/existing-stock-dispatch/Image2.jpeg)
+
+---
+
+## 3. Scan Pallet Code
+
+- **Step 3.1:** After selecting the warehouse, scan the **Pallet Code** using the barcode scanner.
+
+- **Validation Check:**
+  - If the scanned pallet code does **not belong** to the selected warehouse, an error message will appear:
+    > ⚠️ **Invalid Pallet Code for Selected Warehouse**
+
+![image3](/DOCS_IMAGE/existing-stock-dispatch/Image3.jpeg)
+
+---
+
+## 4. Confirm Valid Location and Pallet
+
+- **Step 4.1:** If a valid location and matching pallet code are scanned, the system will confirm:
+  > ✅ **Valid Pallet Scan**
+
+- **Step 4.2:** Once validated, all related details of the pallet will be fetched from the database and displayed.
+
+![image4](/DOCS_IMAGE/existing-stock-dispatch/Image4.jpeg)
+
+---
+
+## 5. Modify Dispatch Quantity (Optional)
+
+- **Step 5.1:** You may change the **Dispatch Quantity** field based on the actual amount being dispatched.
+
+- **Step 5.2:** Upon modifying the dispatch quantity:
+  - The system will automatically **recalculate the number of dispatch boxes** as per the entered quantity.
+
+![image5](/DOCS_IMAGE/existing-stock-dispatch/Image5.jpeg)
+
+---
+
+## 6. Finalize the Dispatch
+
+- **Step 6.1:** Click the **"Dispatch" button** to finalize the stock dispatch operation.
+
+- **Step 6.2:** Upon successful dispatch, a confirmation message will appear:
+  > ✅ **Pallet Dispatched Successfully**
+
+![image6](/DOCS_IMAGE/existing-stock-dispatch/Image6.jpeg)
+
+---
+
+## 7. Post-Dispatch Re-scan Behavior
+
+- **Step 7.1:** If you scan the **same barcode again after dispatch**, the system will adjust the quantity accordingly.
+
+  
+- This automatic deduction ensures accurate tracking of dispatched quantities per pallet.
+
+![image7](/DOCS_IMAGE/existing-stock-dispatch/Image7.jpeg)
+
+---
+

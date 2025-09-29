@@ -1,0 +1,77 @@
+# Pallet Validation Process Documentation
+
+This document outlines the steps for pallet validation in the FG Material Movement module of the Warehouse Management System (WMS). It includes the process of scanning pallet and box serial numbers for successful validation.
+
+---
+
+## 1. Access FG Material Movement Menu
+
+- **Step 1.1:** Upon logging into the WMS application, the **FG Material Movement Menu** will be displayed.  
+
+  <img src="/DOCS_IMAGE/hht-pallet-validation/image0.jpeg" alt="FG Material Movement Menu" width="250px"/>
+ 
+---
+
+## 2. Navigate to Pallet Validation
+
+- **Step 2.1:** In the **FG Material Movement Menu**, locate the **Pallet Validation** option.  
+  <img src="/DOCS_IMAGE/hht-pallet-validation/image1.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+- **Step 2.2:** Click on **Pallet Validation** to open the **Pallet Validation Page**.  
+
+  The **Pallet Validation Page** contains the following fields:  
+    - **Scan Pallet Field:** Used to scan the pallet number.  
+    - **Scan Box Field:** Used to scan the serial number of the box.  
+  <img src="/DOCS_IMAGE/hht-pallet-validation/image3.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  Both fields are equipped with scanner functionality for barcode input.
+
+---
+
+## 3. Validate Pallet Number
+
+- **Step 3.1:** Use the scanner to scan the **Pallet Number** in the **Scan Pallet Field**.
+
+  <img src="/DOCS_IMAGE/hht-pallet-validation/image4.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+- **Step 3.2:** The system will validate the scanned pallet number:  
+  - If the pallet number is correct:  
+    - The system displays a **success message** in green:  
+      `"Pallet Number is Correct"`.  
+    - The user is automatically redirected to the **Scan Box Field**.  
+
+      <img src="/DOCS_IMAGE/hht-pallet-validation/image5.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - If the pallet number is incorrect:  
+    - The system displays an **error message** in red:  
+      `"Invalid Pallet Number format"`.  
+    - The user remains in the **Scan Pallet Field** to re-scan.  
+      <img src="/DOCS_IMAGE/hht-pallet-validation/image6.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+---
+
+## 5. Validate Box Serial Number
+
+- **Step 5.1:** After scanning a valid pallet number, scan the **Serial Number** in the **Scan Box Field**.  
+
+- **Step 5.2:** The system validates the serial number:  
+  - If the serial number is linked with the pallet:  
+    - The system displays a **success message** in green:  
+      `"Serial number is linked with the pallet barcode {Pallet Number}."`  
+      <img src="/DOCS_IMAGE/hht-pallet-validation/image9.png" alt="FG Material Movement Menu" width="250px"/>
+
+  - If the serial number is incorrect:  
+    - The system displays an **error message** in red:  
+      `"Invalid barcode format"`.  
+    - The user remains in the **Scan Box Field** to re-scan.  
+     <img src="/DOCS_IMAGE/hht-pallet-validation/image8.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+  - If the serial number is not linked with the pallet:  
+    - The system displays an **error message** in red:  
+      `"Serial number is not linked with the pallet barcode."`  
+
+
+---
+
+
+This concludes the detailed process for pallet validation. If you encounter any issues, please contact the support team for assistance.

@@ -1,0 +1,139 @@
+# Primary Pack Label Printing Process Documentation
+
+This document outlines the steps for entering and printing production order labels from SAP. It includes the process of entering production order numbers, fetching data from SAP, generating serial numbers, and printing labels.
+
+---
+
+## 1. Enter the Production Order
+
+The first step in the process is to enter the production order. 
+
+- **Step 1.1:** Enter the **Production Order No** in the input box.
+  ![image11](/DOCS_IMAGE/fg-label-printing/image0.png)
+  
+- **Step 1.2:** The user can either:
+  - Directly enter the **Production Order No**.
+  - **Optionally append "000"** at the start of the Production Order No.
+  ![image1](/DOCS_IMAGE/fg-label-printing/image1.png)
+  ![image2](/DOCS_IMAGE/fg-label-printing/image2.png)
+
+---
+
+## 2. Fetch Production Order Details from SAP
+
+- **Step 2.1:** After entering the production order number, click on the **Get Details** button.
+  ![image3](/DOCS_IMAGE/fg-label-printing/image3.png)
+
+- **Step 2.2:** The details of the production order will be fetched from SAP and displayed in the following fields:
+  - **Material No**
+  - **Material Description**
+  - **Storage Location**
+  ![image4](/DOCS_IMAGE/fg-label-printing/image4.png)
+
+---
+
+## 3. View Table of Quantities and Labels
+
+- **Step 3.1:** Below the fields, a table will be displayed with the following values:
+  - **Target Quantity**
+  - **PAL**
+  - **ZPE**
+  - **Printed Label** (initially set to 0)
+  - **Remaining Labels**
+  ![image5](/DOCS_IMAGE/fg-label-printing/image5.png)
+  
+- **Step 3.2:** The **Remaining Labels** are calculated by dividing the **Target Quantity** by the **ZPE** value.
+
+  For example:
+  - **Target Quantity:** 1,150,000
+  - **ZPE Value:** 800
+  - **Remaining Labels:** `1150000 / 800 = 1438` (displayed as 688 Remaining Labels and 750 Printed Labels)
+
+---
+
+## 4. Print Quantity Input and Validation
+
+- **Step 4.1:** Below the table, an input field for **PrintQty** is provided, where the user can enter the quantity they wish to print.
+  ![image5](/DOCS_IMAGE/fg-label-printing/image5.png)
+
+- **Step 4.2:** The **PrintQty** must not exceed the **Remaining Labels** quantity. If the user enters a higher value, a message will be displayed, and the **Remaining Label** quantity will automatically fill in the **PrintQty** field.
+  ![image6](/DOCS_IMAGE/fg-label-printing/image6.png)
+
+---
+
+## 5. Generate Serial Numbers
+
+- **Step 5.1:** Click the **Generate S/N** button to generate serial numbers for the production order.
+  ![image7](/DOCS_IMAGE/fg-label-printing/image7.png)
+
+- **Step 5.2:** The generated **Serial No** and **PrintQty** will be displayed in the table, and the user can see the serial numbers generated.
+
+---
+
+## 6. Table Entry Display and Print Option
+
+- **Step 6.1:** In the top left corner of the table, there is a **Show Entries** dropdown where the user can select the number of entries they wish to view.
+
+- **Step 6.2:** A **Print** button is located at the bottom right corner of the table.
+  ![image8](/DOCS_IMAGE/fg-label-printing/image8.png)
+  - When clicked, a pop-up window will appear for label printing.
+  - The user can select the printer and print the serial numbers.
+
+---
+
+## 7. Print Pallet Option
+
+- **Step 7.1:** If the user wants to print the **Pallet Serial No** (the parent serial number for multiple generated serial numbers), they can enable the **Print Pallet** option.
+  ![image12](/DOCS_IMAGE/fg-label-printing/image12.png)
+
+- **Step 7.2:** After the serial numbers are generated, the user will also see the pallet serial number and can print it.
+
+---
+
+## 8. Recent FG Label Printing
+
+- **Step 8.1:** A table will display the **Recent FG Label Printing**.
+  ![image13](/DOCS_IMAGE/fg-label-printing/image13.png)
+- This table will include details such as:
+  - **Order No**
+  - **Serial No**
+  - **Material**
+  - **Other relevant details**
+
+---
+
+### Image References
+
+Example of Production Order Number with prepended "000":
+![image1](/DOCS_IMAGE/fg-label-printing/image0.png)
+
+Alternative format for entering Production Order No:
+![image2](/DOCS_IMAGE/fg-label-printing/image2.png)
+
+**Get Details** Button for fetching SAP data:
+![image3](/DOCS_IMAGE/fg-label-printing/image3.png)
+
+Fields displaying material and storage location details:
+![image4](/DOCS_IMAGE/fg-label-printing/image4.png)
+
+Table showing Target Quantity, PAL, ZPE, Printed and Remaining Labels:
+![image5](/DOCS_IMAGE/fg-label-printing/image5.png)
+
+Example of validation message and auto-filled **Remaining Label** quantity:
+![image6](/DOCS_IMAGE/fg-label-printing/image6.png)
+
+Serial Number generation and PrintQty table:
+![image7](/DOCS_IMAGE/fg-label-printing/image7.png)
+
+**Print** button and label print pop-up:
+![image8](/DOCS_IMAGE/fg-label-printing/image8.png)
+
+Option to print **Pallet Serial No**:
+![image12](/DOCS_IMAGE/fg-label-printing/image12.png)
+
+Table displaying recent FG label print history:
+![image13](/DOCS_IMAGE/fg-label-printing/image13.png)
+
+---
+
+This concludes the detailed process for entering and printing production order labels. If you have any questions or need further clarification, please contact the support team.

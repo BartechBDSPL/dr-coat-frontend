@@ -1,0 +1,92 @@
+# FG Material Movement - Palletization Documentation
+
+This document outlines the steps for performing palletization in the FG Material Movement menu. It details the process of scanning material codes, handling scanned data, and creating pallets.
+
+---
+
+## 1. Accessing Palletization Page
+
+- **Step 1.1:** After successful login, the **FG Material Movement Menu** is displayed.
+
+- **Step 1.2:** Click on the **Palletization** option to open the Palletization page.
+
+  <img src="/DOCS_IMAGE/hht-palletization/image0.jpeg" alt="FG Material Movement Menu" width="250px"/>
+
+- **Step 1.3:** The Palletization page appears.
+
+---
+
+## 2. Scanning Material Codes
+
+### 2.1 Scanning a Box Number
+
+- **Step 2.1.1:** Locate the field **Scan Material Code**, where a scanner is enabled.
+
+- **Step 2.1.2:** Use the scanner to scan the **Box Number** into the field.
+
+   <img src="/DOCS_IMAGE/hht-palletization/image1.jpeg" alt="Palletization Page" width="250px"/>
+
+### 2.2 Valid Scans
+
+- If the scanned Box Number is correct:
+  - A green message appears: **"Valid Barcode Found"**.
+  - Additional hidden fields become visible automatically.
+  - Data related to the scanned Box Number (e.g., **Order Number, Batch, Material, Material Description, Quantity, Production Plant, Pallet Size, Number of Boxes**) is displayed in the relevant fields and a table below.
+  
+    <img src="/DOCS_IMAGE/hht-palletization/image2.jpeg" alt="Palletization Page" width="250px"/>
+
+### 2.3 Invalid Scans
+
+- If the scanned Box Number is incorrect:
+  - A red message appears: **"Invalid Barcode Scan. Not Found in the FG Label Printing..!."**
+
+     <img src="/DOCS_IMAGE/hht-palletization/image3.jpeg" alt="Palletization Page" width="250px"/>
+
+- If the Box Number is scanned more than once:
+  - The system displays the error message: **"Serial Number already added. Cannot be duplicate."**
+
+     <img src="/DOCS_IMAGE/hht-palletization/image4.jpeg" alt="Palletization Page" width="250px"/>
+
+- If the Serial Number is already linked with another pallet:
+  - The system displays the error: **"Scan Barcode already linked with the Pallet Barcode: PalletNumber."**
+
+     <img src="/DOCS_IMAGE/hht-palletization/image5.jpeg" alt="Palletization Page" width="250px"/>
+
+---
+
+## 3. Box Count Management
+
+- **Step 3.1:** The field **Number of Box** shows the count of boxes for the pallet, e.g., 45.
+- **Step 3.2:** As each Box Number is scanned, the count decreases automatically.
+
+   <img src="/DOCS_IMAGE/hht-palletization/image6.jpeg" alt="Palletization Page" width="250px"/>
+
+---
+
+## 4. Automatic Pallet Creation
+
+- **Step 4.1:** When all 45 serial numbers are scanned:
+  - The system automatically creates a pallet.
+  - A success message is displayed: **"Successfully Palletization Done for the Scanned Barcode: PalletNumber"**.
+- **Step 4.2:** After pallet creation:
+  - The fields and the table disappear from the screen.
+
+    <img src="/DOCS_IMAGE/hht-palletization/image7.jpeg" alt="Palletization Page" width="250px"/>
+
+---
+
+## 5. Manual Pallet Creation
+
+- **Step 5.1:** The user can manually create a pallet before scanning all serial numbers by clicking the **Print Pallet** button.
+- **Step 5.2:** A pop-up message appears: **"Do you want to print pallet label?"**
+  - If the user selects **Yes**:
+    - The pallet is created immediately.
+    - A success message appears: **"Successfully Palletization Done for the Scanned Barcode: PalletNumber"**.
+  - If the user selects **No**:
+    - The page remains on the current screen, and the pallet is not created.
+
+    <img src="/DOCS_IMAGE/hht-palletization/image8.jpeg" alt="Palletization Page" width="250px"/>
+
+---
+
+This concludes the detailed process for Palletization in the FG Material Movement module. If you have any questions or require further assistance, please contact the support team.
