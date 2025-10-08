@@ -7,8 +7,6 @@ import React, {
   useCallback,
 } from 'react';
 import axios from '@/lib/axios-config';
-import { jwtDecode } from 'jwt-decode';
-import Cookies from 'js-cookie';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +27,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { BACKEND_URL } from '@/lib/constants';
 import TableSearch from '@/utils/tableSearch';
 import { Loading } from '@/components/loading';
 import {
@@ -41,10 +38,24 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Loader2, FileText, Download, Upload, Info } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { getUserID } from '@/utils/getFromSession';
 
 interface UnitData {
-  unit: string;
+  id?: number;
+  uom_code: string;
   description: string;
+  international_standard_code: string;
   created_date: string;
   created_by: string;
   updated_by: string | null;
@@ -56,29 +67,20 @@ interface UpdateApiResponse {
   Message: string;
 }
 
-const getUserID = () => {
-  const token = Cookies.get('token');
-  if (token) {
-    try {
-      const decodedToken: any = jwtDecode(token);
-      return decodedToken.user.user_id;
-    } catch (e) {
-      console.error('Failed to decode token:', e);
-    }
-  }
-  return 'Guest';
-};
-
 const UOMMaster: React.FC = () => {
-  const [unit, setUnit] = useState<string>('');
+  const [uomCode, setUomCode] = useState<string>('');
   const [unitDesc, setUnitDesc] = useState<string>('');
+  const [internationalStandardCode, setInternationalStandardCode] = useState<string>('');
   const [data, setData] = useState<UnitData[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const unitRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLInputElement>(null);
-  const token = Cookies.get('token');
+  const internationalRef = useRef<HTMLInputElement>(null);
+  const userID = getUserID();
   // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -104,10 +106,7 @@ const UOMMaster: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await axios.get<UnitData[]>(
-        `${BACKEND_URL}/api/master/all-uom-details`,
-        {
-          headers: { authorization: `Bearer ${token}` },
-        }
+        '/api/master/uom/all-details'
       );
       setData(response.data);
     } catch (error) {
@@ -127,9 +126,10 @@ const UOMMaster: React.FC = () => {
     setCurrentPage(1);
   }, []);
   const handleRowSelect = (row: UnitData) => {
-    setUnit(row.unit);
+    setUomCode(row.uom_code);
     setUnitDesc(row.description);
-    setSelectedUnit(row.unit);
+    setInternationalStandardCode(row.international_standard_code || '');
+    setSelectedUnit(row);
     setIsEditing(true);
     // insertAuditTrail({
     //   AppType: "Web",
@@ -144,19 +144,20 @@ const UOMMaster: React.FC = () => {
   };
 
   const handleCancel = () => {
-    setUnit('');
+    setUomCode('');
     setUnitDesc('');
+    setInternationalStandardCode('');
     setIsEditing(false);
     setSelectedUnit(null);
   };
 
   const handleSave = async () => {
-    if (!unit) {
-      toast.error('Please fill the unit for UOM');
+    if (!uomCode.trim()) {
+      toast.error('Please fill the UOM code');
       unitRef.current?.focus();
       return;
     }
-    if (!unitDesc) {
+    if (!unitDesc.trim()) {
       toast.error('Please fill the unit description for UOM');
       descRef.current?.focus();
       return;
@@ -164,20 +165,15 @@ const UOMMaster: React.FC = () => {
 
     try {
       const newUnitData = {
-        unit,
-        description: unitDesc,
-        user: getUserID(),
+        uom_code: uomCode.trim(),
+        description: unitDesc.trim(),
+        international_standard_code: internationalStandardCode.trim() || '',
+        user: userID || 'Guest',
       };
 
       const response = await axios.post(
-        `${BACKEND_URL}/api/master/insert-uom-details`,
-        newUnitData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            authorization: `Bearer ${token}`,
-          },
-        }
+        '/api/master/uom/insert-details',
+        newUnitData
       );
 
       const { Status, Message } = response.data;
@@ -207,32 +203,28 @@ const UOMMaster: React.FC = () => {
   };
   const handleUpdate = async () => {
     if (!selectedUnit) return;
-    if (!unit) {
-      toast.error('Please fill the unit for UOM');
+    if (!uomCode.trim()) {
+      toast.error('Please fill the UOM code');
       unitRef.current?.focus();
       return;
     }
-    if (!unitDesc) {
+    if (!unitDesc.trim()) {
       toast.error('Please fill the unit description for UOM');
       descRef.current?.focus();
       return;
     }
     try {
       const updatedUnit = {
-        unit,
-        description: unitDesc,
-        user: getUserID(),
+        id: selectedUnit.id,
+        uom_code: uomCode.trim(),
+        description: unitDesc.trim(),
+        international_standard_code: internationalStandardCode.trim() || '',
+        user: userID || 'Guest',
       };
 
       const response = await axios.patch<UpdateApiResponse>(
-        `${BACKEND_URL}/api/master/update-uom-details`,
-        updatedUnit,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            authorization: `Bearer ${token}`,
-          },
-        }
+        '/api/master/uom/update-details',
+        updatedUnit
       );
 
       const { Status, Message } = response.data;
@@ -247,7 +239,7 @@ const UOMMaster: React.FC = () => {
         //   Activity: "UOM Master",
         //   Action: `UOM Updated by ${getUserID()}`,
         //   NewData: JSON.stringify(updatedUnit),
-        //   OldData: JSON.stringify({ Unit: selectedUnit, Description: unitDesc }),
+        //   OldData: JSON.stringify(selectedUnit),
         //   Remarks: "",
         //   UserId: getUserID(),
         //   PlantCode: getUserPlant()
@@ -257,9 +249,10 @@ const UOMMaster: React.FC = () => {
       } else {
         toast.error('Unexpected Error');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating data:', error);
-      toast.error('Failed to update UOM');
+      const errorMessage = error.response?.data?.Message || 'Failed to update UOM';
+      toast.error(errorMessage);
     }
   };
 
@@ -267,7 +260,8 @@ const UOMMaster: React.FC = () => {
     return data.filter(item => {
       const searchableFields: (keyof UnitData)[] = [
         'description',
-        'unit',
+        'uom_code',
+        'international_standard_code',
         'updated_by',
         'created_by',
       ];
@@ -296,6 +290,80 @@ const UOMMaster: React.FC = () => {
     setCurrentPage(1); // Reset to first page when searching
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleUploadFile = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a file to upload');
+      return;
+    }
+
+    // Validate file extension
+    const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+    if (fileExt !== 'xlsx' && fileExt !== 'xls') {
+      toast.error('Please upload an Excel file (.xlsx or .xls)');
+      return;
+    }
+
+    if (!userID) {
+      toast.error('Failed to retrieve user ID');
+      return;
+    }
+
+    setFileUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('excelFile', selectedFile);
+      formData.append('username', userID);
+
+      const response = await axios.post(
+        '/api/master/uom/upload-excel',
+        formData
+      );
+
+      if (response.data.Status === 'F') {
+        toast.error(
+          response.data.Message || 'Failed to upload UOM details'
+        );
+        if (response.data.results?.failures) {
+          console.log('Upload failures:', response.data.results.failures);
+        }
+      } else {
+        const { totalProcessed, successCount, failureCount } = response.data.results || {};
+        toast.success(
+          response.data.Message + 
+          (totalProcessed ? ` (${successCount}/${totalProcessed} records processed successfully)` : '')
+        );
+        await fetchData();
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.Message || 'Failed to upload file');
+    } finally {
+      setFileUploading(false);
+      setSelectedFile(null);
+      // Reset the file input
+      const fileInput = document.getElementById(
+        'excel-upload'
+      ) as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+    }
+  };
+
+    const downloadSampleFile = () => {
+    const link = document.createElement('a');
+    link.href = '/uom_sample_upload.csv';
+    link.download = 'uom_sample_upload.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
       <Card className="mx-auto mt-5 w-full">
@@ -311,14 +379,15 @@ const UOMMaster: React.FC = () => {
           <form className="space-y-6" onSubmit={e => e.preventDefault()}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <div className="space-y-2">
-                <Label htmlFor="categoryCode">Unit *</Label>
+                <Label htmlFor="uomCode">UOM Code *</Label>
                 <Input
-                  id="categoryCode"
-                  value={unit}
-                  onChange={e => setUnit(e.target.value)}
+                  id="uomCode"
+                  value={uomCode}
+                  onChange={e => setUomCode(e.target.value)}
                   ref={unitRef}
                   required
                   disabled={isEditing}
+                  placeholder="Enter UOM code"
                 />
               </div>
               <div className="space-y-2">
@@ -329,6 +398,17 @@ const UOMMaster: React.FC = () => {
                   ref={descRef}
                   onChange={e => setUnitDesc(e.target.value)}
                   required
+                  placeholder="Enter description"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="internationalCode">International Standard Code</Label>
+                <Input
+                  id="internationalCode"
+                  value={internationalStandardCode}
+                  ref={internationalRef}
+                  onChange={e => setInternationalStandardCode(e.target.value)}
+                  placeholder="Enter international code"
                 />
               </div>
             </div>
@@ -354,6 +434,78 @@ const UOMMaster: React.FC = () => {
               >
                 Cancel
               </Button>
+            </div>
+
+            {/* Excel Upload Section */}
+            <div className="border-t pt-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-medium">Excel Upload</h3>
+                <p className="text-sm text-muted-foreground">
+                  Upload UOM data from Excel file
+                </p>
+              </div>
+              
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <Label htmlFor="excel-upload">Select Excel File</Label>
+                  <Input
+                    id="excel-upload"
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleFileChange}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Info className="mr-2 h-4 w-4" />
+                        Sample Format
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excel Upload Format</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Please ensure your Excel file has the following columns:
+                          <br />
+                          <br />
+                          <strong>Required Columns:</strong>
+                          <ul className="list-disc pl-5 mt-2">
+                            <li>uom_code (Required)</li>
+                            <li>description (Required)</li>
+                            <li>international_standard_code (Optional)</li>
+                          </ul>
+                          <br />
+                          Download the sample file for reference.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <Button onClick={downloadSampleFile} variant="outline">
+                          <Download className="mr-2 h-4 w-4" />
+                          Download Sample
+                        </Button>
+                        <AlertDialogCancel>Close</AlertDialogCancel>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  
+                  <Button
+                    onClick={handleUploadFile}
+                    disabled={!selectedFile || fileUploading}
+                    size="sm"
+                  >
+                    {fileUploading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" />
+                    )}
+                    {fileUploading ? 'Uploading...' : 'Upload'}
+                  </Button>
+                </div>
+              </div>
             </div>
           </form>
         </CardContent>
@@ -390,9 +542,12 @@ const UOMMaster: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="whitespace-nowrap">Action</TableHead>
-                    <TableHead className="whitespace-nowrap">UNIT</TableHead>
+                    <TableHead className="whitespace-nowrap">UOM Code</TableHead>
                     <TableHead className="whitespace-nowrap">
-                      UNIT Description
+                      Description
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      International Standard Code
                     </TableHead>
                     <TableHead className="whitespace-nowrap">
                       Created by
@@ -411,13 +566,13 @@ const UOMMaster: React.FC = () => {
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center">
+                      <TableCell colSpan={8} className="text-center">
                         <Loading size="md" label="Loading UOM data..." />
                       </TableCell>
                     </TableRow>
                   ) : paginatedData.length > 0 ? (
                     paginatedData.map(row => (
-                      <TableRow key={row.unit}>
+                      <TableRow key={row.uom_code + row.created_date}>
                         <TableCell>
                           <Button
                             variant={'ghost'}
@@ -428,9 +583,10 @@ const UOMMaster: React.FC = () => {
                           </Button>
                         </TableCell>
                         <TableCell className="font-medium">
-                          {row.unit}
+                          {row.uom_code}
                         </TableCell>
                         <TableCell>{row.description}</TableCell>
+                        <TableCell>{row.international_standard_code || '-'}</TableCell>
                         <TableCell>{row.created_by}</TableCell>
                         <TableCell className="whitespace-nowrap">
                           {new Date(row.created_date).toLocaleDateString()}
@@ -445,7 +601,7 @@ const UOMMaster: React.FC = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center">
+                      <TableCell colSpan={8} className="text-center">
                         <div className="flex h-32 items-center justify-center">
                           <span className="text-muted-foreground">
                             No data available

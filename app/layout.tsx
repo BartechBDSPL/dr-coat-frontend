@@ -28,8 +28,8 @@ const dancingScript = Dancing_Script({ subsets: ['latin'] });
 const caveat = Caveat({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'WMS | Marken',
-  description: 'Warehouse Management System for Marken World',
+  title: 'WMS | DR Coat and Resin',
+  description: 'Warehouse Management System for DR Coat and Resin',
   icons: {
     icon: '/logo.svg',
   },

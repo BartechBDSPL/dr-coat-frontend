@@ -65,12 +65,12 @@ export function getMenuList(pathname: string): Group[] {
               active: pathname === '/plant-master',
               value: '2_2',
             },
-            // {
-            //   href: "/uom-master",
-            //   label: "UOM Master",
-            //   active: pathname === "/uom-master",
-            //   value: "2_3",
-            // },
+            {
+              href: "/uom-master",
+              label: "UOM Master",
+              active: pathname === "/uom-master",
+              value: "2_3",
+            },
             {
               href: '/warehouse-category-master',
               label: 'WH Category Master',
