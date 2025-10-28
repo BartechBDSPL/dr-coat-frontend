@@ -81,6 +81,7 @@ const BinMaster: React.FC = () => {
   const [bin, setBin] = useState('');
   const [status, setStatus] = useState('Active');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedLocation, setSelectedLocation] =
     useState<WarehouseLocation | null>(null);
   const [oldData, setOldData] = useState<WarehouseLocation | null>(null);
@@ -234,6 +235,7 @@ const BinMaster: React.FC = () => {
       WStatus: status.trim(),
     };
 
+    setIsSaving(true);
     try {
       const response = await axios.post(
         `/api/master/insert-wh-location`,
@@ -261,6 +263,8 @@ const BinMaster: React.FC = () => {
       toast.error(
         error.response?.data?.error || 'Failed to save warehouse location'
       );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -300,6 +304,7 @@ const BinMaster: React.FC = () => {
       Status: status.trim(),
     };
 
+    setIsUpdating(true);
     try {
       const response = await axios.patch(
         `/api/master/update-wh-location`,
@@ -323,11 +328,12 @@ const BinMaster: React.FC = () => {
       );
       fetchLocations();
       handleClear();
-      setIsUpdating(false);
     } catch (error: any) {
       toast.error(
         error.response?.data?.error || 'Failed to update warehouse location'
       );
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -486,18 +492,32 @@ const BinMaster: React.FC = () => {
             <div className="flex flex-col justify-end gap-2 pt-4 sm:flex-row">
               <Button
                 onClick={handleSave}
-                disabled={isUpdating}
+                disabled={isUpdating || isSaving}
                 type="submit"
                 className="w-full sm:w-auto"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
                 onClick={handleUpdate}
-                disabled={!isUpdating}
+                disabled={!isUpdating || isUpdating}
                 className="w-full sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
                 onClick={handleClear}

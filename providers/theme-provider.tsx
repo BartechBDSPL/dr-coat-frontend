@@ -26,6 +26,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         // Small delay to ensure DOM is ready
         await new Promise(resolve => setTimeout(resolve, 10));
 
+        // Clean up any duplicate style tags that might exist
+        const existingStyleTags = document.querySelectorAll(
+          '#dynamic-theme-vars'
+        );
+        if (existingStyleTags.length > 1) {
+          // Keep only the first one, remove others
+          Array.from(existingStyleTags)
+            .slice(1)
+            .forEach(tag => tag.remove());
+        }
+
         // Load theme from localStorage and sessionStorage (for immediate access)
         const savedTheme =
           localStorage.getItem('app-theme') ||
@@ -69,19 +80,42 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     const isDark = root.classList.contains('dark');
 
+    // Get all current classes
+    const currentClasses = Array.from(root.classList);
+
+    // Remove only theme- classes, keep everything else (including 'dark')
+    const nonThemeClasses = currentClasses.filter(
+      cls => !cls.startsWith('theme-')
+    );
+
+    // Set classes: keep non-theme classes and add the new theme class
+    root.className = [...nonThemeClasses, `theme-${themeId}`].join(' ');
+
     // Get the correct variables for current mode
     const variables = isDark
       ? selectedTheme.cssVariables.dark
       : selectedTheme.cssVariables.light;
 
-    // Apply CSS variables directly to root style for maximum performance
-    Object.entries(variables).forEach(([key, value]) => {
-      root.style.setProperty(key, value);
-    });
+    // Use a <style> tag instead of inline styles for better performance
+    let styleTag = document.getElementById(
+      'dynamic-theme-vars'
+    ) as HTMLStyleElement;
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = 'dynamic-theme-vars';
+      document.head.appendChild(styleTag);
+    }
 
-    // Update theme class efficiently
-    root.className =
-      root.className.replace(/theme-\w+/g, '') + ` theme-${themeId}`;
+    // Only update if content has changed to prevent unnecessary re-renders
+    const cssVars = Object.entries(variables)
+      .map(([key, value]) => `${key}: ${value};`)
+      .join('\n    ');
+
+    const newContent = `:root.theme-${themeId}${isDark ? '.dark' : ''} {\n    ${cssVars}\n  }`;
+
+    if (styleTag.textContent !== newContent) {
+      styleTag.textContent = newContent;
+    }
   };
 
   const setTheme = (themeId: string) => {
@@ -106,14 +140,28 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isHydrated) return;
 
+    let isApplyingTheme = false; // Flag to prevent infinite loops
+
     const observer = new MutationObserver(mutations => {
       mutations.forEach(mutation => {
         if (
           mutation.type === 'attributes' &&
-          mutation.attributeName === 'class'
+          mutation.attributeName === 'class' &&
+          !isApplyingTheme
         ) {
-          // Reapply theme when dark class changes
-          setTimeout(() => applyTheme(theme, true), 50);
+          const root = document.documentElement;
+          const currentIsDark = root.classList.contains('dark');
+          const previousIsDark = mutation.oldValue?.includes('dark') ?? false;
+
+          // Only reapply if dark mode actually changed
+          if (currentIsDark !== previousIsDark) {
+            isApplyingTheme = true;
+            applyTheme(theme, true);
+            // Reset flag after a short delay
+            setTimeout(() => {
+              isApplyingTheme = false;
+            }, 100);
+          }
         }
       });
     });
@@ -121,6 +169,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
+      attributeOldValue: true, // Need this to compare old vs new
     });
 
     return () => observer.disconnect();

@@ -3,18 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 import { handleApiError } from '@/lib/api-error-handler';
 
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
   try {
     const token = req.cookies.get('token')?.value || '';
     const body = await req.json();
-    const response = await axios.post(
-      `${BACKEND_URL}/api/master/insert-uom-details`,
+
+    const response = await axios.patch(
+      `${BACKEND_URL}/api/master/item-packing/update-details`,
       body,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     return NextResponse.json(response.data);

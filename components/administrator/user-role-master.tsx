@@ -36,6 +36,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Loader2 } from 'lucide-react';
 import axios from '@/lib/axios-config';
 import Cookies from 'js-cookie';
 import { getUserID } from '@/utils/getFromSession';
@@ -115,6 +116,8 @@ const UserRoleMaster: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Search and pagination states
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -202,6 +205,7 @@ const UserRoleMaster: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
     try {
       const response = await axios.post<ApiResponse>(
         '/api/admin/insert-user-role',
@@ -225,6 +229,8 @@ const UserRoleMaster: React.FC = () => {
     } catch (error) {
       console.error('Error saving user role:', error);
       toast.error('Failed to save user role.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -235,6 +241,7 @@ const UserRoleMaster: React.FC = () => {
       return;
     }
 
+    setIsUpdating(true);
     try {
       const response = await axios.patch<ApiResponse>(
         '/api/admin/update-user-role',
@@ -261,6 +268,8 @@ const UserRoleMaster: React.FC = () => {
       toast.error(
         error.response?.data?.message || 'Failed to update user role.'
       );
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -338,17 +347,31 @@ const UserRoleMaster: React.FC = () => {
             <div className="flex flex-col justify-end gap-3 pt-4 sm:flex-row">
               <Button
                 onClick={handleSave}
-                disabled={isEditing}
+                disabled={isEditing || isSaving}
                 className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
                 onClick={handleUpdate}
-                disabled={!isEditing}
+                disabled={!isEditing || isUpdating}
                 className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
                 onClick={handleCancel}

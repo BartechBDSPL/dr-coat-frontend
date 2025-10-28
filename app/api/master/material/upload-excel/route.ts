@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const response = await axios.post(
-      `${BACKEND_URL}/api/master/upload-uom-excel`,
+      `${BACKEND_URL}/api/master/upload-material-excel`,
       backendFormData,
       {
         headers: {

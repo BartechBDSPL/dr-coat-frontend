@@ -7,14 +7,12 @@ export async function POST(req: NextRequest) {
   try {
     const token = req.cookies.get('token')?.value || '';
     const body = await req.json();
+
     const response = await axios.post(
-      `${BACKEND_URL}/api/master/insert-uom-details`,
+      `${BACKEND_URL}/api/master/item-packing/insert-details`,
       body,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${token}` },
       }
     );
     return NextResponse.json(response.data);

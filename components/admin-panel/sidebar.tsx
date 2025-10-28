@@ -40,7 +40,7 @@ export function Sidebar() {
           <Link href="/dashboard" className="flex items-center gap-2">
             {/* <PanelsTopLeft className="w-6 h-6 mr-1" /> */}
             <Image
-              src="/gerresheimer_logo.jpg"
+              src="/logo.png"
               alt="gerresheimer_logo"
               width={30}
               height={20}

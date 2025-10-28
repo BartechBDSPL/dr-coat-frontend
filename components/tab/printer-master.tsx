@@ -42,6 +42,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Loader2 } from 'lucide-react';
 
 interface PrinterData {
   PID: number;
@@ -101,6 +102,8 @@ const PalletMaster: React.FC = () => {
   const [status, setStatus] = useState<string>('');
   const [data, setData] = useState<PrinterData[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const printerMakeModelRef = useRef<HTMLInputElement>(null);
@@ -190,6 +193,7 @@ const PalletMaster: React.FC = () => {
     setStatus(row.Status);
     setPlantCode(row.PlantCode);
     setIsEditing(true);
+    setIsUpdating(true);
     setSelectedUnit(row.PID.toString());
     // insertAuditTrail({
     //   AppType: "Web",
@@ -213,6 +217,7 @@ const PalletMaster: React.FC = () => {
     setDefaultPrinter('');
     setStatus('');
     setIsEditing(false);
+    setIsUpdating(false);
     setSelectedUnit(null);
   };
 
@@ -251,6 +256,7 @@ const PalletMaster: React.FC = () => {
       sooner('Please select the status');
       return;
     }
+    setIsSaving(true);
     try {
       const newUnitData = {
         PlantCode: plantCode.trim(),
@@ -308,6 +314,8 @@ const PalletMaster: React.FC = () => {
       console.error(error);
       const errorMessage = error.response?.data?.error || error.message;
       toast(errorMessage, { description: 'Error', position: 'top-right' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -348,6 +356,7 @@ const PalletMaster: React.FC = () => {
       sooner('Please select the status');
       return;
     }
+    setIsUpdating(true);
     try {
       const oldUnit = data.find(item => item.PID.toString() === selectedUnit);
 
@@ -414,6 +423,8 @@ const PalletMaster: React.FC = () => {
         description: 'Error',
         position: 'top-right',
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -672,11 +683,28 @@ const PalletMaster: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button onClick={handleSave} disabled={isEditing}>
-                Save
+              <Button onClick={handleSave} disabled={isUpdating || isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
-              <Button onClick={handleUpdate} disabled={!isEditing}>
-                Update
+              <Button
+                onClick={handleUpdate}
+                disabled={!isUpdating || isUpdating}
+              >
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button onClick={handleCancel} variant="outline">
                 Cancel

@@ -66,10 +66,10 @@ export function getMenuList(pathname: string): Group[] {
               value: '2_2',
             },
             {
-              href: "/uom-master",
-              label: "UOM Master",
-              active: pathname === "/uom-master",
-              value: "2_3",
+              href: '/uom-master',
+              label: 'UOM Master',
+              active: pathname === '/uom-master',
+              value: '2_3',
             },
             {
               href: '/warehouse-category-master',
@@ -90,16 +90,22 @@ export function getMenuList(pathname: string): Group[] {
               value: '2_6',
             },
             {
-              href: "/material-master",
-              label: "Material Master",
-              active: pathname === "/material-master",
-              value: "2_7",
+              href: '/material-master',
+              label: 'Material Master',
+              active: pathname === '/material-master',
+              value: '2_7',
+            },
+            {
+              href: '/item-packing-master',
+              label: 'Item Packing Master',
+              active: pathname === '/item-packing-master',
+              value: '2_8',
             },
             // {
             //   href: "/material-master-existing-stock-upload",
             //   label: "Material Master Existing Stock Upload",
             //   active: pathname === "/material-master-existing-stock-upload",
-            //   value: "2_8",
+            //   value: "2_9",
             // },
             // {
             //   href: "/line-master",

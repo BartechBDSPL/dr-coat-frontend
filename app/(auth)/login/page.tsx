@@ -469,7 +469,7 @@ const Page = () => {
         <section className="relative flex h-32 items-end bg-gray-900 lg:col-span-5 lg:h-full xl:col-span-6">
           <Image
             alt=""
-            src="/images/gerr.png"
+            src="/images/wms.png"
             className="absolute inset-0 h-full w-full object-cover opacity-80"
             fill
           />

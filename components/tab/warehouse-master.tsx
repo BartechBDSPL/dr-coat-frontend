@@ -35,6 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Loader2 } from 'lucide-react';
 import TableSearch from '@/utils/tableSearch';
 interface PlantCode {
   plant_code: string;
@@ -91,6 +92,8 @@ const WarehouseMaster: React.FC = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [oldData, setOldData] = useState<WarehouseData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -231,6 +234,7 @@ const WarehouseMaster: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
     try {
       const newWarehouseData = {
         PlantCode: plantCode.trim(),
@@ -259,6 +263,8 @@ const WarehouseMaster: React.FC = () => {
     } catch (error) {
       console.error('Error inserting warehouse:', error);
       toast.error('Failed to insert warehouse');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -277,6 +283,7 @@ const WarehouseMaster: React.FC = () => {
       return;
     }
 
+    setIsUpdating(true);
     const updatedWarehouseData = {
       PlantCode: plantCode.trim(),
       WarehouseCode: warehouseCode.trim(),
@@ -332,6 +339,8 @@ const WarehouseMaster: React.FC = () => {
       toast.error(
         error.response?.data?.Message || 'Failed to update warehouse'
       );
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -477,17 +486,31 @@ const WarehouseMaster: React.FC = () => {
             <div className="flex flex-col justify-end gap-3 pt-4 sm:flex-row">
               <Button
                 onClick={handleSave}
-                disabled={isEditing}
+                disabled={isEditing || isSaving}
                 className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
                 onClick={handleUpdate}
-                disabled={!isEditing}
+                disabled={!isEditing || isUpdating}
                 className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
                 onClick={handleCancel}

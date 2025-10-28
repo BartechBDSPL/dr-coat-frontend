@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest) {
     const token = req.cookies.get('token')?.value || '';
     const body = await req.json();
     const response = await axios.patch(
-      `${BACKEND_URL}/api/master/update-material-details`,
+      `${BACKEND_URL}/api/master/material/update-details`,
       body,
       {
         headers: { Authorization: `Bearer ${token}` },

@@ -1,11 +1,5 @@
 'use client';
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from '@/lib/axios-config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -41,6 +35,17 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { useForm } from 'react-hook-form';
+import { Loader2 } from 'lucide-react';
+
+interface CompanyFormData {
+  companyCode: string;
+  companyName: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  companyStatus: 'Active' | 'Inactive';
+}
 
 interface CompanyData {
   company_id: number;
@@ -58,25 +63,36 @@ interface CompanyData {
 }
 
 const CompanyMasterForm: React.FC = () => {
-  const [companyCode, setCompanyCode] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [companyAddress, setCompanyAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [status, setStatus] = useState('Active');
   const [data, setData] = useState<CompanyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCID, setSelectedCID] = useState<number | null>(null);
   const [isUpdateMode, setIsUpdateMode] = useState(false);
   const [oldData, setOldData] = useState<CompanyData | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const token = Cookies.get('token');
 
-  const companyCodeRef = useRef<HTMLInputElement>(null);
-  const companyNameRef = useRef<HTMLInputElement>(null);
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<CompanyFormData>({
+    defaultValues: {
+      companyCode: '',
+      companyName: '',
+      address: '',
+      city: '',
+      state: '',
+      companyStatus: 'Active',
+    },
+  });
   useEffect(() => {
     fetchData();
   }, []);
@@ -143,72 +159,72 @@ const CompanyMasterForm: React.FC = () => {
     setCurrentPage(1);
   }, []);
 
-  const handleSave = () => {
-    if (!companyCode.trim()) {
-      toast.error('Please fill Company Code');
-      companyCodeRef.current?.focus();
-      return;
-    }
-    if (!companyName.trim()) {
-      toast.error('Please fill Company Name');
-      companyNameRef.current?.focus();
-      return;
-    }
-    const newCompanyData = {
-      companyCode: companyCode.trim(),
-      companyName: companyName.trim(),
-      address: companyAddress.trim(),
-      city: city.trim(),
-      state: state.trim(),
-      companyStatus: status.trim(),
-      createdBy: getUserID().trim(),
-    };
+  const handleSave = async (formData: CompanyFormData) => {
+    setIsSaving(true);
+    try {
+      const newCompanyData = {
+        companyCode: formData.companyCode.trim(),
+        companyName: formData.companyName.trim(),
+        address: formData.address?.trim() || '',
+        city: formData.city?.trim() || '',
+        state: formData.state?.trim() || '',
+        companyStatus: formData.companyStatus,
+        createdBy: getUserID().trim(),
+      };
 
-    axios
-      .post('/api/master/company/insert-details', newCompanyData)
-      .then(response => {
-        const responseData = response.data;
-        if (responseData.Status === 'F') {
-          toast.error(responseData.Message);
-          logError(
-            responseData.Message.toLocaleString(),
-            '',
-            'Company Master',
-            getUserID()
-          );
-        } else if (responseData.Status === 'T') {
-          toast.success(responseData.Message);
-          fetchData();
-          handleCancel();
-          // Insert audit trail for save action
-          // insertAuditTrail({
-          //   AppType: "Web",
-          //   Activity: "Company Master",
-          //   Action: `New Company Added by ${getUserID()}`,
-          //   NewData: JSON.stringify(newCompanyData),
-          //   OldData: "",
-          //   Remarks: "",
-          //   UserId: getUserID(),
-          //   PlantCode: ""
-          // });
-        }
-      })
-      .catch(error => {
-        const errorMessage = error.response?.data?.message || error.message;
-        logError(errorMessage, error, 'Company Master', getUserID());
-        toast.error(errorMessage);
-      });
+      const response = await axios.post(
+        '/api/master/company/insert-details',
+        newCompanyData
+      );
+      const responseData = response.data;
+
+      if (responseData.Status === 'F') {
+        toast.error(responseData.Message);
+        logError(
+          responseData.Message.toLocaleString(),
+          '',
+          'Company Master',
+          getUserID()
+        );
+      } else if (responseData.Status === 'T') {
+        toast.success(responseData.Message);
+        fetchData();
+        handleCancel();
+        // Insert audit trail for save action
+        // insertAuditTrail({
+        //   AppType: "Web",
+        //   Activity: "Company Master",
+        //   Action: `New Company Added by ${getUserID()}`,
+        //   NewData: JSON.stringify(newCompanyData),
+        //   OldData: "",
+        //   Remarks: "",
+        //   UserId: getUserID(),
+        //   PlantCode: ""
+        // });
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message;
+      logError(errorMessage, error, 'Company Master', getUserID());
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleRowSelect = (index: number) => {
     const selectedData = paginatedData[index];
     setOldData(selectedData);
-    setCompanyCode(selectedData.company_code);
-    setCompanyName(selectedData.company_name);
-    setCompanyAddress(selectedData.address);
-    setCity(selectedData.city);
-    setState(selectedData.state);
-    setStatus(selectedData.company_status || 'Inactive');
+    setValue('companyCode', selectedData.company_code);
+    setValue('companyName', selectedData.company_name);
+    setValue('address', selectedData.address || '');
+    setValue('city', selectedData.city || '');
+    setValue('state', selectedData.state || '');
+    setValue(
+      'companyStatus',
+      (selectedData.company_status === 'Active' ? 'Active' : 'Inactive') as
+        | 'Active'
+        | 'Inactive'
+    );
     setSelectedCID(selectedData.company_id);
     setIsUpdateMode(true);
     // Insert audit trail for edit action
@@ -225,93 +241,93 @@ const CompanyMasterForm: React.FC = () => {
   };
 
   const handleCancel = () => {
-    setCompanyCode('');
-    setCompanyName('');
-    setCompanyAddress('');
-    setCity('');
-    setState('');
-    setStatus('Active');
+    reset({
+      companyCode: '',
+      companyName: '',
+      address: '',
+      city: '',
+      state: '',
+      companyStatus: 'Active',
+    });
     setSelectedCID(null);
     setIsUpdateMode(false);
     setOldData(null);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async (formData: CompanyFormData) => {
     if (!selectedCID || !oldData) return;
-    if (!companyCode.trim()) {
-      toast.error('Please fill Company Code');
-      companyCodeRef.current?.focus();
-      return;
-    }
-    if (!companyName.trim()) {
-      toast.error('Please fill Company Name');
-      companyNameRef.current?.focus();
-      return;
-    }
-    const updatedData = {
-      companyId: selectedCID,
-      companyName: companyName.trim(),
-      address: companyAddress.trim(),
-      city: city.trim(),
-      state: state.trim(),
-      companyStatus: status.trim(),
-      updatedBy: getUserID().trim(),
-    };
 
-    axios
-      .patch('/api/master/company/update-details', updatedData)
-      .then(response => {
-        const responseData = response.data;
-        if (responseData.Status === 'F') {
-          toast.error(responseData.Message);
-          logError(
-            responseData.Message.toLocaleString(),
-            '',
-            'Company Master Update',
-            getUserID()
+    setIsUpdating(true);
+    try {
+      const updatedData = {
+        companyId: selectedCID,
+        companyName: formData.companyName.trim(),
+        address: formData.address?.trim() || '',
+        city: formData.city?.trim() || '',
+        state: formData.state?.trim() || '',
+        companyStatus: formData.companyStatus,
+        updatedBy: getUserID().trim(),
+      };
+
+      const response = await axios.patch(
+        '/api/master/company/update-details',
+        updatedData
+      );
+      const responseData = response.data;
+
+      if (responseData.Status === 'F') {
+        toast.error(responseData.Message);
+        logError(
+          responseData.Message.toLocaleString(),
+          '',
+          'Company Master Update',
+          getUserID()
+        );
+      } else if (responseData.Status === 'T') {
+        fetchData();
+        handleCancel();
+        toast.success(responseData.Message);
+        // Prepare audit data
+        const changedFields: string[] = [];
+        if (oldData.company_name !== formData.companyName)
+          changedFields.push(
+            `Company Name: ${oldData.company_name} -> ${formData.companyName}`
           );
-        } else if (responseData.Status === 'T') {
-          fetchData();
-          handleCancel();
-          toast.success(responseData.Message);
-          // Prepare audit data
-          const changedFields: string[] = [];
-          if (oldData.company_name !== companyName)
-            changedFields.push(
-              `Company Name: ${oldData.company_name} -> ${companyName}`
-            );
-          if (oldData.address !== companyAddress)
-            changedFields.push(
-              `Address: ${oldData.address} -> ${companyAddress}`
-            );
-          if (oldData.city !== city)
-            changedFields.push(`City: ${oldData.city} -> ${city}`);
-          if (oldData.state !== state)
-            changedFields.push(`State: ${oldData.state} -> ${state}`);
-          if (oldData.company_status !== status)
-            changedFields.push(
-              `Status: ${oldData.company_status} -> ${status}`
-            );
+        if (oldData.address !== (formData.address || ''))
+          changedFields.push(
+            `Address: ${oldData.address} -> ${formData.address || ''}`
+          );
+        if (oldData.city !== (formData.city || ''))
+          changedFields.push(`City: ${oldData.city} -> ${formData.city || ''}`);
+        if (oldData.state !== (formData.state || ''))
+          changedFields.push(
+            `State: ${oldData.state} -> ${formData.state || ''}`
+          );
+        if (oldData.company_status !== formData.companyStatus)
+          changedFields.push(
+            `Status: ${oldData.company_status} -> ${formData.companyStatus}`
+          );
 
-          // Insert audit trail for update action
-          // insertAuditTrail({
-          //   AppType: "Web",
-          //   Activity: "Company Master",
-          //   Action: `Company Updated by ${getUserID()}`,
-          //   NewData: changedFields.join(", "),
-          //   OldData: JSON.stringify(oldData),
-          //   Remarks: "",
-          //   UserId: getUserID(),
-          //   PlantCode: ""
-          // });
-        }
-      })
-      .catch(error => {
-        console.error('Error updating company:', error);
-        const errorMessage = error.response?.data?.message || error.message;
-        logError(errorMessage, error, 'Company Master Update', getUserID());
-        toast.error('Failed to update details. Try again');
-      });
+        // Insert audit trail for update action
+        // insertAuditTrail({
+        //   AppType: "Web",
+        //   Activity: "Company Master",
+        //   Action: `Company Updated by ${getUserID()}`,
+        //   NewData: changedFields.join(", "),
+        //   OldData: JSON.stringify(oldData),
+        //   Remarks: "",
+        //   UserId: getUserID(),
+        //   PlantCode: ""
+        // });
+      }
+    } catch (error: any) {
+      console.error('Error updating company:', error);
+      const errorMessage = error.response?.data?.message || error.message;
+      logError(errorMessage, error, 'Company Master Update', getUserID());
+      toast.error('Failed to update details. Try again');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   return (
@@ -326,56 +342,44 @@ const CompanyMasterForm: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4" onSubmit={e => e.preventDefault()}>
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit(isUpdateMode ? handleUpdate : handleSave)}
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <div className="space-y-2">
                 <Label htmlFor="companyCode">Company Code *</Label>
                 <Input
-                  ref={companyCodeRef}
                   id="companyCode"
-                  value={companyCode}
-                  onChange={e => setCompanyCode(e.target.value)}
+                  {...register('companyCode')}
                   required
                   disabled={isUpdateMode}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="companyName">Company Name *</Label>
-                <Input
-                  ref={companyNameRef}
-                  id="companyName"
-                  value={companyName}
-                  onChange={e => setCompanyName(e.target.value)}
-                  required
-                />
+                <Input id="companyName" {...register('companyName')} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyAddress">Company Address </Label>
-                <Input
-                  id="companyAddress"
-                  value={companyAddress}
-                  onChange={e => setCompanyAddress(e.target.value)}
-                />
+                <Label htmlFor="address">Company Address</Label>
+                <Input id="address" {...register('address')} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="city">City </Label>
-                <Input
-                  id="city"
-                  value={city}
-                  onChange={e => setCity(e.target.value)}
-                />
+                <Label htmlFor="city">City</Label>
+                <Input id="city" {...register('city')} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="state">State </Label>
-                <Input
-                  id="state"
-                  value={state}
-                  onChange={e => setState(e.target.value)}
-                />
+                <Label htmlFor="state">State</Label>
+                <Input id="state" {...register('state')} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="status">Status *</Label>
-                <Select value={status} onValueChange={setStatus}>
+                <Label htmlFor="companyStatus">Status *</Label>
+                <Select
+                  value={watch('companyStatus')}
+                  onValueChange={value =>
+                    setValue('companyStatus', value as 'Active' | 'Inactive')
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -388,24 +392,39 @@ const CompanyMasterForm: React.FC = () => {
             </div>
             <div className="flex flex-col justify-end gap-2 pt-4 sm:flex-row">
               <Button
-                onClick={handleSave}
-                disabled={isUpdateMode}
                 type="submit"
+                disabled={isUpdateMode || isSaving}
                 className="w-full sm:w-auto"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
-                onClick={handleUpdate}
-                disabled={!isUpdateMode}
+                type="submit"
+                disabled={!isUpdateMode || isUpdating}
                 className="w-full sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
+                type="button"
                 onClick={handleCancel}
                 variant="outline"
                 className="w-full sm:w-auto"
+                disabled={isSaving || isUpdating}
               >
                 Cancel
               </Button>

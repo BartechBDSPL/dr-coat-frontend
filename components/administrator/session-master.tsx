@@ -41,7 +41,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Info, AlertCircle } from 'lucide-react';
+import { Info, AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
@@ -105,6 +105,8 @@ const SessionMasterForm: React.FC = () => {
     {}
   );
   const [isValid, setIsValid] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -218,6 +220,7 @@ const SessionMasterForm: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
     const newSessionData = {
       session_time: sessionTime.trim(),
       unit: unit,
@@ -246,6 +249,9 @@ const SessionMasterForm: React.FC = () => {
         const errorMessage = error.response?.data?.message || error.message;
         logError(errorMessage, error, 'Session Master', getUserID());
         toast.error('Failed to save session details. Try again');
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
   };
 
@@ -277,6 +283,7 @@ const SessionMasterForm: React.FC = () => {
       return;
     }
 
+    setIsUpdating(true);
     const updatedData = {
       id: selectedId,
       session_time: sessionTime.trim(),
@@ -307,6 +314,9 @@ const SessionMasterForm: React.FC = () => {
         const errorMessage = error.response?.data?.message || error.message;
         logError(errorMessage, error, 'Session Master Update', getUserID());
         toast.error('Failed to update session details. Try again');
+      })
+      .finally(() => {
+        setIsUpdating(false);
       });
   };
 
@@ -438,10 +448,19 @@ const SessionMasterForm: React.FC = () => {
             <div className="flex flex-col justify-end gap-2 pt-4 sm:flex-row">
               <Button
                 onClick={handleUpdate}
-                disabled={!isUpdateMode || !isEditMode || !isValid}
+                disabled={
+                  !isUpdateMode || !isEditMode || !isValid || isUpdating
+                }
                 className="w-full sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
                 onClick={handleCancel}

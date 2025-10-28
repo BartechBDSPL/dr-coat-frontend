@@ -1,5 +1,11 @@
 'use client';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,17 +16,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+
 import { Button } from '@/components/ui/button';
-import CustomDropdown from '../CustomDropdown';
 import { toast } from 'sonner';
-import Cookies from 'js-cookie';
 import axios from '@/lib/axios-config';
-import { delay } from '@/utils/delay';
 import { Loading } from '@/components/loading';
+import { Loader2 } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -28,107 +40,124 @@ import {
 } from '@/components/ui/pagination';
 import TableSearch from '@/utils/tableSearch';
 import { getUserID } from '@/utils/getFromSession';
-
-interface PlantCode {
-  plant_code: string;
-}
+import { convertToIST } from '@/utils/convertToIST';
 
 interface MaterialData {
   id?: number;
-  plant_code: string | null;
-  material_code: string;
-  material_description: string;
-  material_type: string;
-  material_group: string;
-  material_status: string;
-  created_by: string;
+  item_code: string;
+  item_description: string;
+  inventory_posting_group: string;
+  category_l1: string;
+  category_l2: string;
+  category_l3: string;
+  base_uom: string;
+  hazardous: string;
+  approval_status: string;
+  item_tracking_code: string;
   created_date: string;
-  updated_by: string;
-  updated_date: string;
+  created_by: string;
+  updated_by: string | null;
+  updated_date: string | null;
 }
 
-interface ApiResponse {
-  Status: string;
+interface UpdateApiResponse {
+  Status: 'T' | 'F';
   Message: string;
 }
 
-interface DropdownOption {
-  value: string;
-  label: string;
-}
-
 const MaterialMaster: React.FC = () => {
-  const [plantCode, setPlantCode] = useState<string>('');
-  const [materialCode, setMaterialCode] = useState<string>('');
-  const [materialDescription, setMaterialDescription] = useState<string>('');
-  const [materialType, setMaterialType] = useState<string>('');
-  const [materialGroup, setMaterialGroup] = useState<string>('');
-  const [status, setStatus] = useState<string>('Active');
-  const [plantCodes, setPlantCodes] = useState<DropdownOption[]>([]);
-  const [materialData, setMaterialData] = useState<MaterialData[]>([]);
+  const [itemCode, setItemCode] = useState<string>('');
+  const [itemDescription, setItemDescription] = useState<string>('');
+  const [inventoryPostingGroup, setInventoryPostingGroup] =
+    useState<string>('');
+  const [categoryL1, setCategoryL1] = useState<string>('');
+  const [categoryL2, setCategoryL2] = useState<string>('');
+  const [categoryL3, setCategoryL3] = useState<string>('');
+  const [baseUom, setBaseUom] = useState<string>('');
+  const [hazardous, setHazardous] = useState<string>('No');
+  const [approvalStatus, setApprovalStatus] = useState<string>('Pending');
+  const [itemTrackingCode, setItemTrackingCode] = useState<string>('');
+
+  const [data, setData] = useState<MaterialData[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [oldData, setOldData] = useState<MaterialData | null>(null);
+  const [selectedMaterial, setSelectedMaterial] = useState<MaterialData | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState(
+    'Loading Material data...'
+  );
+  const [fileUploading, setFileUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const itemCodeRef = useRef<HTMLInputElement>(null);
+  const itemDescRef = useRef<HTMLInputElement>(null);
+  const userID = getUserID();
 
   // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const token = Cookies.get('token');
 
   useEffect(() => {
     const executeSequentially = async () => {
-      await fetchPlantCodes();
-      await delay(50);
-
-      await fetchMaterialData();
-      await delay(50);
+      await fetchData();
     };
-
     executeSequentially();
   }, []);
 
-  const fetchPlantCodes = async () => {
-    try {
-      const response = await axios.get('/api/master/material/get-plant');
-      setPlantCodes(
-        response.data.map((item: PlantCode) => ({
-          value: item.plant_code,
-          label: item.plant_code,
-        }))
-      );
-    } catch (error) {
-      console.error('Error fetching plant codes:', error);
-      toast.error('Failed to fetch plant codes');
-    }
-  };
+  const fetchData = async () => {
+    let timer4s: NodeJS.Timeout | null = null;
+    let timer10s: NodeJS.Timeout | null = null;
 
-  const fetchMaterialData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('/api/master/material/get-details');
+      setLoadingMessage('Loading Material data...');
 
-      const data: MaterialData[] = response.data;
-      setMaterialData(Array.isArray(data) ? data : []);
+      // After 4 seconds, change the message
+      timer4s = setTimeout(() => {
+        setLoadingMessage(
+          'Fetching details from API, this might take a moment...'
+        );
+      }, 4000);
+
+      // After 10 seconds, change the message again
+      timer10s = setTimeout(() => {
+        setLoadingMessage('Hang on, almost there...');
+      }, 10000);
+
+      const response = await axios.get<MaterialData[]>(
+        '/api/master/material/all-details'
+      );
+      setData(response.data);
     } catch (error) {
-      console.error('Error fetching material data:', error);
-      toast.error('Failed to fetch material data');
+      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch data');
     } finally {
+      if (timer4s) clearTimeout(timer4s);
+      if (timer10s) clearTimeout(timer10s);
       setIsLoading(false);
+      setLoadingMessage('Loading Material data...');
     }
   };
 
-  // Logic for pagination
   const filteredData = useMemo(() => {
-    return materialData.filter(item => {
+    return data.filter(item => {
       const searchableFields: (keyof MaterialData)[] = [
-        'plant_code',
-        'material_code',
-        'material_description',
-        'material_type',
-        'material_group',
-        'material_status',
+        'item_code',
+        'item_description',
+        'inventory_posting_group',
+        'category_l1',
+        'category_l2',
+        'category_l3',
+        'base_uom',
+        'hazardous',
+        'approval_status',
+        'item_tracking_code',
+        'updated_by',
+        'created_by',
       ];
       return searchableFields.some(key => {
         const value = item[key];
@@ -138,7 +167,7 @@ const MaterialMaster: React.FC = () => {
         );
       });
     });
-  }, [materialData, searchTerm]);
+  }, [data, searchTerm]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -165,28 +194,31 @@ const MaterialMaster: React.FC = () => {
   }, []);
 
   const handleSave = async () => {
-    if (!plantCode.trim()) {
-      toast.error('Please select the plant code');
+    if (!itemCode.trim()) {
+      toast.error('Please fill the Item Code');
+      itemCodeRef.current?.focus();
       return;
     }
-    if (!materialCode.trim()) {
-      toast.error('Please fill the material code');
-      return;
-    }
-    if (!materialType.trim()) {
-      toast.error('Please fill the material type');
+    if (!itemDescription.trim()) {
+      toast.error('Please fill the Item Description');
+      itemDescRef.current?.focus();
       return;
     }
 
+    setIsSaving(true);
     try {
       const newMaterialData = {
-        plant_code: plantCode.trim(),
-        material_code: materialCode.trim(),
-        material_description: materialDescription.trim(),
-        material_type: materialType.trim(),
-        material_group: materialGroup.trim(),
-        material_status: status.trim(),
-        created_by: getUserID().trim(),
+        item_code: itemCode.trim(),
+        item_description: itemDescription.trim(),
+        inventory_posting_group: inventoryPostingGroup.trim(),
+        category_l1: categoryL1.trim(),
+        category_l2: categoryL2.trim(),
+        category_l3: categoryL3.trim(),
+        base_uom: baseUom.trim(),
+        hazardous: hazardous,
+        approval_status: approvalStatus,
+        item_tracking_code: itemTrackingCode.trim(),
+        created_by: userID || 'Guest',
       };
 
       const response = await axios.post(
@@ -194,464 +226,628 @@ const MaterialMaster: React.FC = () => {
         newMaterialData
       );
 
-      const result: ApiResponse = response.data[0];
+      const { Status, Message } = response.data;
 
-      if (result.Status === 'T') {
-        toast.success(result.Message || 'Material inserted successfully');
-        fetchMaterialData();
+      if (Status === 'F') {
+        toast.error(Message);
+      } else if (Status === 'T') {
+        toast.success(Message);
+        fetchData();
         handleCancel();
-      } else {
-        toast.error(result.Message || 'Failed to insert material');
       }
-    } catch (error) {
-      console.error('Error inserting material:', error);
-      toast.error('Failed to insert material');
+    } catch (error: any) {
+      console.error(error);
+      const errorMessage = error.response?.data?.Message || error.message;
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdate = async () => {
-    if (!selectedId) return;
-    if (!plantCode.trim()) {
-      toast.error('Please select the plant code');
+    if (!selectedMaterial) return;
+    if (!itemCode.trim()) {
+      toast.error('Please fill the Item Code');
+      itemCodeRef.current?.focus();
       return;
     }
-    if (!materialCode.trim()) {
-      toast.error('Please fill the material code');
-      return;
-    }
-    if (!materialType.trim()) {
-      toast.error('Please fill the material type');
+    if (!itemDescription.trim()) {
+      toast.error('Please fill the Item Description');
+      itemDescRef.current?.focus();
       return;
     }
 
-    const updatedMaterialData = {
-      id: selectedId,
-      plant_code: plantCode.trim(),
-      material_code: materialCode.trim(),
-      material_description: materialDescription.trim(),
-      material_type: materialType.trim(),
-      material_group: materialGroup.trim(),
-      material_status: status.trim(),
-      updated_by: getUserID().trim(),
-    };
-
-    const changedFields: string[] = [];
-    if (oldData?.plant_code !== plantCode)
-      changedFields.push(`Plant Code: ${oldData?.plant_code} -> ${plantCode}`);
-    if (oldData?.material_code !== materialCode)
-      changedFields.push(
-        `Material Code: ${oldData?.material_code} -> ${materialCode}`
-      );
-    if (oldData?.material_description !== materialDescription)
-      changedFields.push(
-        `Material Description: ${oldData?.material_description} -> ${materialDescription}`
-      );
-    if (oldData?.material_type !== materialType)
-      changedFields.push(
-        `Material Type: ${oldData?.material_type} -> ${materialType}`
-      );
-    if (oldData?.material_status !== status)
-      changedFields.push(`Status: ${oldData?.material_status} -> ${status}`);
-
+    setIsUpdating(true);
     try {
-      const response = await axios.patch(
+      const updatedMaterial = {
+        id: selectedMaterial.id,
+        item_code: itemCode.trim(),
+        item_description: itemDescription.trim(),
+        inventory_posting_group: inventoryPostingGroup.trim(),
+        category_l1: categoryL1.trim(),
+        category_l2: categoryL2.trim(),
+        category_l3: categoryL3.trim(),
+        base_uom: baseUom.trim(),
+        hazardous: hazardous,
+        approval_status: approvalStatus,
+        item_tracking_code: itemTrackingCode.trim(),
+        updated_by: userID || 'Guest',
+      };
+
+      const response = await axios.patch<UpdateApiResponse>(
         '/api/master/material/update-details',
-        updatedMaterialData
+        updatedMaterial
       );
 
-      const result: ApiResponse = response.data[0];
+      const { Status, Message } = response.data;
 
-      if (result.Status === 'T') {
-        toast.success(result.Message || 'Material updated successfully');
-        fetchMaterialData();
+      if (Status === 'T') {
+        toast.success(Message);
+        fetchData();
         handleCancel();
+      } else if (Status === 'F') {
+        toast.error(Message);
       } else {
-        toast.error(result.Message || 'Failed to update material details');
+        toast.error('Unexpected Error');
       }
     } catch (error: any) {
-      console.error('Error updating material:', error);
-      toast.error(error.response?.data?.Message || 'Failed to update material');
+      console.error('Error updating data:', error);
+      const errorMessage =
+        error.response?.data?.Message || 'Failed to update Material';
+      toast.error(errorMessage);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   const handleRowSelect = (row: MaterialData) => {
-    setOldData(row);
-    setPlantCode(row.plant_code || '');
-    setMaterialCode(row.material_code);
-    setMaterialDescription(row.material_description);
-    setMaterialType(row.material_type);
-    setMaterialGroup(row.material_group);
-    setStatus(row.material_status);
-    setSelectedId(row.id || null);
+    setItemCode(row.item_code);
+    setItemDescription(row.item_description);
+    setInventoryPostingGroup(row.inventory_posting_group);
+    setCategoryL1(row.category_l1);
+    setCategoryL2(row.category_l2);
+    setCategoryL3(row.category_l3);
+    setBaseUom(row.base_uom);
+    setHazardous(row.hazardous);
+    setApprovalStatus(row.approval_status);
+    setItemTrackingCode(row.item_tracking_code);
+    setSelectedMaterial(row);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setPlantCode('');
-    setMaterialCode('');
-    setMaterialDescription('');
-    setMaterialType('');
-    setMaterialGroup('');
-    setStatus('Active');
+    setItemCode('');
+    setItemDescription('');
+    setInventoryPostingGroup('');
+    setCategoryL1('');
+    setCategoryL2('');
+    setCategoryL3('');
+    setBaseUom('');
+    setHazardous('No');
+    setApprovalStatus('Pending');
+    setItemTrackingCode('');
     setIsEditing(false);
-    setSelectedId(null);
-    setOldData(null);
+    setSelectedMaterial(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleUploadFile = async () => {
+    if (!selectedFile) {
+      toast.error('Please select a file to upload');
+      return;
+    }
+
+    const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+    if (fileExt !== 'xlsx' && fileExt !== 'xls') {
+      toast.error('Please upload an Excel file (.xlsx or .xls)');
+      return;
+    }
+
+    if (!userID) {
+      toast.error('Failed to retrieve user ID');
+      return;
+    }
+
+    setFileUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('excelFile', selectedFile);
+      formData.append('username', userID);
+
+      const response = await axios.post(
+        '/api/master/material/upload-excel',
+        formData
+      );
+
+      if (response.data.Status === 'F') {
+        toast.error(
+          response.data.Message || 'Failed to upload Material details'
+        );
+        if (response.data.results?.failures) {
+          console.log('Upload failures:', response.data.results.failures);
+        }
+      } else {
+        const { totalProcessed, successCount, failureCount } =
+          response.data.results || {};
+        toast.success(
+          response.data.Message +
+            (totalProcessed
+              ? ` (${successCount}/${totalProcessed} records processed successfully)`
+              : '')
+        );
+        await fetchData();
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.Message || 'Failed to upload file');
+    } finally {
+      setFileUploading(false);
+      setSelectedFile(null);
+      const fileInput = document.getElementById(
+        'excel-upload'
+      ) as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+    }
+  };
+
+  const downloadSampleFile = () => {
+    const link = document.createElement('a');
+    link.href = '/Item_Master.xlsx';
+    link.download = 'Item_Master.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <Card className="mx-auto w-full border-border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-foreground sm:text-2xl">
-            Material Master
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
+    <>
+      <Card className="mx-auto mt-5 w-full">
+        <CardHeader>
+          <CardTitle className="text-lg md:text-xl">
+            Material Master{' '}
+            <span className="text-sm font-normal text-muted-foreground">
               (* Fields Are Mandatory)
             </span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-6" onSubmit={e => e.preventDefault()}>
+        <CardContent className="p-4 md:p-6">
+          <form className="space-y-6" onSubmit={e => e.preventDefault()}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <div className="space-y-2">
-                <Label
-                  htmlFor="plantCode"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Plant Code *
-                </Label>
-                <CustomDropdown
-                  options={plantCodes}
-                  value={plantCode}
-                  onValueChange={setPlantCode}
-                  placeholder="Select plant code..."
-                  searchPlaceholder="Search plant code..."
-                  emptyText="No plant code found."
-                  disabled={isEditing}
-                />
-                <Label className="mt-1 block text-sm text-muted-foreground">
-                  Only active plants will be visible here
-                </Label>
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="materialCode"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Material Code *
-                </Label>
+                <Label htmlFor="itemCode">Item Code *</Label>
                 <Input
-                  id="materialCode"
-                  value={materialCode}
-                  onChange={e => setMaterialCode(e.target.value)}
+                  id="itemCode"
+                  value={itemCode}
+                  onChange={e => setItemCode(e.target.value)}
+                  ref={itemCodeRef}
                   required
                   disabled={isEditing}
-                  className="border-border"
-                  placeholder="Enter material code"
+                  placeholder="Enter item code"
                 />
               </div>
               <div className="space-y-2">
-                <Label
-                  htmlFor="materialDescription"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Material Description
-                </Label>
+                <Label htmlFor="itemDescription">Item Description *</Label>
                 <Input
-                  id="materialDescription"
-                  value={materialDescription}
-                  onChange={e => setMaterialDescription(e.target.value)}
-                  className="border-border"
+                  id="itemDescription"
+                  value={itemDescription}
+                  ref={itemDescRef}
+                  onChange={e => setItemDescription(e.target.value)}
+                  required
                   placeholder="Enter description"
                 />
               </div>
               <div className="space-y-2">
-                <Label
-                  htmlFor="materialType"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Material Type *
+                <Label htmlFor="inventoryPostingGroup">
+                  Inventory Posting Group
                 </Label>
                 <Input
-                  id="materialType"
-                  value={materialType}
-                  onChange={e => setMaterialType(e.target.value)}
-                  required
-                  className="border-border"
-                  placeholder="Enter material type"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="materialType"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Material Group *
-                </Label>
-                <Input
-                  id="materialGroup"
-                  value={materialGroup}
-                  onChange={e => setMaterialGroup(e.target.value)}
-                  required
-                  className="border-border"
-                  placeholder="Enter material Group"
+                  id="inventoryPostingGroup"
+                  value={inventoryPostingGroup}
+                  onChange={e => setInventoryPostingGroup(e.target.value)}
+                  placeholder="Enter posting group"
                 />
               </div>
               <div className="space-y-2">
-                <Label
-                  htmlFor="status"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Status *
-                </Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="border-border">
-                    <SelectValue placeholder="Select status" />
+                <Label htmlFor="categoryL1">Category L1</Label>
+                <Input
+                  id="categoryL1"
+                  value={categoryL1}
+                  onChange={e => setCategoryL1(e.target.value)}
+                  placeholder="Enter category L1"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="categoryL2">Category L2</Label>
+                <Input
+                  id="categoryL2"
+                  value={categoryL2}
+                  onChange={e => setCategoryL2(e.target.value)}
+                  placeholder="Enter category L2"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="categoryL3">Category L3</Label>
+                <Input
+                  id="categoryL3"
+                  value={categoryL3}
+                  onChange={e => setCategoryL3(e.target.value)}
+                  placeholder="Enter category L3"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="baseUom">Base UOM</Label>
+                <Input
+                  id="baseUom"
+                  value={baseUom}
+                  onChange={e => setBaseUom(e.target.value)}
+                  placeholder="Enter base UOM"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="hazardous">Hazardous</Label>
+                <Select value={hazardous} onValueChange={setHazardous}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="approvalStatus">Approval Status</Label>
+                <Select
+                  value={approvalStatus}
+                  onValueChange={setApprovalStatus}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Approved">Approved</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="itemTrackingCode">Item Tracking Code</Label>
+                <Input
+                  id="itemTrackingCode"
+                  value={itemTrackingCode}
+                  onChange={e => setItemTrackingCode(e.target.value)}
+                  placeholder="Enter tracking code"
+                />
+              </div>
             </div>
-            <div className="flex flex-col justify-end gap-3 pt-4 sm:flex-row">
+            <div className="flex flex-col justify-end gap-2 pt-4 sm:flex-row">
               <Button
                 onClick={handleSave}
-                disabled={isEditing}
-                className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
+                disabled={isEditing || isSaving}
+                className="w-full sm:w-auto"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
                 onClick={handleUpdate}
-                disabled={!isEditing}
-                className="w-full bg-primary hover:bg-primary/90 sm:w-auto"
+                disabled={!isEditing || isUpdating}
+                className="w-full sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
                 onClick={handleCancel}
                 variant="outline"
-                className="w-full border-border hover:bg-accent sm:w-auto"
+                className="w-full sm:w-auto"
+                disabled={isSaving || isUpdating}
               >
                 Cancel
               </Button>
             </div>
-          </div>
+
+            {/* Excel Upload Section - Commented out for now */}
+            {/* <div className="border-t pt-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-medium">Excel Upload</h3>
+                <p className="text-sm text-muted-foreground">
+                  Upload Material data from Excel file
+                </p>
+              </div>
+              
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <Label htmlFor="excel-upload">Select Excel File</Label>
+                  <Input
+                    id="excel-upload"
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleFileChange}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Info className="mr-2 h-4 w-4" />
+                        Sample Format
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="max-w-3xl">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excel Upload Format</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          <div className="space-y-4">
+                            <p>Please use the following format for uploading Material Master data:</p>
+                            <div className="rounded-md bg-muted p-4">
+                              <p className="mb-2 font-semibold">Required columns (in order):</p>
+                              <ol className="list-decimal space-y-1 pl-5 text-sm">
+                                <li>Item Code</li>
+                                <li>Item Description</li>
+                                <li>Inventory Posting Group</li>
+                                <li>Category L1</li>
+                                <li>Category L2</li>
+                                <li>Category L3</li>
+                                <li>Base UOM</li>
+                                <li>Hazardous (Yes/No)</li>
+                                <li>Approval Status</li>
+                                <li>Item Tracking Code</li>
+                              </ol>
+                            </div>
+                            <p className="text-sm">
+                              Download the sample file below to see the correct format.
+                            </p>
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Close</AlertDialogCancel>
+                        <AlertDialogAction onClick={downloadSampleFile}>
+                          Download Sample
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  
+                  <Button
+                    onClick={handleUploadFile}
+                    disabled={!selectedFile || fileUploading}
+                    size="sm"
+                  >
+                    {fileUploading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" />
+                    )}
+                    {fileUploading ? 'Uploading...' : 'Upload'}
+                  </Button>
+                </div>
+              </div>
+            </div> */}
+          </form>
         </CardContent>
       </Card>
-      <Card className="mx-auto w-full border-border shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-foreground sm:text-2xl">
-            Material List
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-            <div className="flex items-center space-x-2 text-sm">
-              <span className="text-muted-foreground">Show</span>
-              <Select
-                defaultValue="10"
-                value={itemsPerPage.toString()}
-                onValueChange={handleItemsPerPageChange}
-              >
-                <SelectTrigger className="h-8 w-[70px] border-border">
-                  <SelectValue placeholder={itemsPerPage.toString()} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-muted-foreground">entries</span>
-            </div>
-            <div className="w-full sm:w-auto">
-              <TableSearch onSearch={handleSearch} />
-            </div>
-          </div>
 
-          {Array.isArray(materialData) && materialData.length > 0 ? (
-            <>
-              <div className="overflow-hidden rounded-md border border-border">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-border">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground">
-                          Select
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground">
-                          Plant Code
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground">
-                          Material Code
-                        </th>
-                        <th className="hidden px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground md:table-cell">
-                          Description
-                        </th>
-                        <th className="hidden px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:table-cell">
-                          Material Type
-                        </th>
-                        <th className="hidden px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground sm:table-cell">
-                          Material Group
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground">
-                          Created by
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground">
-                          Created On
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground">
-                          Updated by
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-foreground">
-                          Updated On
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border bg-background">
-                      {isLoading ? (
-                        <tr>
-                          <td colSpan={6} className="px-6 py-4 text-center">
-                            <Loading size="md" label="Loading materials..." />
-                          </td>
-                        </tr>
-                      ) : (
-                        Array.isArray(paginatedData) &&
-                        paginatedData.map((item, index) => (
-                          <tr
-                            key={item.id || index}
-                            className="hover:bg-muted/50"
+      <Card className="mx-auto mt-10 w-full">
+        <CardContent className="p-4 md:p-6">
+          <div className="mt-4 md:mt-8">
+            <div className="mb-4 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">Show</span>
+                <Select
+                  defaultValue="10"
+                  value={itemsPerPage.toString()}
+                  onValueChange={handleItemsPerPageChange}
+                >
+                  <SelectTrigger className="w-[70px]">
+                    <SelectValue placeholder={itemsPerPage.toString()} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm">entries</span>
+              </div>
+              <div className="flex w-full items-center space-x-2 sm:w-auto">
+                <TableSearch onSearch={handleSearch} />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="whitespace-nowrap">Action</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Item Code
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Item Description
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Inventory Posting Group
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Category L1
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Category L2
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Category L3
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Base UOM
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Hazardous
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Approval Status
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Item Tracking Code
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Created by
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Created on
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Updated by
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Updated on
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={15} className="text-center">
+                        <Loading size="md" label={loadingMessage} />
+                      </TableCell>
+                    </TableRow>
+                  ) : paginatedData.length > 0 ? (
+                    paginatedData.map(row => (
+                      <TableRow key={row.item_code + row.created_date}>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRowSelect(row)}
                           >
-                            <td className="whitespace-nowrap px-6 py-4">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRowSelect(item)}
-                                className="h-8 border-border px-2 py-1 text-xs"
-                              >
-                                Select
-                              </Button>
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {item.plant_code || '-'}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {item.material_code}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {item.material_description}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {item.material_type}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {item.material_group}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4">
-                              <span
-                                className={`rounded-full px-2 py-1 text-xs font-medium ${
-                                  item.material_status === 'Active'
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                                }`}
-                              >
-                                {item.material_status}
-                              </span>
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {item.created_by}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {new Date(item.created_date).toLocaleDateString()}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {item.updated_by}
-                            </td>
-                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-foreground">
-                              {item.updated_date
-                                ? new Date(
-                                    item.updated_date
-                                  ).toLocaleDateString()
-                                : ''}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Pagination Component */}
-              <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
-                <div className="text-sm text-muted-foreground">
-                  {filteredData.length > 0
-                    ? `Showing ${(currentPage - 1) * itemsPerPage + 1} to ${Math.min(currentPage * itemsPerPage, filteredData.length)} of ${filteredData.length} entries`
-                    : 'No entries to show'}
-                </div>
-                {filteredData.length > 0 && (
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          className={`${currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:bg-accent'} border-border`}
-                        />
-                      </PaginationItem>
-                      {[...Array(totalPages)].map((_, index) => {
-                        const pageNumber = index + 1;
-                        if (
-                          pageNumber === 1 ||
-                          pageNumber === totalPages ||
-                          (pageNumber >= currentPage - 1 &&
-                            pageNumber <= currentPage + 1)
-                        ) {
-                          return (
-                            <PaginationItem key={pageNumber}>
-                              <PaginationLink
-                                isActive={pageNumber === currentPage}
-                                onClick={() => handlePageChange(pageNumber)}
-                                className={`cursor-pointer border-border ${pageNumber === currentPage ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}
-                              >
-                                {pageNumber}
-                              </PaginationLink>
-                            </PaginationItem>
-                          );
-                        } else if (
-                          pageNumber === currentPage - 2 ||
-                          pageNumber === currentPage + 2
-                        ) {
-                          return <PaginationEllipsis key={pageNumber} />;
-                        }
-                        return null;
-                      })}
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          className={`${currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:bg-accent'} border-border`}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="py-12 text-center">
-              <p className="text-lg text-muted-foreground">
-                No material data available
-              </p>
+                            Edit
+                          </Button>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {row.item_code}
+                        </TableCell>
+                        <TableCell>{row.item_description}</TableCell>
+                        <TableCell>{row.inventory_posting_group}</TableCell>
+                        <TableCell>{row.category_l1}</TableCell>
+                        <TableCell>{row.category_l2}</TableCell>
+                        <TableCell>{row.category_l3}</TableCell>
+                        <TableCell>{row.base_uom}</TableCell>
+                        <TableCell>{row.hazardous}</TableCell>
+                        <TableCell>{row.approval_status}</TableCell>
+                        <TableCell>{row.item_tracking_code}</TableCell>
+                        <TableCell>{row.created_by}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {convertToIST(row.created_date)}
+                        </TableCell>
+                        <TableCell>{row.updated_by || '-'}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {row.updated_date
+                            ? convertToIST(row.updated_date)
+                            : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={15} className="text-center">
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <p className="text-muted-foreground">No data found</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          )}
+
+            {/* Pagination Component */}
+            <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
+              <div className="text-center sm:text-left">
+                {filteredData.length > 0
+                  ? `Showing ${(currentPage - 1) * itemsPerPage + 1} to ${Math.min(currentPage * itemsPerPage, filteredData.length)} of ${filteredData.length} entries`
+                  : 'No entries to show'}
+              </div>
+              {filteredData.length > 0 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        className={
+                          currentPage === 1
+                            ? 'pointer-events-none opacity-50'
+                            : ''
+                        }
+                      />
+                    </PaginationItem>
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      if (
+                        pageNumber === 1 ||
+                        pageNumber === totalPages ||
+                        (pageNumber >= currentPage - 1 &&
+                          pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <PaginationItem key={pageNumber}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(pageNumber)}
+                              isActive={pageNumber === currentPage}
+                            >
+                              {pageNumber}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
+                        return (
+                          <PaginationItem key={pageNumber}>...</PaginationItem>
+                        );
+                      }
+                      return null;
+                    })}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        className={
+                          currentPage === totalPages
+                            ? 'pointer-events-none opacity-50'
+                            : ''
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
 

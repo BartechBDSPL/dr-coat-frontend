@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const response = await axios.post(
-      `${BACKEND_URL}/api/master/insert-material-details`,
+      `${BACKEND_URL}/api/master/material/insert-details`,
       body,
       {
         headers: { Authorization: `Bearer ${token}` },

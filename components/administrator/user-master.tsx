@@ -31,6 +31,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Loader2 } from 'lucide-react';
 import CustomDropdown from '../CustomDropdown';
 import Cookies from 'js-cookie';
 import { getUserID } from '@/utils/getFromSession';
@@ -114,6 +115,8 @@ const UserMaster: React.FC = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Search and pagination states
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -287,6 +290,7 @@ const UserMaster: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
     try {
       const response = await axios.post('/api/admin/insert-user-master', {
         ...formData,
@@ -314,6 +318,8 @@ const UserMaster: React.FC = () => {
     } catch (error: any) {
       console.error('Error saving user:', error);
       toast.error('Failed to save user');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -343,6 +349,7 @@ const UserMaster: React.FC = () => {
     }
     if (editingId === null) return;
 
+    setIsUpdating(true);
     try {
       const response = await axios.patch('/api/admin/edit-user-master', {
         User_Name: formData.User_Name,
@@ -375,6 +382,8 @@ const UserMaster: React.FC = () => {
     } catch (error) {
       console.error('Error updating user:', error);
       toast.error('Failed to update user');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -726,15 +735,33 @@ const UserMaster: React.FC = () => {
               </div>
             )}
             <div className="flex justify-end space-x-2">
-              <Button type="button" onClick={handleSave} disabled={isEditing}>
-                Save
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={isEditing || isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
                 type="button"
                 onClick={handleUpdate}
-                disabled={!isEditing}
+                disabled={!isEditing || isUpdating}
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button type="button" variant="outline" onClick={resetForm}>
                 Cancel

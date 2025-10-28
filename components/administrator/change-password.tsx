@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import axios from '@/lib/axios-config';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z
   .object({
@@ -36,6 +37,7 @@ const formSchema = z
 const ChangePassword = () => {
   const token = Cookies.get('token');
   const [passwordMatch, setPasswordMatch] = useState(false);
+  const [isChanging, setIsChanging] = useState(false);
   const [passwordValidation, setPasswordValidation] = useState({
     length: false,
     uppercase: false,
@@ -116,6 +118,7 @@ const ChangePassword = () => {
   }, []);
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsChanging(true);
     try {
       const response = await axios.post('/api/admin/change-password', {
         user_id: values.userId,
@@ -143,6 +146,8 @@ const ChangePassword = () => {
         error.message ||
         'An error occurred while changing password';
       toast.error(errorMessage);
+    } finally {
+      setIsChanging(false);
     }
   };
 
@@ -265,16 +270,24 @@ const ChangePassword = () => {
           <div className="flex flex-col justify-end gap-2 pt-4 sm:flex-row">
             <Button
               type="submit"
-              disabled={!passwordMatch}
+              disabled={!passwordMatch || isChanging}
               className="w-full sm:w-auto"
             >
-              Change Password
+              {isChanging ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Changing...
+                </>
+              ) : (
+                'Change Password'
+              )}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={handleClear}
               className="w-full sm:w-auto"
+              disabled={isChanging}
             >
               Clear
             </Button>

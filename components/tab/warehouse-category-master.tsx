@@ -39,6 +39,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Loader2 } from 'lucide-react';
 import TableSearch from '@/utils/tableSearch';
 
 interface WarehouseCategoryData {
@@ -74,6 +75,8 @@ const WarehouseCategoryMaster: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [oldData, setOldData] = useState<WarehouseCategoryData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   // for search and pagination
   const warehouseCategoryCodeRef = useRef<HTMLInputElement>(null);
   const warehouseCategoryDesccRef = useRef<HTMLInputElement>(null);
@@ -202,6 +205,7 @@ const WarehouseCategoryMaster: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
     try {
       const newCategoryData = {
         category_code: categoryCode.trim(),
@@ -246,6 +250,8 @@ const WarehouseCategoryMaster: React.FC = () => {
           color: 'hsl(var(--destructive-foreground))',
         },
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -261,6 +267,7 @@ const WarehouseCategoryMaster: React.FC = () => {
       sooner('Please fill the warehouse category description');
       return;
     }
+    setIsUpdating(true);
     try {
       const updatedCategoryData = {
         category_code: selectedCategoryCode,
@@ -324,6 +331,8 @@ const WarehouseCategoryMaster: React.FC = () => {
           color: 'hsl(var(--destructive-foreground))',
         },
       });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -366,17 +375,31 @@ const WarehouseCategoryMaster: React.FC = () => {
             <div className="flex flex-col justify-end space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
               <Button
                 onClick={handleSave}
-                disabled={isEditing}
+                disabled={isEditing || isSaving}
                 className="w-full sm:w-auto"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
                 onClick={handleUpdate}
-                disabled={!isEditing}
+                disabled={!isEditing || isUpdating}
                 className="w-full sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
                 onClick={handleCancel}

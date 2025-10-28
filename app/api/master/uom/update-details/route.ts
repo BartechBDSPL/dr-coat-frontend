@@ -11,9 +11,9 @@ export async function PATCH(req: NextRequest) {
       `${BACKEND_URL}/api/master/update-uom-details`,
       body,
       {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
       }
     );

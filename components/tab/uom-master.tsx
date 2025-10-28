@@ -38,7 +38,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Loader2, FileText, Download, Upload, Info } from 'lucide-react';
+import { Loader2, Download, Upload, Info } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -70,13 +70,16 @@ interface UpdateApiResponse {
 const UOMMaster: React.FC = () => {
   const [uomCode, setUomCode] = useState<string>('');
   const [unitDesc, setUnitDesc] = useState<string>('');
-  const [internationalStandardCode, setInternationalStandardCode] = useState<string>('');
+  const [internationalStandardCode, setInternationalStandardCode] =
+    useState<string>('');
   const [data, setData] = useState<UnitData[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fileUploading, setFileUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const unitRef = useRef<HTMLInputElement>(null);
   const descRef = useRef<HTMLInputElement>(null);
   const internationalRef = useRef<HTMLInputElement>(null);
@@ -163,6 +166,7 @@ const UOMMaster: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
     try {
       const newUnitData = {
         uom_code: uomCode.trim(),
@@ -199,6 +203,8 @@ const UOMMaster: React.FC = () => {
       console.error(error);
       const errorMessage = error.response?.data?.Message || error.message;
       toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
   const handleUpdate = async () => {
@@ -213,6 +219,8 @@ const UOMMaster: React.FC = () => {
       descRef.current?.focus();
       return;
     }
+
+    setIsUpdating(true);
     try {
       const updatedUnit = {
         id: selectedUnit.id,
@@ -251,8 +259,11 @@ const UOMMaster: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error updating data:', error);
-      const errorMessage = error.response?.data?.Message || 'Failed to update UOM';
+      const errorMessage =
+        error.response?.data?.Message || 'Failed to update UOM';
       toast.error(errorMessage);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -327,17 +338,18 @@ const UOMMaster: React.FC = () => {
       );
 
       if (response.data.Status === 'F') {
-        toast.error(
-          response.data.Message || 'Failed to upload UOM details'
-        );
+        toast.error(response.data.Message || 'Failed to upload UOM details');
         if (response.data.results?.failures) {
           console.log('Upload failures:', response.data.results.failures);
         }
       } else {
-        const { totalProcessed, successCount, failureCount } = response.data.results || {};
+        const { totalProcessed, successCount, failureCount } =
+          response.data.results || {};
         toast.success(
-          response.data.Message + 
-          (totalProcessed ? ` (${successCount}/${totalProcessed} records processed successfully)` : '')
+          response.data.Message +
+            (totalProcessed
+              ? ` (${successCount}/${totalProcessed} records processed successfully)`
+              : '')
         );
         await fetchData();
       }
@@ -355,7 +367,7 @@ const UOMMaster: React.FC = () => {
     }
   };
 
-    const downloadSampleFile = () => {
+  const downloadSampleFile = () => {
     const link = document.createElement('a');
     link.href = '/uom_sample_upload.csv';
     link.download = 'uom_sample_upload.csv';
@@ -402,7 +414,9 @@ const UOMMaster: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="internationalCode">International Standard Code</Label>
+                <Label htmlFor="internationalCode">
+                  International Standard Code
+                </Label>
                 <Input
                   id="internationalCode"
                   value={internationalStandardCode}
@@ -415,22 +429,37 @@ const UOMMaster: React.FC = () => {
             <div className="flex flex-col justify-end gap-2 pt-4 sm:flex-row">
               <Button
                 onClick={handleSave}
-                disabled={isEditing}
+                disabled={isEditing || isSaving}
                 className="w-full sm:w-auto"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
                 onClick={handleUpdate}
-                disabled={!isEditing}
+                disabled={!isEditing || isUpdating}
                 className="w-full sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
                 onClick={handleCancel}
                 variant="outline"
                 className="w-full sm:w-auto"
+                disabled={isSaving || isUpdating}
               >
                 Cancel
               </Button>
@@ -444,7 +473,7 @@ const UOMMaster: React.FC = () => {
                   Upload UOM data from Excel file
                 </p>
               </div>
-              
+
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                 <div className="flex-1">
                   <Label htmlFor="excel-upload">Select Excel File</Label>
@@ -456,7 +485,7 @@ const UOMMaster: React.FC = () => {
                     className="mt-1"
                   />
                 </div>
-                
+
                 <div className="flex gap-2">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -469,11 +498,12 @@ const UOMMaster: React.FC = () => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Excel Upload Format</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Please ensure your Excel file has the following columns:
+                          Please ensure your Excel file has the following
+                          columns:
                           <br />
                           <br />
                           <strong>Required Columns:</strong>
-                          <ul className="list-disc pl-5 mt-2">
+                          <ul className="mt-2 list-disc pl-5">
                             <li>uom_code (Required)</li>
                             <li>description (Required)</li>
                             <li>international_standard_code (Optional)</li>
@@ -491,7 +521,7 @@ const UOMMaster: React.FC = () => {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  
+
                   <Button
                     onClick={handleUploadFile}
                     disabled={!selectedFile || fileUploading}
@@ -542,7 +572,9 @@ const UOMMaster: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="whitespace-nowrap">Action</TableHead>
-                    <TableHead className="whitespace-nowrap">UOM Code</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      UOM Code
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">
                       Description
                     </TableHead>
@@ -586,7 +618,9 @@ const UOMMaster: React.FC = () => {
                           {row.uom_code}
                         </TableCell>
                         <TableCell>{row.description}</TableCell>
-                        <TableCell>{row.international_standard_code || '-'}</TableCell>
+                        <TableCell>
+                          {row.international_standard_code || '-'}
+                        </TableCell>
                         <TableCell>{row.created_by}</TableCell>
                         <TableCell className="whitespace-nowrap">
                           {new Date(row.created_date).toLocaleDateString()}

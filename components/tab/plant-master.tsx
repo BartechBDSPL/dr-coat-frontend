@@ -44,6 +44,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Loader2 } from 'lucide-react';
 
 interface CompanyOption {
   value: string;
@@ -103,6 +104,8 @@ const PlantMasterForm = () => {
   const plantCodeRef = useRef<HTMLInputElement>(null);
   const plantNameRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const fetchDataSequentially = async () => {
@@ -259,6 +262,7 @@ const PlantMasterForm = () => {
       plantNameRef.current?.focus();
       return;
     }
+    setIsSaving(true);
     try {
       const newPlantData = {
         companyCode: companyName.trim(),
@@ -300,6 +304,8 @@ const PlantMasterForm = () => {
       console.error('Error saving plant details:', error);
       const errorMessage = error.response?.data?.message || error.message;
       toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -319,6 +325,7 @@ const PlantMasterForm = () => {
       return;
     }
     if (!selectedPlantId || !oldData) return;
+    setIsUpdating(true);
     try {
       const updatedPlantData = {
         plantId: selectedPlantId,
@@ -374,6 +381,8 @@ const PlantMasterForm = () => {
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
       toast.error('Failed to update plant details');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -465,18 +474,32 @@ const PlantMasterForm = () => {
             <div className="flex flex-col justify-end gap-2 pt-4 sm:flex-row">
               <Button
                 onClick={handleSave}
-                disabled={isUpdateMode}
+                disabled={isUpdateMode || isSaving}
                 className="w-full sm:w-auto"
               >
-                Save
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
               </Button>
               <Button
                 variant="outline"
                 onClick={handleUpdate}
-                disabled={!isUpdateMode}
+                disabled={!isUpdateMode || isUpdating}
                 className="w-full sm:w-auto"
               >
-                Update
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update'
+                )}
               </Button>
               <Button
                 variant="outline"
