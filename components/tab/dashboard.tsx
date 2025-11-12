@@ -19,7 +19,7 @@ import {
   DoorOpen,
   NotebookTabs,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { DateTime } from 'luxon';
 import { BACKEND_URL } from '@/lib/constants';
 import Cookies from 'js-cookie';
 import axios from '@/lib/axios-config';
@@ -70,8 +70,8 @@ const Dashboard: React.FC = () => {
       const response = await axios.post(
         `${BACKEND_URL}/api/dashboard/details`,
         {
-          FromDate: format(fromDate, 'yyyy-MM-dd'),
-          ToDate: format(toDate, 'yyyy-MM-dd'),
+          FromDate: DateTime.fromJSDate(fromDate).toFormat('yyyy-MM-dd'),
+          ToDate: DateTime.fromJSDate(toDate).toFormat('yyyy-MM-dd'),
         },
         {
           headers: {
@@ -156,7 +156,11 @@ const Dashboard: React.FC = () => {
           className="w-full justify-start text-left font-normal"
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, 'PPP') : <span>{label}</span>}
+          {date ? (
+            DateTime.fromJSDate(date).toLocaleString(DateTime.DATE_FULL)
+          ) : (
+            <span>{label}</span>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">

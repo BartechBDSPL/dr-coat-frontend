@@ -17,17 +17,23 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = 'label',
   buttonVariant = 'ghost',
+  disableFutureDates = false,
   formatters,
   components,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>['variant'];
+  disableFutureDates?: boolean;
 }) {
   const defaultClassNames = getDefaultClassNames();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      disabled={disableFutureDates ? { after: today } : props.disabled}
       className={cn(
         'group/calendar bg-background p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,

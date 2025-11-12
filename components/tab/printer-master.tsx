@@ -30,7 +30,6 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { toast as sooner } from 'sonner';
-import { BACKEND_URL } from '@/lib/constants';
 import { delay } from '@/utils/delay';
 import { Loading } from '@/components/loading';
 import {
@@ -45,26 +44,20 @@ import {
 import { Loader2 } from 'lucide-react';
 
 interface PrinterData {
-  PID: number;
-  PlantCode: string;
-  PrinterName: string;
-  PrinterMake: string;
-  PrinterSrNo: string;
-  PrinterIp: string;
-  AssetCode: string;
-  DefaultPrinter: string;
-  Status: string;
+  plant_code: string;
+  printer_name: string;
+  printer_make: string;
+  printer_sr_no: string;
+  printer_ip: string;
+  asset_code: string;
   dpi: string;
-  CreatedBy: string;
-  CreatedOn: string;
-  UpdatedBy: string | null;
-  UpdatedOn: string | null;
-  CompCode: string | null;
-  LineCode: string;
-  PlantName: string;
+  company_code: string | null;
+  line_code: string;
+  created_by: string;
+  status?: string;
 }
 interface PlantCode {
-  PlantCode: string;
+  plant_code: string;
 }
 
 const getUserID = () => {
@@ -143,17 +136,14 @@ const PalletMaster: React.FC = () => {
 
   const fetchPlantCodes = async () => {
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/api/master/get-all-plant-code`,
-        {
-          headers: {
-            authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch('/api/master/get-all-plant-code', {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
       const data: PlantCode[] = await response.json();
       setPlantCodes(
-        data.map(item => ({ value: item.PlantCode, label: item.PlantCode }))
+        data.map(item => ({ value: item.plant_code, label: item.plant_code }))
       );
     } catch (error) {
       console.error('Error fetching plant codes:', error);
@@ -165,7 +155,7 @@ const PalletMaster: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await axios.get<PrinterData[]>(
-        `${BACKEND_URL}/api/master/get-all-printer`,
+        '/api/master/printer/get-all-printer',
         {
           headers: { authorization: `Bearer ${token}` },
         }
@@ -183,18 +173,21 @@ const PalletMaster: React.FC = () => {
     setCurrentPage(newPage);
   }, []);
   const handleRowSelect = (row: PrinterData) => {
-    setPrinterMakeModel(row.PrinterMake);
-    setPrinterName(row.PrinterName);
-    setPrinterSrNo(row.PrinterSrNo);
-    setPrinterIPPort(row.PrinterIp);
+    setPrinterMakeModel(row.printer_make);
+    setPrinterName(row.printer_name);
+    setPrinterSrNo(row.printer_sr_no);
+    setPrinterIPPort(row.printer_ip);
     setDpi(row.dpi);
-    setAssetCode(row.AssetCode);
-    setDefaultPrinter(row.DefaultPrinter);
-    setStatus(row.Status);
-    setPlantCode(row.PlantCode);
+    setAssetCode(row.asset_code);
+    setDefaultPrinter('');
+    setStatus(row.status || 'active');
+    setPlantCode(row.plant_code);
     setIsEditing(true);
-    setIsUpdating(true);
-    setSelectedUnit(row.PID.toString());
+    setSelectedUnit(row.printer_sr_no);
+    
+    // Scroll to top of the page to show the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     // insertAuditTrail({
     //   AppType: "Web",
     //   Activity: "Pallet Master",
@@ -216,12 +209,16 @@ const PalletMaster: React.FC = () => {
     setAssetCode('');
     setDefaultPrinter('');
     setStatus('');
+    setPlantCode('');
     setIsEditing(false);
-    setIsUpdating(false);
     setSelectedUnit(null);
   };
 
   const handleSave = async () => {
+    if (!plantCode) {
+      sooner('Please select the plant code');
+      return;
+    }
     if (!printerMakeModel) {
       sooner('Please fill the printer make-model');
       printerMakeModelRef.current?.focus();
@@ -259,21 +256,20 @@ const PalletMaster: React.FC = () => {
     setIsSaving(true);
     try {
       const newUnitData = {
-        PlantCode: plantCode.trim(),
-        DeviceName: printerName.trim(),
-        DeviceSrNo: printerSrNo.trim(),
-        DeviceIp: printerIPPort.trim(),
-        DeviceMake: printerMakeModel.trim(),
-        AssetCode: assetCode.trim(),
-        Status: status.trim(),
-        Createdby: getUserID(),
+        plant_code: plantCode.trim(),
+        printer_name: printerName.trim(),
+        printer_sr_no: printerSrNo.trim(),
+        printer_ip: printerIPPort.trim(),
+        printer_make: printerMakeModel.trim(),
+        asset_code: assetCode.trim(),
+        status: status.trim(),
         dpi: dpi.trim(),
-        DefaultValue: '',
-        LineCode: '',
+        line_code: '',
+        company_code: '',
       };
 
       const response = await axios.post(
-        `${BACKEND_URL}/api/master/insert-printer`,
+        '/api/master/printer/insert-printer',
         newUnitData,
         {
           headers: {
@@ -283,7 +279,7 @@ const PalletMaster: React.FC = () => {
         }
       );
 
-      const { Status, Message } = response.data[0];
+      const { Status, Message } = response.data;
 
       if (Status === 'T') {
         toast(Message, {
@@ -321,6 +317,10 @@ const PalletMaster: React.FC = () => {
 
   const handleUpdate = async () => {
     if (!selectedUnit) return;
+    if (!plantCode) {
+      sooner('Please select the plant code');
+      return;
+    }
     if (!printerMakeModel) {
       sooner('Please fill the printer make-model');
       printerMakeModelRef.current?.focus();
@@ -358,28 +358,26 @@ const PalletMaster: React.FC = () => {
     }
     setIsUpdating(true);
     try {
-      const oldUnit = data.find(item => item.PID.toString() === selectedUnit);
+      const oldUnit = data.find(item => item.printer_sr_no === selectedUnit);
 
       const updatedUnit = {
-        DvcID: selectedUnit,
-        PlantCode: plantCode || oldUnit?.PlantCode,
-        DeviceName: printerName || oldUnit?.PrinterName,
-        DeviceSrNo: printerSrNo || oldUnit?.PrinterSrNo,
-        DeviceIp: printerIPPort || oldUnit?.PrinterIp,
-        DeviceMake: printerMakeModel || oldUnit?.PrinterMake,
-        AssetCode: assetCode || oldUnit?.AssetCode,
-        Status: status || oldUnit?.Status,
-        Updatedby: getUserID(),
-        OldPlantCode: oldUnit?.PlantCode || '',
-        OldDeviceSrNo: oldUnit?.PrinterSrNo || '',
-        OldDeviceIp: oldUnit?.PrinterIp || '',
-        LineCode: oldUnit?.LineCode || '',
+        plant_code: plantCode || oldUnit?.plant_code,
+        printer_name: printerName || oldUnit?.printer_name,
+        printer_sr_no: printerSrNo || oldUnit?.printer_sr_no,
+        printer_ip: printerIPPort || oldUnit?.printer_ip,
+        printer_make: printerMakeModel || oldUnit?.printer_make,
+        asset_code: assetCode || oldUnit?.asset_code,
+        status: status || oldUnit?.status,
+        old_plant_code: oldUnit?.plant_code || '',
+        old_printer_sr_no: oldUnit?.printer_sr_no || '',
+        old_printer_ip: oldUnit?.printer_ip || '',
+        line_code: oldUnit?.line_code || '',
         dpi: dpi || oldUnit?.dpi,
-        DefaultValue: defaultPrinter || oldUnit?.DefaultPrinter,
+        company_code: oldUnit?.company_code || '',
       };
 
       const response = await axios.post(
-        `${BACKEND_URL}/api/master/update-printer`,
+        '/api/master/printer/update-printer',
         updatedUnit,
         {
           headers: {
@@ -389,7 +387,7 @@ const PalletMaster: React.FC = () => {
         }
       );
 
-      const { Status, Message } = response.data[0];
+      const { Status, Message } = response.data;
 
       if (Status === 'T') {
         toast(Message, {
@@ -431,15 +429,13 @@ const PalletMaster: React.FC = () => {
   const filteredData = useMemo(() => {
     return data.filter(item => {
       const searchableFields: (keyof PrinterData)[] = [
-        'PrinterName',
-        'PrinterMake',
-        'PrinterSrNo',
-        'PrinterIp',
-        'AssetCode',
-        'DefaultPrinter',
-        'Status',
-        'CreatedBy',
-        'UpdatedBy',
+        'printer_name',
+        'printer_make',
+        'printer_sr_no',
+        'printer_ip',
+        'asset_code',
+        'status',
+        'created_by',
       ];
       return searchableFields.some(key => {
         const value = item[key];
@@ -472,7 +468,7 @@ const PalletMaster: React.FC = () => {
 
     try {
       const response = await axios.get(
-        `${BACKEND_URL}/api/master/ping-printer?ip=${ip}`,
+        `/api/master/printer/ping-printer?ip=${ip}`,
         {
           headers: { authorization: `Bearer ${token}` },
           timeout: 10000,
@@ -534,30 +530,52 @@ const PalletMaster: React.FC = () => {
           background-color: #6b7280;
         }
       }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
     
       .ping-button {
         position: relative;
         transition: all 0.3s ease;
-        min-width: 80px;
+        min-width: 70px;
+        font-weight: 500;
       }
     
       .ping-button.pinging {
-        background: #6b7280;
-        animation: loading-pulse 1s ease-in-out infinite;
+        background: #6b7280 !important;
+        color: white !important;
+        border-color: #6b7280 !important;
+      }
+
+      .ping-button.pinging::after {
+        content: '';
+        animation: spin 1s linear infinite;
       }
     
       .ping-button.success {
-        background: #10B981;
-        animation: pulse 1s ease-in-out;
+        background: #10B981 !important;
+        color: white !important;
+        border-color: #10B981 !important;
+        animation: pulse 0.5s ease-in-out;
       }
     
       .ping-button.error {
-        background: #EF4444;
-        animation: pulse 1s ease-in-out;
+        background: #EF4444 !important;
+        color: white !important;
+        border-color: #EF4444 !important;
+        animation: pulse 0.5s ease-in-out;
       }
     
-      .ping-button:not(.pinging):hover {
+      .ping-button:not(.pinging):not(.success):not(.error):hover {
         transform: scale(1.05);
+        border-color: hsl(var(--primary));
+        color: hsl(var(--primary));
       }
     `;
 
@@ -575,28 +593,47 @@ const PalletMaster: React.FC = () => {
     <>
       <Card className="mx-auto mt-5 w-full">
         <CardHeader>
-          <CardTitle>
-            Printer Master{' '}
-            <span className="text-sm font-normal text-muted-foreground">
-              (* Fields Are Mandatory)
-            </span>
+          <CardTitle className="flex items-center justify-between">
+            <div>
+              Printer Master{' '}
+              <span className="text-sm font-normal text-muted-foreground">
+                (* Fields Are Mandatory)
+              </span>
+            </div>
+            {isEditing && (
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                Editing Mode
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={e => e.preventDefault()}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {/* <div className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="plantCode">Plant Code *</Label>
-                <CustomDropdown
-                  options={plantCodes}
-                  value={plantCode}
+                <Select 
+                  value={plantCode} 
                   onValueChange={setPlantCode}
-                  placeholder="Select plant code..."
-                  searchPlaceholder="Search plant code..."
-                  emptyText="No plant code found."
-               
-                />
-              </div> */}
+                  disabled={isEditing}
+                >
+                  <SelectTrigger className={isEditing ? 'bg-muted cursor-not-allowed' : ''}>
+                    <SelectValue placeholder="Select plant code..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plantCodes.map(plant => (
+                      <SelectItem key={plant.value} value={plant.value}>
+                        {plant.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {isEditing && (
+                  <p className="text-xs text-muted-foreground">
+                    Plant code cannot be changed
+                  </p>
+                )}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="printerMakeModel">Printer Make-Model *</Label>
                 <Input
@@ -625,7 +662,14 @@ const PalletMaster: React.FC = () => {
                   onChange={e => setPrinterSrNo(e.target.value)}
                   required
                   ref={printerSrNoRef}
+                  disabled={isEditing}
+                  className={isEditing ? 'bg-muted cursor-not-allowed' : ''}
                 />
+                {isEditing && (
+                  <p className="text-xs text-muted-foreground">
+                    Serial number cannot be changed
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="printerIPPort">Printer IP:Port *</Label>
@@ -683,7 +727,7 @@ const PalletMaster: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button onClick={handleSave} disabled={isUpdating || isSaving}>
+              <Button onClick={handleSave} disabled={isEditing || isSaving}>
                 {isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -695,7 +739,7 @@ const PalletMaster: React.FC = () => {
               </Button>
               <Button
                 onClick={handleUpdate}
-                disabled={!isUpdating || isUpdating}
+                disabled={!isEditing || isUpdating}
               >
                 {isUpdating ? (
                   <>
@@ -718,82 +762,95 @@ const PalletMaster: React.FC = () => {
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span>Search:</span>
+                <Label htmlFor="search">Search:</Label>
                 <Input
+                  id="search"
                   className="max-w-sm"
-                  placeholder="Search..."
+                  placeholder="Search by name, make, serial no, IP..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value.trim())}
                 />
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Total: {filteredData.length} printer{filteredData.length !== 1 ? 's' : ''}
               </div>
             </div>
 
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Select</TableHead>
+                  <TableHead className="w-[100px]">Action</TableHead>
                   <TableHead>Printer Name</TableHead>
                   <TableHead>Printer Make</TableHead>
-                  <TableHead>Printer SrNo</TableHead>
-                  <TableHead>Printer IP</TableHead>
-                  <TableHead>Ping</TableHead>
+                  <TableHead>Serial No</TableHead>
+                  <TableHead>IP Address</TableHead>
                   <TableHead>Asset Code</TableHead>
+                  <TableHead>DPI</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Created by</TableHead>
-                  <TableHead>Created on</TableHead>
-                  <TableHead>Updated by</TableHead>
-                  <TableHead>Updated on</TableHead>
+                  <TableHead>Plant Code</TableHead>
+                  <TableHead className="w-[100px]">Ping</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center">
+                    <TableCell colSpan={10} className="text-center">
                       <Loading size="md" label="Loading printers..." />
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                      No printers found
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginatedData.map(row => (
-                    <TableRow key={row.PID}>
-                      <TableCell>
-                        <Button
-                          variant={'ghost'}
-                          onClick={() => handleRowSelect(row)}
-                        >
-                          Select
-                        </Button>
-                      </TableCell>
-                      <TableCell>{row.PrinterName}</TableCell>
-                      <TableCell>{row.PrinterMake}</TableCell>
-                      <TableCell>{row.PrinterSrNo}</TableCell>
-                      <TableCell>{row.PrinterIp}</TableCell>
+                    <TableRow 
+                      key={row.printer_sr_no}
+                      className={selectedUnit === row.printer_sr_no ? 'bg-muted/50' : ''}
+                    >
                       <TableCell>
                         <Button
                           size="sm"
-                          onClick={() => pingPrinter(row.PrinterIp)}
-                          className={`ping-button ${pingStatus[row.PrinterIp] || 'idle'}`}
-                          disabled={pingStatus[row.PrinterIp] === 'pinging'}
+                          variant={selectedUnit === row.printer_sr_no ? 'default' : 'outline'}
+                          onClick={() => handleRowSelect(row)}
                         >
-                          {pingStatus[row.PrinterIp] === 'pinging'
+                          {selectedUnit === row.printer_sr_no ? 'Selected' : 'Select'}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="font-medium">{row.printer_name}</TableCell>
+                      <TableCell>{row.printer_make}</TableCell>
+                      <TableCell>{row.printer_sr_no}</TableCell>
+                      <TableCell>{row.printer_ip}</TableCell>
+                      <TableCell>{row.asset_code}</TableCell>
+                      <TableCell>{row.dpi}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                          row.status === 'active' 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                        }`}>
+                          {row.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>{row.plant_code}</TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => pingPrinter(row.printer_ip)}
+                          className={`ping-button ${pingStatus[row.printer_ip] || 'idle'}`}
+                          disabled={pingStatus[row.printer_ip] === 'pinging'}
+                        >
+                          {pingStatus[row.printer_ip] === 'pinging'
                             ? '⟳'
-                            : pingStatus[row.PrinterIp] === 'success'
+                            : pingStatus[row.printer_ip] === 'success'
                               ? '✓'
-                              : pingStatus[row.PrinterIp] === 'error'
+                              : pingStatus[row.printer_ip] === 'error'
                                 ? '✕'
                                 : 'Ping'}
                         </Button>
-                      </TableCell>
-                      <TableCell>{row.AssetCode}</TableCell>
-                      <TableCell>{row.Status}</TableCell>
-                      <TableCell>{row.CreatedBy}</TableCell>
-                      <TableCell>
-                        {new Date(row.CreatedOn).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>{row.UpdatedBy}</TableCell>
-                      <TableCell>
-                        {row.UpdatedOn
-                          ? new Date(row.UpdatedOn).toLocaleDateString()
-                          : ''}
                       </TableCell>
                     </TableRow>
                   ))

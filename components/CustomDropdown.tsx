@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useCallback } from 'react';
-import { Check, ChevronsUpDown, Plus } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +29,7 @@ interface CustomDropdownProps {
   searchPlaceholder: string;
   emptyText: string;
   disabled?: boolean;
+  loading?: boolean;
   allowCustomValue?: boolean;
   onCustomValueChange?: (value: string) => void;
 }
@@ -42,6 +43,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   searchPlaceholder = 'Search...',
   emptyText = 'No options available',
   disabled = false,
+  loading = false,
   allowCustomValue = false,
 }) => {
   const [open, setOpen] = useState(false);
@@ -105,10 +107,19 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
-          disabled={disabled}
+          disabled={disabled || loading}
         >
-          <span className="truncate">{selectedLabel}</span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              <span className="truncate">{selectedLabel}</span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent
