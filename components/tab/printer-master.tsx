@@ -44,6 +44,7 @@ import {
 import { Loader2 } from 'lucide-react';
 
 interface PrinterData {
+  id?: number;
   plant_code: string;
   printer_name: string;
   printer_make: string;
@@ -183,7 +184,7 @@ const PalletMaster: React.FC = () => {
     setStatus(row.status || 'active');
     setPlantCode(row.plant_code);
     setIsEditing(true);
-    setSelectedUnit(row.printer_sr_no);
+    setSelectedUnit(row.id?.toString() || row.printer_sr_no);
     
     // Scroll to top of the page to show the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -358,9 +359,10 @@ const PalletMaster: React.FC = () => {
     }
     setIsUpdating(true);
     try {
-      const oldUnit = data.find(item => item.printer_sr_no === selectedUnit);
+      const oldUnit = data.find(item => item.id?.toString() === selectedUnit || item.printer_sr_no === selectedUnit);
 
       const updatedUnit = {
+        id: selectedUnit,
         plant_code: plantCode || oldUnit?.plant_code,
         printer_name: printerName || oldUnit?.printer_name,
         printer_sr_no: printerSrNo || oldUnit?.printer_sr_no,
@@ -807,16 +809,16 @@ const PalletMaster: React.FC = () => {
                 ) : (
                   paginatedData.map(row => (
                     <TableRow 
-                      key={row.printer_sr_no}
-                      className={selectedUnit === row.printer_sr_no ? 'bg-muted/50' : ''}
+                      key={row.id || row.printer_sr_no}
+                      className={selectedUnit === (row.id?.toString() || row.printer_sr_no) ? 'bg-muted/50' : ''}
                     >
                       <TableCell>
                         <Button
                           size="sm"
-                          variant={selectedUnit === row.printer_sr_no ? 'default' : 'outline'}
+                          variant={selectedUnit === (row.id?.toString() || row.printer_sr_no) ? 'default' : 'outline'}
                           onClick={() => handleRowSelect(row)}
                         >
-                          {selectedUnit === row.printer_sr_no ? 'Selected' : 'Select'}
+                          {selectedUnit === (row.id?.toString() || row.printer_sr_no) ? 'Selected' : 'Select'}
                         </Button>
                       </TableCell>
                       <TableCell className="font-medium">{row.printer_name}</TableCell>

@@ -38,6 +38,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import CustomDropdown from '../CustomDropdown';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface ShipmentDetails {
   shipment_no: string;
@@ -114,6 +124,10 @@ const SalesShipmentOrder: React.FC = () => {
   const [globalDriverContact, setGlobalDriverContact] = useState('');
   const [showReassignDialog, setShowReassignDialog] = useState(false);
   const [isFromAPI, setIsFromAPI] = useState(true);
+  const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
+  const [toDate, setToDate] = useState<Date | undefined>(new Date());
+  const [shipmentNumbers, setShipmentNumbers] = useState<string[]>([]);
+  const [isFetchingShipments, setIsFetchingShipments] = useState(false);
   const shipmentNoRef = useRef<HTMLInputElement>(null);
   const token = Cookies.get('token');
 
@@ -195,6 +209,63 @@ const SalesShipmentOrder: React.FC = () => {
       toast.error('Failed to fetch recent shipments');
     } finally {
       setIsLoadingRecent(false);
+    }
+  };
+
+  const fetchShipmentsByDateRange = async () => {
+    if (!fromDate || !toDate) {
+      toast.error('Please select both from and to dates');
+      return;
+    }
+
+    if (fromDate > toDate) {
+      toast.error('From Date cannot be greater than To Date');
+      return;
+    }
+
+    setIsFetchingShipments(true);
+
+    try {
+      const response = await fetch(
+        `/api/transactions/sales-shipment-order/by-date-range`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            from_date: DateTime.fromJSDate(fromDate).toFormat('yyyy-MM-dd'),
+            to_date: DateTime.fromJSDate(toDate).toFormat('yyyy-MM-dd'),
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch shipment numbers');
+
+      const result = await response.json();
+
+      if (result.Status === 'F') {
+        toast.error(result.Message || 'Failed to fetch shipment numbers');
+        setShipmentNumbers([]);
+        return;
+      }
+
+      if (result.Status === 'T') {
+        if (result.data && result.data.length > 0) {
+          setShipmentNumbers(result.data);
+          toast.success(`Found ${result.data.length} shipment orders`);
+        } else {
+          setShipmentNumbers([]);
+          toast.info(result.Message || 'No shipment orders found');
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching shipment numbers:', error);
+      toast.error('Failed to fetch shipment numbers');
+      setShipmentNumbers([]);
+    } finally {
+      setIsFetchingShipments(false);
     }
   };
 
@@ -630,22 +701,104 @@ const SalesShipmentOrder: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Date Range Selection Row */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <Label>From Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !fromDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {fromDate ? (
+                        format(fromDate, 'PPP')
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={fromDate}
+                      onSelect={setFromDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <Label>To Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !toDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {toDate ? (
+                        format(toDate, 'PPP')
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={toDate}
+                      onSelect={setToDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  onClick={fetchShipmentsByDateRange}
+                  disabled={isFetchingShipments}
+                  className="w-full"
+                >
+                  {isFetchingShipments ? (
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="mr-2 h-4 w-4" />
+                  )}
+                  Fetch Shipments
+                </Button>
+              </div>
+            </div>
+
             {/* First Row: Shipment Number and User Assignment */}
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              {/* Shipment Number Input */}
+              {/* Shipment Number Input with Dropdown */}
               <div className="lg:col-span-5">
-                <Label htmlFor="shipmentNo">Shipment Number *</Label>
+                <Label htmlFor="shipmentNo">
+                  Shipment Number *
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    (Select date and fetch or enter manually)
+                  </span>
+                </Label>
                 <div className="flex gap-2">
-                  <Input
-                    ref={shipmentNoRef}
-                    id="shipmentNo"
+                  <CustomDropdown
                     value={shipmentNo}
-                    onChange={e => setShipmentNo(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleGetDetails();
-                    }}
-                    placeholder="Enter Shipment Number"
+                    onValueChange={setShipmentNo}
+                    options={shipmentNumbers.map(num => ({ value: num, label: num }))}
+                    placeholder="Select or Enter Shipment Number"
+                    searchPlaceholder="Search shipment..."
+                    emptyText="No shipments found"
                     disabled={isLoading}
+                    allowCustomValue={true}
                   />
                   <Button
                     onClick={handleGetDetails}

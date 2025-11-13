@@ -29,6 +29,16 @@ import { Badge } from '@/components/ui/badge';
 import { MultiSelect } from '../multi-select';
 import { Separator } from '@/components/ui/separator';
 import { getUserID } from '@/utils/getFromSession';
+import CustomDropdown from '../CustomDropdown';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface StockTransferDetails {
   Status: string;
@@ -91,6 +101,10 @@ const StockTransferOrder: React.FC = () => {
   const [activeUsers, setActiveUsers] = useState<DropdownOption[]>([]);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(false);
+  const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
+  const [toDate, setToDate] = useState<Date | undefined>(new Date());
+  const [transferOrderNumbers, setTransferOrderNumbers] = useState<string[]>([]);
+  const [isFetchingOrders, setIsFetchingOrders] = useState(false);
   const orderNoRef = useRef<HTMLInputElement>(null);
   const token = Cookies.get('token');
 
@@ -155,6 +169,63 @@ const StockTransferOrder: React.FC = () => {
       toast.error('Failed to fetch recent orders');
     } finally {
       setIsLoadingRecent(false);
+    }
+  };
+
+  const fetchTransferOrdersByDateRange = async () => {
+    if (!fromDate || !toDate) {
+      toast.error('Please select both from and to dates');
+      return;
+    }
+
+    if (fromDate > toDate) {
+      toast.error('From Date cannot be greater than To Date');
+      return;
+    }
+
+    setIsFetchingOrders(true);
+
+    try {
+      const response = await fetch(
+        `/api/transactions/stock-transfer-order/by-date-range`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            from_date: DateTime.fromJSDate(fromDate).toFormat('yyyy-MM-dd'),
+            to_date: DateTime.fromJSDate(toDate).toFormat('yyyy-MM-dd'),
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to fetch transfer order numbers');
+
+      const result = await response.json();
+
+      if (result.Status === 'F') {
+        toast.error(result.Message || 'Failed to fetch transfer order numbers');
+        setTransferOrderNumbers([]);
+        return;
+      }
+
+      if (result.Status === 'T') {
+        if (result.data && result.data.length > 0) {
+          setTransferOrderNumbers(result.data);
+          toast.success(`Found ${result.data.length} transfer orders`);
+        } else {
+          setTransferOrderNumbers([]);
+          toast.info(result.Message || 'No transfer orders found');
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching transfer order numbers:', error);
+      toast.error('Failed to fetch transfer order numbers');
+      setTransferOrderNumbers([]);
+    } finally {
+      setIsFetchingOrders(false);
     }
   };
 
@@ -414,39 +485,123 @@ const StockTransferOrder: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-            {/* Transfer Order Number Input */}
-            <div className="lg:col-span-5">
-              <Label htmlFor="transferOrderNo">Transfer Order Number *</Label>
-              <div className="flex gap-2">
-                <Input
-                  ref={orderNoRef}
-                  id="transferOrderNo"
-                  value={transferOrderNo}
-                  onChange={e => setTransferOrderNo(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') handleGetDetails();
-                  }}
-                  placeholder="Enter Transfer Order Number"
-                  disabled={isLoading}
-                />
+          <div className="space-y-4">
+            {/* Date Range Selection Row */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <Label>From Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !fromDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {fromDate ? (
+                        format(fromDate, 'PPP')
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={fromDate}
+                      onSelect={setFromDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <Label>To Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-full justify-start text-left font-normal',
+                        !toDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {toDate ? (
+                        format(toDate, 'PPP')
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={toDate}
+                      onSelect={setToDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="flex items-end">
                 <Button
-                  onClick={handleGetDetails}
-                  disabled={isLoading}
-                  className="shrink-0"
+                  onClick={fetchTransferOrdersByDateRange}
+                  disabled={isFetchingOrders}
+                  className="w-full"
                 >
-                  {isLoading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  {isFetchingOrders ? (
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <Search className="h-4 w-4" />
+                    <Search className="mr-2 h-4 w-4" />
                   )}
-                  <span className="ml-2 hidden sm:inline">Get Details</span>
+                  Fetch Orders
                 </Button>
               </div>
             </div>
 
-            {/* User Assignment */}
-            <div className="lg:col-span-5">
+            {/* Transfer Order Number and User Assignment Row */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+              {/* Transfer Order Number Input with Dropdown */}
+              <div className="lg:col-span-5">
+                <Label htmlFor="transferOrderNo">
+                  Transfer Order Number *
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    (Select date and fetch or enter manually)
+                  </span>
+                </Label>
+                <div className="flex gap-2">
+                  <CustomDropdown
+                    value={transferOrderNo}
+                    onValueChange={setTransferOrderNo}
+                    options={transferOrderNumbers.map(num => ({ value: num, label: num }))}
+                    placeholder="Select or Enter Transfer Order Number"
+                    searchPlaceholder="Search transfer order..."
+                    emptyText="No transfer orders found"
+                    disabled={isLoading}
+                    allowCustomValue={true}
+                  />
+                  <Button
+                    onClick={handleGetDetails}
+                    disabled={isLoading}
+                    className="shrink-0"
+                  >
+                    {isLoading ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    <span className="ml-2 hidden sm:inline">Get Details</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* User Assignment */}
+              <div className="lg:col-span-5">
               <Label htmlFor="assignUser">
                 Assign to Users (Global) *
                 <span className="ml-2 text-xs text-muted-foreground">
@@ -494,6 +649,7 @@ const StockTransferOrder: React.FC = () => {
               >
                 Reset
               </Button>
+            </div>
             </div>
           </div>
         </CardContent>

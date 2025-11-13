@@ -212,6 +212,18 @@ export function getMenuList(pathname: string): Group[] {
               active: pathname === '/fg-material-receipt',
               value: '4_6',
             },
+            {
+              href: '/fg-shipment-picking-report',
+              label: 'FG Shipment Picking Report',
+              active: pathname === '/fg-shipment-picking-report',
+              value: '4_7',
+            },
+            {
+              href: '/fg-material-return-report',
+              label: 'FG Material Return Report',
+              active: pathname === '/fg-material-return-report',
+              value: '4_8',
+            },
           ],
         },
         {

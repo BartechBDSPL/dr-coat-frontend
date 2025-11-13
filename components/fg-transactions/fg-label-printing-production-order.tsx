@@ -87,6 +87,12 @@ interface DropdownOption {
   label: string;
 }
 
+interface PrinterData {
+  printer_name: string;
+  printer_ip: string;
+  dpi: string;
+}
+
 const FGLabelPrintingProductionOrder: React.FC = () => {
   const [productionOrderNo, setProductionOrderNo] = useState('');
   const [orderDetails, setOrderDetails] =
@@ -94,7 +100,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [recentOrders, setRecentOrders] = useState<DropdownOption[]>([]);
   const [qty, setQty] = useState<string>('');
-  const [printQty, setPrintQty] = useState<string>('');
+  const [qtyPerLabel, setQtyPerLabel] = useState<string>('');
   const [serialNumbers, setSerialNumbers] = useState<SerialNumber[]>([]);
   const [isGeneratingSerials, setIsGeneratingSerials] = useState(false);
   const [isFetchingRecentOrders, setIsFetchingRecentOrders] = useState(true);
@@ -106,15 +112,19 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   const [selectedExpDate, setSelectedExpDate] = useState<Date | undefined>();
   const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
   const [isPrinting, setIsPrinting] = useState(false);
+  const [printers, setPrinters] = useState<PrinterData[]>([]);
+  const [selectedPrinter, setSelectedPrinter] = useState<string>('');
+  const [printerOptions, setPrinterOptions] = useState<DropdownOption[]>([]);
+  const [isFetchingPrinters, setIsFetchingPrinters] = useState(false);
   const orderNoRef = useRef<HTMLInputElement>(null);
-  const qtyRef = useRef<HTMLInputElement>(null);
-  const printQtyRef = useRef<HTMLInputElement>(null);
+  const qtyPerLabelRef = useRef<HTMLInputElement>(null);
   const serialNumbersCardRef = useRef<HTMLDivElement>(null);
   const token = Cookies.get('token');
 
   useEffect(() => {
     orderNoRef.current?.focus();
     fetchRecentOrders();
+    fetchPrinters();
   }, []);
 
   useEffect(() => {
@@ -161,6 +171,36 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     }
   };
 
+  const fetchPrinters = async () => {
+    setIsFetchingPrinters(true);
+    try {
+      const response = await fetch(`/api/hht/printer-data`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch printers');
+      }
+
+      const data: PrinterData[] = await response.json();
+      setPrinters(data);
+
+      const options: DropdownOption[] = data.map(printer => ({
+        value: printer.printer_ip,
+        label: `${printer.printer_name} - ${printer.printer_ip}`,
+      }));
+
+      setPrinterOptions(options);
+    } catch (error: any) {
+      console.error('Error fetching printers:', error);
+      toast.error('Failed to fetch printers');
+    } finally {
+      setIsFetchingPrinters(false);
+    }
+  };
+
   const handleGetDetails = async () => {
     if (!productionOrderNo.trim()) {
       toast.error('Please enter or select a production order number');
@@ -203,7 +243,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       setOrderDetails(data);
       setSerialNumbers([]);
       setQty(data.remaining_qty.toString());
-      setPrintQty('');
+      setQtyPerLabel('');
       toast.success(data.Message || 'Order details fetched successfully');
     } catch (error: any) {
       console.error('Error fetching order details:', error);
@@ -214,18 +254,18 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     }
   };
 
-  const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQtyPerLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const qtyValue = Number(value);
+    const qtyPerLabelValue = Number(value);
 
     if (value === '') {
-      setQty('');
+      setQtyPerLabel('');
       setSerialNumbers([]);
       return;
     }
 
-    if (qtyValue < 0) {
-      toast.error('Quantity cannot be negative');
+    if (qtyPerLabelValue <= 0) {
+      toast.error('Quantity per label must be greater than 0');
       return;
     }
 
@@ -234,31 +274,25 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       return;
     }
 
-    const maxQty = orderDetails.remaining_qty;
+    const totalQty = Number(qty);
 
-    if (qtyValue > maxQty) {
-      toast.error(`Quantity cannot be greater than ${maxQty}`);
+    if (qtyPerLabelValue > totalQty) {
+      toast.error(`Quantity per label cannot be greater than total quantity (${totalQty})`);
       return;
     }
 
-    setQty(value);
-    setSerialNumbers([]);
-  };
-
-  const handlePrintQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPrintQty(value);
+    setQtyPerLabel(value);
     setSerialNumbers([]);
   };
 
   const generateSerialNumbers = async () => {
-    if (!qty || Number(qty) <= 0) {
-      toast.error('Please enter a valid quantity');
+    if (!qtyPerLabel || Number(qtyPerLabel) <= 0) {
+      toast.error('Please enter a valid quantity per label');
       return;
     }
 
-    if (!printQty || Number(printQty) <= 0) {
-      toast.error('Please enter a valid number of labels');
+    if (!qty || Number(qty) <= 0) {
+      toast.error('Please enter a valid total quantity');
       return;
     }
 
@@ -267,8 +301,16 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       return;
     }
 
-    const numLabels = Number(printQty);
     const totalQty = Number(qty);
+    const qtyPerLabelValue = Number(qtyPerLabel);
+    
+    // Calculate number of labels: Total Qty ÷ Qty per Label
+    const numLabels = Math.floor(totalQty / qtyPerLabelValue);
+    
+    if (numLabels <= 0) {
+      toast.error('Total quantity must be at least equal to quantity per label');
+      return;
+    }
 
     setIsGeneratingSerials(true);
 
@@ -297,21 +339,10 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       const { sr_no } = await response.json();
       const startingSerialNo = sr_no + 1;
 
-      // Calculate quantity per label (handling up to 2 decimals)
-      const totalQtyInt = Math.round(totalQty * 100);
-      const qtyPerLabelInt = Math.floor(totalQtyInt / numLabels);
-      const remainder = totalQtyInt % numLabels;
-
       const generatedSerials: SerialNumber[] = [];
 
       for (let i = 0; i < numLabels; i++) {
-        // Distribute remainder to first labels
-        let labelQtyInt = qtyPerLabelInt;
-        if (i < remainder) {
-          labelQtyInt += 1;
-        }
-
-        const labelQty = labelQtyInt / 100;
+        const labelQty = qtyPerLabelValue;
 
         const serialNo = `${orderDetails.production_order_no}|${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + i}`;
 
@@ -323,7 +354,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
       setSerialNumbers(generatedSerials);
       setCurrentPage(1); // Reset to first page
-      toast.success(`Generated ${numLabels} serial numbers`);
+      toast.success(`Generated ${numLabels} label${numLabels > 1 ? 's' : ''} (${qtyPerLabelValue} ${orderDetails.uom_code} each)`);
 
       // Scroll to the Generated Serial Numbers card
       setTimeout(() => {
@@ -338,15 +369,28 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   };
 
   const handleSerialQtyChange = (index: number, value: string) => {
-    const qty = Number(value);
+    const qtyValue = Number(value);
 
-    if (qty < 0) {
+    if (qtyValue < 0) {
       toast.error('Quantity cannot be negative');
       return;
     }
 
     const updatedSerials = [...serialNumbers];
-    updatedSerials[index].qty = qty;
+    updatedSerials[index].qty = qtyValue;
+    
+    // Calculate total of all serial quantities
+    const totalSerialQty = updatedSerials.reduce((sum, serial) => sum + serial.qty, 0);
+    const expectedQty = Number(qty);
+    
+    // Check if total exceeds expected quantity
+    if (totalSerialQty > expectedQty) {
+      toast.error(`Total quantity (${totalSerialQty.toFixed(2)}) cannot exceed the expected quantity (${expectedQty.toFixed(2)}). Please adjust the quantities.`, {
+        duration: 5000,
+      });
+      return;
+    }
+    
     setSerialNumbers(updatedSerials);
   };
 
@@ -381,17 +425,26 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
     const missingFields: string[] = [];
     if (!productionOrderNo.trim()) missingFields.push('productionOrderNo');
+    if (!qtyPerLabel.trim()) missingFields.push('qtyPerLabel');
     if (!qty.trim()) missingFields.push('qty');
-    if (!printQty.trim()) missingFields.push('printQty');
     if (!selectedMfgDate) missingFields.push('mfgDate');
     if (!selectedExpDate) missingFields.push('expDate');
+    if (!selectedPrinter) missingFields.push('printer');
 
     setInvalidFields(new Set(missingFields));
 
     if (missingFields.length > 0) {
       toast.error(
-        `Please fill the following required fields: ${missingFields.join(', ')}`
+        `Please fill the following required fields: ${missingFields.map(f => f === 'printer' ? 'Assign Printer' : f).join(', ')}`
       );
+      return;
+    }
+
+    // Get selected printer data
+    const printerData = printers.find(p => p.printer_ip === selectedPrinter);
+    
+    if (!printerData) {
+      toast.error('Invalid printer selection');
       return;
     }
 
@@ -400,6 +453,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     try {
       const serialNo = serialNumbers.map(s => s.serialNo).join('$');
       const printQuantity = serialNumbers.map(s => s.qty.toString()).join('$');
+      const numLabels = serialNumbers.length;
 
       const payload = {
         production_order_no: orderDetails!.production_order_no,
@@ -418,6 +472,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         exp_date: expDate,
         printed_qty: Number(qty),
         remaining_qty: orderDetails!.remaining_qty - Number(qty),
+        printer_ip: printerData.printer_ip,
+        dpi: printerData.dpi,
       };
 
       const response = await fetch(
@@ -449,13 +505,14 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       setProductionOrderNo('');
       setOrderDetails(null);
       setQty('');
-      setPrintQty('');
+      setQtyPerLabel('');
       setSerialNumbers([]);
       setCurrentPage(1);
       setMfgDate('');
       setExpDate('');
       setSelectedMfgDate(undefined);
       setSelectedExpDate(undefined);
+      setSelectedPrinter('');
       setInvalidFields(new Set());
       orderNoRef.current?.focus();
 
@@ -473,13 +530,14 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     setProductionOrderNo('');
     setOrderDetails(null);
     setQty('');
-    setPrintQty('');
+    setQtyPerLabel('');
     setSerialNumbers([]);
     setCurrentPage(1);
     setMfgDate('');
     setExpDate('');
     setSelectedMfgDate(undefined);
     setSelectedExpDate(undefined);
+    setSelectedPrinter('');
     setInvalidFields(new Set());
     orderNoRef.current?.focus();
   };
@@ -675,12 +733,11 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                       <TableHead>Item Code</TableHead>
                       <TableHead>Item Description</TableHead>
                       <TableHead>Lot No</TableHead>
+                      <TableHead>UOM</TableHead>
                       <TableHead>Remaining Print Qty</TableHead>
+                      <TableHead>Total Qty</TableHead>
                       <TableHead>
-                        Qty <span className="text-red-500">*</span>
-                      </TableHead>
-                      <TableHead>
-                        Number of Labels <span className="text-red-500">*</span>
+                        Qty per Label ({orderDetails.uom_code}) <span className="text-red-500">*</span>
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -689,35 +746,30 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                       <TableCell>{orderDetails.item_code}</TableCell>
                       <TableCell>{orderDetails.item_description}</TableCell>
                       <TableCell>{orderDetails.lot_no}</TableCell>
+                      <TableCell>{orderDetails.uom_code}</TableCell>
                       <TableCell>{orderDetails.remaining_qty}</TableCell>
                       <TableCell>
                         <Input
                           id="qty"
-                          ref={qtyRef}
                           type="number"
-                          min="1"
-                          max={orderDetails.remaining_qty}
                           value={qty}
-                          onChange={handleQtyChange}
-                          placeholder="Enter quantity"
-                          className={cn(
-                            'w-32',
-                            invalidFields.has('qty') ? 'field-blink' : ''
-                          )}
+                          disabled
+                          className="w-32 bg-muted"
                         />
                       </TableCell>
                       <TableCell>
                         <Input
-                          id="printQty"
-                          ref={printQtyRef}
+                          id="qtyPerLabel"
+                          ref={qtyPerLabelRef}
                           type="number"
-                          min="1"
-                          value={printQty}
-                          onChange={handlePrintQtyChange}
-                          placeholder="Enter number of labels"
+                          min="0.01"
+                          step="0.01"
+                          value={qtyPerLabel}
+                          onChange={handleQtyPerLabelChange}
+                          placeholder="Enter qty per label"
                           className={cn(
                             'w-32',
-                            invalidFields.has('printQty') ? 'field-blink' : ''
+                            invalidFields.has('qtyPerLabel') ? 'field-blink' : ''
                           )}
                         />
                       </TableCell>
@@ -730,10 +782,10 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
               <Button
                 onClick={generateSerialNumbers}
                 disabled={
+                  !qtyPerLabel ||
+                  Number(qtyPerLabel) <= 0 ||
                   !qty ||
                   Number(qty) <= 0 ||
-                  !printQty ||
-                  Number(printQty) <= 0 ||
                   isGeneratingSerials
                 }
               >
@@ -751,10 +803,10 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       {orderDetails && (
         <Card>
           <CardHeader>
-            <CardTitle>Date Information</CardTitle>
+            <CardTitle>Date & Printer Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="mfgDate">
                   Manufacturing Date <span className="text-red-500">*</span>
@@ -821,6 +873,32 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="printer">
+                  Assign Printer <span className="text-red-500">*</span>
+                </Label>
+                <div
+                  className={
+                    invalidFields.has('printer') ? 'field-blink' : ''
+                  }
+                >
+                  <CustomDropdown
+                    options={printerOptions}
+                    value={selectedPrinter}
+                    onValueChange={setSelectedPrinter}
+                    placeholder="Select printer..."
+                    searchPlaceholder="Search printers..."
+                    emptyText="No printers found"
+                    loading={isFetchingPrinters}
+                    disabled={isFetchingPrinters || printerOptions.length === 0}
+                  />
+                </div>
+                {printerOptions.length === 0 && !isFetchingPrinters && (
+                  <p className="text-xs text-red-500">
+                    No printers available. Please configure printers first.
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
