@@ -266,18 +266,6 @@ export function getMenuList(pathname: string): Group[] {
               active: pathname === '/reprint-fg-label-printing',
               value: '9_1',
             },
-            {
-              href: '/reprint-pallet-barcode',
-              label: 'Reprint Pallet Label',
-              active: pathname === '/reprint-pallet-barcode',
-              value: '9_2',
-            },
-            {
-              href: '/reprint-stock-transfer',
-              label: 'Reprint Stock Transfer',
-              active: pathname === 'reprint-stock-transfer',
-              value: '9_3',
-            },
           ],
         },
         {

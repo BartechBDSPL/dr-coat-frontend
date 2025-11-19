@@ -410,7 +410,7 @@ const FGMaterialReceiptReport: React.FC = () => {
               </Popover>
             </div>
 
-            <div className="flex items-end gap-2 lg:col-span-3">
+            <div className="flex items-end gap-2">
               <Button
                 onClick={handleSearch}
                 disabled={isLoading}

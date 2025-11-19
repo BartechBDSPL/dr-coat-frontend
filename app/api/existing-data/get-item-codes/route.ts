@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { BACKEND_URL } from '@/lib/constants';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('token')?.value || '';
@@ -12,13 +14,16 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/existing-data/get-item-codes`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: token,
-      },
-    });
+    const response = await fetch(
+      `${BACKEND_URL}/api/master/existing-data/get-item-codes`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     const data = await response.json();
 

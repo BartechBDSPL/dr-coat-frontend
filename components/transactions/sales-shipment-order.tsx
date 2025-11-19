@@ -425,7 +425,9 @@ const SalesShipmentOrder: React.FC = () => {
     }
 
     // Check if all line items have users assigned
-    const allAssigned = shipmentDetails.every(item => (lineItemUsers[`${item.lot_no}`] || []).length > 0);
+    const allAssigned = shipmentDetails.every(
+      item => (lineItemUsers[`${item.lot_no}`] || []).length > 0
+    );
     if (!allAssigned) {
       toast.error('Please assign at least one user to each line item');
       return;
@@ -852,7 +854,13 @@ const SalesShipmentOrder: React.FC = () => {
               <div className="flex items-end gap-2 lg:col-span-2">
                 <Button
                   onClick={handleAssignUser}
-                  disabled={shipmentDetails.length === 0 || isAssigning || !shipmentDetails.every(item => (lineItemUsers[`${item.lot_no}`] || []).length > 0)}
+                  disabled={
+                    shipmentDetails.length === 0 ||
+                    isAssigning ||
+                    !shipmentDetails.every(
+                      item => (lineItemUsers[`${item.lot_no}`] || []).length > 0
+                    )
+                  }
                   className="flex-1"
                 >
                   {isAssigning ? (
@@ -1251,8 +1259,8 @@ const SalesShipmentOrder: React.FC = () => {
                 Do you want to reassign users to these items?
               </p>
               <p className="text-xs text-muted-foreground">
-                Click "Reassign" to update the user assignments, or "Cancel" to
-                go back.
+                Click &quot;Reassign&quot; to update the user assignments, or
+                &quot;Cancel&quot; to go back.
               </p>
             </DialogDescription>
           </DialogHeader>

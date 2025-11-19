@@ -542,7 +542,9 @@ const PlantMasterForm = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Action
+                    </TableHead>
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Company Code
                     </TableHead>
@@ -555,9 +557,15 @@ const PlantMasterForm = () => {
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Plant Address
                     </TableHead>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">City</TableHead>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">State</TableHead>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Status</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      City
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      State
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Status
+                    </TableHead>
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created by
                     </TableHead>

@@ -8,24 +8,30 @@ export async function POST(req: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { error: 'Authorization token is required' },
+        { Status: 'F', Message: 'Authorization token is required' },
         { status: 401 }
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/existing-data/upload-excel`, {
-      method: 'POST',
-      headers: {
-        authorization: token,
-      },
-      body: formData,
-    });
+    const response = await fetch(
+      `${BACKEND_URL}/api/master/existing-data/upload-excel`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.message || 'Failed to upload excel' },
+        {
+          Status: 'F',
+          Message: data.Message || data.error || 'Failed to upload excel',
+        },
         { status: response.status }
       );
     }
@@ -34,7 +40,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Error uploading excel:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { Status: 'F', Message: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

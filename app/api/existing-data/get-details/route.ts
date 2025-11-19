@@ -13,14 +13,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/existing-data/get-details`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: token,
-      },
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(
+      `${BACKEND_URL}/api/master/existing-data/get-details`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      }
+    );
 
     const data = await response.json();
 

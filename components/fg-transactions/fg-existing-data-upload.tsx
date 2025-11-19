@@ -7,7 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
-import { Loader2, Upload, Printer, RefreshCw } from 'lucide-react';
+import {
+  Loader2,
+  Upload,
+  Printer,
+  RefreshCw,
+  Download,
+  Info,
+} from 'lucide-react';
 import CustomDropdown from '@/components/CustomDropdown';
 import {
   Table,
@@ -17,6 +24,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   Pagination,
   PaginationContent,
@@ -57,6 +74,14 @@ interface PrinterData {
 }
 
 const FGExistingDataUpload: React.FC = () => {
+  const requiredHeaders = [
+    'item_code',
+    'item_description',
+    'lot_no',
+    'mfg_date',
+    'exp_date',
+    'quantity',
+  ];
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +103,7 @@ const FGExistingDataUpload: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
 
   const token = Cookies.get('token');
 
@@ -189,7 +215,23 @@ const FGExistingDataUpload: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setIsLoadingFile(true);
+
+      // Simulate file loading with FileReader to show loading state
+      const reader = new FileReader();
+      reader.onloadstart = () => {
+        setIsLoadingFile(true);
+      };
+      reader.onload = () => {
+        setFile(selectedFile);
+        setIsLoadingFile(false);
+      };
+      reader.onerror = () => {
+        toast.error('Error reading file');
+        setIsLoadingFile(false);
+      };
+      reader.readAsArrayBuffer(selectedFile);
     }
   };
 
@@ -207,7 +249,9 @@ const FGExistingDataUpload: React.FC = () => {
     try {
       const response = await fetch('/api/existing-data/upload-excel', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
       const data = await response.json();
@@ -273,7 +317,7 @@ const FGExistingDataUpload: React.FC = () => {
         }),
       });
       const data = await response.json();
-      
+
       let startSerial = 1;
       if (data.Status === 'T' && data.data) {
         startSerial = data.data.sr_no + 1;
@@ -281,7 +325,7 @@ const FGExistingDataUpload: React.FC = () => {
 
       const numLabels = Math.floor(totalQtyNum / qtyPerLabelNum);
       const remainder = totalQtyNum % qtyPerLabelNum;
-      
+
       const newSerials: SerialNumber[] = [];
       for (let i = 0; i < numLabels; i++) {
         newSerials.push({
@@ -384,6 +428,15 @@ const FGExistingDataUpload: React.FC = () => {
     }
   };
 
+  const downloadSampleFile = () => {
+    const link = document.createElement('a');
+    link.href = '/exisiting_sample_data.xlsx';
+    link.download = 'exisiting_sample_data.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Pagination
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -395,9 +448,52 @@ const FGExistingDataUpload: React.FC = () => {
       {/* Upload Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Upload Existing Data Excel
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Upload Existing Data Excel
+            </div>
+            <div className="flex items-center gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Info className="mr-2 h-4 w-4" />
+                    Sample Format
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Excel Upload Format</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Please ensure your Excel file has the following columns:
+                      <br />
+                      <br />
+                      <strong>Required Columns:</strong>
+                      <ul className="mt-2 list-disc pl-5">
+                        {requiredHeaders.map(header => (
+                          <li key={header}>{header}</li>
+                        ))}
+                      </ul>
+                      <br />
+                      <strong>Note:</strong> All columns are mandatory. Download
+                      the sample file for reference.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <Button onClick={downloadSampleFile} variant="outline">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Sample
+                    </Button>
+                    <AlertDialogCancel>Close</AlertDialogCancel>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <Button variant="outline" size="sm" onClick={downloadSampleFile}>
+                <Download className="mr-2 h-4 w-4" />
+                Download Sample
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -410,11 +506,23 @@ const FGExistingDataUpload: React.FC = () => {
                 accept=".xlsx, .xls"
                 onChange={handleFileChange}
                 ref={fileInputRef}
+                disabled={isLoadingFile || isUploading}
               />
+              {isLoadingFile && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span>Loading file...</span>
+                </div>
+              )}
+              {file && !isLoadingFile && (
+                <div className="text-sm text-muted-foreground">
+                  Selected: {file.name}
+                </div>
+              )}
             </div>
-            <Button 
-              onClick={handleUpload} 
-              disabled={isUploading || !file}
+            <Button
+              onClick={handleUpload}
+              disabled={isUploading || !file || isLoadingFile}
             >
               {isUploading ? (
                 <>
@@ -438,7 +546,7 @@ const FGExistingDataUpload: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label>Item Code</Label>
               <CustomDropdown
@@ -466,30 +574,50 @@ const FGExistingDataUpload: React.FC = () => {
 
           {itemDetails && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="grid grid-cols-1 gap-4 rounded-lg bg-muted/50 p-4 md:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Description</Label>
-                  <div className="font-medium">{itemDetails.item_description}</div>
+                  <Label className="text-xs text-muted-foreground">
+                    Description
+                  </Label>
+                  <div className="font-medium">
+                    {itemDetails.item_description}
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Mfg Date</Label>
-                  <div className="font-medium">{itemDetails.mfg_date?.split('T')[0]}</div>
+                  <Label className="text-xs text-muted-foreground">
+                    Mfg Date
+                  </Label>
+                  <div className="font-medium">
+                    {itemDetails.mfg_date?.split('T')[0]}
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Exp Date</Label>
-                  <div className="font-medium">{itemDetails.exp_date?.split('T')[0]}</div>
+                  <Label className="text-xs text-muted-foreground">
+                    Exp Date
+                  </Label>
+                  <div className="font-medium">
+                    {itemDetails.exp_date?.split('T')[0]}
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Remaining Qty</Label>
-                  <div className="font-medium">{itemDetails.remaining_quantity}</div>
+                  <Label className="text-xs text-muted-foreground">
+                    Remaining Qty
+                  </Label>
+                  <div className="font-medium">
+                    {itemDetails.remaining_quantity}
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Printed Qty</Label>
-                  <div className="font-medium">{itemDetails.printed_quantity}</div>
+                  <Label className="text-xs text-muted-foreground">
+                    Printed Qty
+                  </Label>
+                  <div className="font-medium">
+                    {itemDetails.printed_quantity}
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Qty Per Label</Label>
                   <Input
@@ -508,7 +636,7 @@ const FGExistingDataUpload: React.FC = () => {
                     placeholder="Enter Total Quantity"
                   />
                 </div>
-                <Button 
+                <Button
                   onClick={generateSerialNumbers}
                   disabled={isGeneratingSerials || !qtyPerLabel || !totalQty}
                 >
@@ -541,8 +669,13 @@ const FGExistingDataUpload: React.FC = () => {
                           <Input
                             type="number"
                             value={serial.qty}
-                            onChange={(e) => handleSerialQtyChange(startIndex + index, e.target.value)}
-                            className="w-32 h-8"
+                            onChange={e =>
+                              handleSerialQtyChange(
+                                startIndex + index,
+                                e.target.value
+                              )
+                            }
+                            className="h-8 w-32"
                           />
                         </TableCell>
                       </TableRow>
@@ -555,41 +688,57 @@ const FGExistingDataUpload: React.FC = () => {
                 <Pagination>
                   <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious 
+                      <PaginationPrevious
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        className={
+                          currentPage === 1
+                            ? 'pointer-events-none opacity-50'
+                            : 'cursor-pointer'
+                        }
                       />
                     </PaginationItem>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          isActive={page === currentPage}
-                          onClick={() => setCurrentPage(page)}
-                          className="cursor-pointer"
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      page => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            isActive={page === currentPage}
+                            onClick={() => setCurrentPage(page)}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    )}
                     <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      <PaginationNext
+                        onClick={() =>
+                          setCurrentPage(p => Math.min(totalPages, p + 1))
+                        }
+                        className={
+                          currentPage === totalPages
+                            ? 'pointer-events-none opacity-50'
+                            : 'cursor-pointer'
+                        }
                       />
                     </PaginationItem>
                   </PaginationContent>
                 </Pagination>
               )}
 
-              <div className="flex items-end gap-4 pt-4 border-t">
-                <div className="space-y-2 flex-1 max-w-xs">
-                  <Label className={invalidFields.has('printer') ? 'text-red-500' : ''}>
+              <div className="flex items-end gap-4 border-t pt-4">
+                <div className="max-w-xs flex-1 space-y-2">
+                  <Label
+                    className={
+                      invalidFields.has('printer') ? 'text-red-500' : ''
+                    }
+                  >
                     Select Printer
                   </Label>
                   <CustomDropdown
                     options={printerOptions}
                     value={selectedPrinter}
-                    onValueChange={(val) => {
+                    onValueChange={val => {
                       setSelectedPrinter(val);
                       setInvalidFields(prev => {
                         const next = new Set(prev);
@@ -602,7 +751,7 @@ const FGExistingDataUpload: React.FC = () => {
                     emptyText="No printers found"
                   />
                 </div>
-                <Button 
+                <Button
                   onClick={handlePrintLabels}
                   disabled={isPrinting}
                   className="w-32"

@@ -277,13 +277,12 @@ const FGLabelPrintingReport: React.FC = () => {
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
     const totalLabels = filteredData.length;
 
-
     return {
       totalOrders,
       totalItems,
       totalLots,
       totalLabels,
-   };
+    };
   };
 
   const stats = getDashboardStats();

@@ -444,8 +444,12 @@ const ItemPackingMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Item No</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Action
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Item No
+                    </TableHead>
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Customer No
                     </TableHead>

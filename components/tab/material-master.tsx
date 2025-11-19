@@ -681,7 +681,9 @@ const MaterialMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Action
+                    </TableHead>
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Item Code
                     </TableHead>

@@ -806,17 +806,35 @@ const UserMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-semibold text-foreground">Action</TableHead>
-                    <TableHead className="font-semibold text-foreground">User ID</TableHead>
-                    <TableHead className="font-semibold text-foreground">User Name</TableHead>
-                    <TableHead className="font-semibold text-foreground">Role</TableHead>
-                    <TableHead className="font-semibold text-foreground">Status</TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Action
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      User ID
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      User Name
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Role
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Status
+                    </TableHead>
                     {/* <TableHead>Web menu Access</TableHead>
                 <TableHead>HHT menu Access</TableHead> */}
-                    <TableHead className="font-semibold text-foreground">Locked Status</TableHead>
-                    <TableHead className="font-semibold text-foreground">Plant Code</TableHead>
-                    <TableHead className="font-semibold text-foreground">Email ID</TableHead>
-                    <TableHead className="font-semibold text-foreground">Mobile No</TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Locked Status
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Plant Code
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Email ID
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Mobile No
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

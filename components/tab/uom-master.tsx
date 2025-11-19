@@ -68,10 +68,15 @@ interface UpdateApiResponse {
 }
 
 const UOMMaster: React.FC = () => {
-  const requiredHeaders = ['Code', 'Description', 'International Standard Code'];
+  const requiredHeaders = [
+    'Code',
+    'Description',
+    'International Standard Code',
+  ];
   const [uomCode, setUomCode] = useState<string>('');
   const [unitDesc, setUnitDesc] = useState<string>('');
-  const [internationalStandardCode, setInternationalStandardCode] = useState<string>('');
+  const [internationalStandardCode, setInternationalStandardCode] =
+    useState<string>('');
   const [data, setData] = useState<UnitData[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
@@ -573,7 +578,9 @@ const UOMMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Action
+                    </TableHead>
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       UOM Code
                     </TableHead>

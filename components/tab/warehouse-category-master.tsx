@@ -443,17 +443,27 @@ const WarehouseCategoryMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[80px] font-semibold text-foreground">Select</TableHead>
+                    <TableHead className="min-w-[80px] font-semibold text-foreground">
+                      Select
+                    </TableHead>
                     <TableHead className="min-w-[120px] font-semibold text-foreground">
                       WH Category Code
                     </TableHead>
                     <TableHead className="min-w-[150px] font-semibold text-foreground">
                       WH Category Desc
                     </TableHead>
-                    <TableHead className="min-w-[100px] font-semibold text-foreground">Created by</TableHead>
-                    <TableHead className="min-w-[120px] font-semibold text-foreground">Created on</TableHead>
-                    <TableHead className="min-w-[100px] font-semibold text-foreground">Updated by</TableHead>
-                    <TableHead className="min-w-[120px] font-semibold text-foreground">Updated on</TableHead>
+                    <TableHead className="min-w-[100px] font-semibold text-foreground">
+                      Created by
+                    </TableHead>
+                    <TableHead className="min-w-[120px] font-semibold text-foreground">
+                      Created on
+                    </TableHead>
+                    <TableHead className="min-w-[100px] font-semibold text-foreground">
+                      Updated by
+                    </TableHead>
+                    <TableHead className="min-w-[120px] font-semibold text-foreground">
+                      Updated on
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

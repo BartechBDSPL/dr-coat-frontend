@@ -800,7 +800,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                           step="0.01"
                           value={qtyPerLabel}
                           onChange={handleQtyPerLabelChange}
-                          onWheel={(e) => e.currentTarget.blur()}
+                          onWheel={e => e.currentTarget.blur()}
                           placeholder="Enter qty per label"
                           className={cn(
                             'w-32',
@@ -1009,7 +1009,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                               e.target.value
                             )
                           }
-                          onWheel={(e) => e.currentTarget.blur()}
+                          onWheel={e => e.currentTarget.blur()}
                           className="w-24"
                         />
                       </TableCell>

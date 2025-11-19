@@ -35,7 +35,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { CalendarIcon, AlertCircle } from 'lucide-react';
-import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
+import { FaFileExcel } from 'react-icons/fa';
 import { DateTime } from 'luxon';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';

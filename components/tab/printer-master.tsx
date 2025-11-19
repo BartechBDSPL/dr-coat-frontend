@@ -788,16 +788,36 @@ const PalletMaster: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[100px] font-semibold text-foreground">Action</TableHead>
-                  <TableHead className="font-semibold text-foreground">Printer Name</TableHead>
-                  <TableHead className="font-semibold text-foreground">Printer Make</TableHead>
-                  <TableHead className="font-semibold text-foreground">Serial No</TableHead>
-                  <TableHead className="font-semibold text-foreground">IP Address</TableHead>
-                  <TableHead className="font-semibold text-foreground">Asset Code</TableHead>
-                  <TableHead className="font-semibold text-foreground">DPI</TableHead>
-                  <TableHead className="font-semibold text-foreground">Status</TableHead>
-                  <TableHead className="font-semibold text-foreground">Plant Code</TableHead>
-                  <TableHead className="w-[100px] font-semibold text-foreground">Ping</TableHead>
+                  <TableHead className="w-[100px] font-semibold text-foreground">
+                    Action
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Printer Name
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Printer Make
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Serial No
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    IP Address
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Asset Code
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    DPI
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Status
+                  </TableHead>
+                  <TableHead className="font-semibold text-foreground">
+                    Plant Code
+                  </TableHead>
+                  <TableHead className="w-[100px] font-semibold text-foreground">
+                    Ping
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

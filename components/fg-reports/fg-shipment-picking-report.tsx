@@ -391,7 +391,7 @@ const FGShipmentPickingReport: React.FC = () => {
               </Popover>
             </div>
 
-            <div className="flex items-end gap-2 lg:col-span-3">
+            <div className="flex items-end gap-2">
               <Button
                 onClick={handleSearch}
                 disabled={isLoading}
@@ -414,7 +414,7 @@ const FGShipmentPickingReport: React.FC = () => {
       {reportData.length > 0 ? (
         <>
           {/* Analytics Cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -445,17 +445,6 @@ const FGShipmentPickingReport: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalLots}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Quantity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalQuantity}</div>
               </CardContent>
             </Card>
 

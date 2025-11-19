@@ -299,11 +299,6 @@ const FGStockTransferPickingReport: React.FC = () => {
     ).size;
     const totalItems = new Set(filteredData.map(item => item.item_code)).size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
-    const totalPicks = filteredData.length;
-    const totalPickQuantity = filteredData.reduce(
-      (sum, item) => sum + item.pick_quantity,
-      0
-    );
     const uniqueWarehouses = new Set(
       filteredData.map(item => item.picked_from_warehouse)
     ).size;
@@ -314,8 +309,7 @@ const FGStockTransferPickingReport: React.FC = () => {
       totalTransfers,
       totalItems,
       totalLots,
-      totalPicks,
-      totalPickQuantity,
+
       uniqueWarehouses,
       uniqueBins,
     };
@@ -445,7 +439,7 @@ const FGStockTransferPickingReport: React.FC = () => {
               </Popover>
             </div>
 
-            <div className="flex items-end gap-2 lg:col-span-3">
+            <div className="flex items-end gap-2">
               <Button
                 onClick={handleSearch}
                 disabled={isLoading}
@@ -468,7 +462,7 @@ const FGStockTransferPickingReport: React.FC = () => {
       {reportData.length > 0 ? (
         <>
           {/* Analytics Cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -499,30 +493,6 @@ const FGStockTransferPickingReport: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalLots}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Picks
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalPicks}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Pick Quantity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.totalPickQuantity.toFixed(2)}
-                </div>
               </CardContent>
             </Card>
 

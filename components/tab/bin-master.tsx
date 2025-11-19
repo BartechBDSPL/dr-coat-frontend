@@ -7,7 +7,6 @@ import React, {
   useRef,
 } from 'react';
 import axios from '@/lib/axios-config';
-import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -52,6 +51,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import TableSearch from '@/utils/tableSearch';
+import { getUserID } from '@/utils/getFromSession';
 
 interface WarehouseCode {
   warehouse_code: string;
@@ -76,7 +76,7 @@ const BinMaster: React.FC = () => {
   const [rack, setRack] = useState('');
   const [bin, setBin] = useState('');
   const [status, setStatus] = useState('Active');
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedLocation, setSelectedLocation] =
     useState<WarehouseLocation | null>(null);
@@ -85,6 +85,7 @@ const BinMaster: React.FC = () => {
   const token = Cookies.get('token');
   const [fileUploading, setFileUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUpdatingLoading, setIsUpdatingLoading] = useState(false);
 
   // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -92,20 +93,6 @@ const BinMaster: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const rackRef = useRef<HTMLInputElement>(null);
   const binRef = useRef<HTMLInputElement>(null);
-
-  // Function to get User_ID from the JWT token
-  const getUserID = () => {
-    const token = Cookies.get('token');
-    if (token) {
-      try {
-        const decodedToken: any = jwtDecode(token);
-        return decodedToken.user.User_ID;
-      } catch (e) {
-        console.error('Failed to decode token:', e);
-      }
-    }
-    return '';
-  };
 
   useEffect(() => {
     const fetchDataSequentially = async () => {
@@ -217,24 +204,18 @@ const BinMaster: React.FC = () => {
       return;
     }
 
-    const userID = getUserID();
-    if (!userID) {
-      toast.error('Failed to retrieve user ID');
-      return;
-    }
-
     const newLocationData = {
       warehouse_code: warehouseValue.trim(),
       rack: rack.trim(),
       bin: bin.trim(),
-      user: userID.trim(),
+      user: getUserID().trim(),
       location_status: status.trim(),
     };
 
     setIsSaving(true);
     try {
       const response = await axios.post(
-        `/api/masters/wh-location/insert`,
+        `/api/master/insert-wh-location`,
         newLocationData,
         {
           headers: {
@@ -300,7 +281,7 @@ const BinMaster: React.FC = () => {
       location_status: status.trim(),
     };
 
-    setIsUpdating(true);
+    setIsUpdatingLoading(true);
     try {
       const response = await axios.patch(
         `/api/master/update-wh-location`,
@@ -329,7 +310,7 @@ const BinMaster: React.FC = () => {
         error.response?.data?.error || 'Failed to update warehouse location'
       );
     } finally {
-      setIsUpdating(false);
+      setIsUpdatingLoading(false);
     }
   };
 
@@ -340,7 +321,8 @@ const BinMaster: React.FC = () => {
     setStatus('Active');
     setSelectedLocation(null);
     setOldData(null);
-    setIsUpdating(false);
+    setIsEditing(false);
+    setIsUpdatingLoading(false);
   };
 
   const handleRowSelect = (index: number) => {
@@ -351,7 +333,8 @@ const BinMaster: React.FC = () => {
     setRack(selectedData.rack);
     setBin(selectedData.bin || '');
     setStatus(selectedData.location_status || 'Active');
-    setIsUpdating(true);
+    setIsEditing(true);
+    setIsUpdatingLoading(false);
   };
 
   const warehouseOptions = warehouseCodes.map(code => ({
@@ -492,7 +475,7 @@ const BinMaster: React.FC = () => {
             <div className="flex flex-col justify-end gap-2 pt-4 sm:flex-row">
               <Button
                 onClick={handleSave}
-                disabled={isUpdating || isSaving}
+                disabled={isEditing || isSaving}
                 type="submit"
                 className="w-full sm:w-auto"
               >
@@ -507,10 +490,10 @@ const BinMaster: React.FC = () => {
               </Button>
               <Button
                 onClick={handleUpdate}
-                disabled={!isUpdating || isUpdating}
+                disabled={!isEditing || isUpdatingLoading}
                 className="w-full sm:w-auto"
               >
-                {isUpdating ? (
+                {isUpdatingLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Updating...
@@ -558,7 +541,7 @@ const BinMaster: React.FC = () => {
                         <li>location_status</li>
                       </ul>
                       <p className="mt-2">
-                        If your file doesn't match this format, it will be
+                        If your file doesn&apos;t match this format, it will be
                         rejected.
                       </p>
                     </AlertDialogDescription>
@@ -647,15 +630,21 @@ const BinMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Action
+                    </TableHead>
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Warehouse Code
                     </TableHead>
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Rack
                     </TableHead>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Bin</TableHead>
-                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Status</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Bin
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Status
+                    </TableHead>
                     <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created by
                     </TableHead>

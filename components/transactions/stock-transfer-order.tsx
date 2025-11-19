@@ -316,7 +316,9 @@ const StockTransferOrder: React.FC = () => {
       return;
     }
 
-    const allAssigned = orderDetails.every(item => (lineItemUsers[item.line_no] || []).length > 0);
+    const allAssigned = orderDetails.every(
+      item => (lineItemUsers[item.line_no] || []).length > 0
+    );
     if (!allAssigned) {
       toast.error('Please assign at least one user to each line item');
       return;
@@ -635,7 +637,13 @@ const StockTransferOrder: React.FC = () => {
               <div className="flex items-end gap-2 lg:col-span-2">
                 <Button
                   onClick={handleAssignUser}
-                  disabled={orderDetails.length === 0 || isAssigning || !orderDetails.every(item => (lineItemUsers[item.line_no] || []).length > 0)}
+                  disabled={
+                    orderDetails.length === 0 ||
+                    isAssigning ||
+                    !orderDetails.every(
+                      item => (lineItemUsers[item.line_no] || []).length > 0
+                    )
+                  }
                   className="flex-1"
                 >
                   {isAssigning ? (
