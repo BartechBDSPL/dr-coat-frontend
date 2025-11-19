@@ -84,9 +84,9 @@ export function getMenuList(pathname: string): Group[] {
               value: '2_5',
             },
             {
-              href: '/bin-master',
-              label: 'Bin Master',
-              active: pathname === '/bin-master',
+              href: '/wh-location-master',
+              label: 'Wh Location Master',
+              active: pathname === '/wh-location-master',
               value: '2_6',
             },
             {
@@ -139,21 +139,21 @@ export function getMenuList(pathname: string): Group[] {
             },
           ],
         },
-        {
-          href: '',
-          label: 'RM Transaction',
-          active: pathname.includes('/heloj'),
-          icon: ArrowLeftRight,
-          value: '10',
-          submenus: [
-            {
-              href: '/rm-label-printing',
-              label: 'RM Label Printing',
-              active: pathname === '/rm-label-printing',
-              value: '10_1',
-            },
-          ],
-        },
+        // {
+        //   href: '',
+        //   label: 'RM Transaction',
+        //   active: pathname.includes('/heloj'),
+        //   icon: ArrowLeftRight,
+        //   value: '10',
+        //   submenus: [
+        //     {
+        //       href: '/rm-label-printing',
+        //       label: 'RM Label Printing',
+        //       active: pathname === '/rm-label-printing',
+        //       value: '10_1',
+        //     },
+        //   ],
+        // },
         {
           href: '',
           label: 'FG Transaction',
@@ -166,6 +166,12 @@ export function getMenuList(pathname: string): Group[] {
               label: 'FG Production Order Label Printing',
               active: pathname === '/fg-production-order-label-printing',
               value: '3_1',
+            },
+            {
+              href: '/fg-existing-data-upload',
+              label: 'Existing Data Upload',
+              active: pathname === '/fg-existing-data-upload',
+              value: '3_2',
             },
           ],
         },

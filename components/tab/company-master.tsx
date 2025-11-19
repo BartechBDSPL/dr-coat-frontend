@@ -463,27 +463,27 @@ const CompanyMasterForm: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Action</TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Company Code
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Company Name
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">Address</TableHead>
-                    <TableHead className="whitespace-nowrap">City</TableHead>
-                    <TableHead className="whitespace-nowrap">State</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Address</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">City</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">State</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Status</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created On
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated On
                     </TableHead>
                   </TableRow>

@@ -507,28 +507,28 @@ const SessionMasterForm: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="whitespace-nowrap text-foreground">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Action
                     </TableHead>
-                    <TableHead className="whitespace-nowrap text-foreground">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       ID
                     </TableHead>
-                    <TableHead className="whitespace-nowrap text-foreground">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Session Time
                     </TableHead>
-                    <TableHead className="whitespace-nowrap text-foreground">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Unit
                     </TableHead>
-                    <TableHead className="whitespace-nowrap text-foreground">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap text-foreground">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created On
                     </TableHead>
-                    <TableHead className="whitespace-nowrap text-foreground">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap text-foreground">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated On
                     </TableHead>
                   </TableRow>

@@ -59,25 +59,21 @@ interface WarehouseCode {
 
 interface WarehouseLocation {
   id: number;
+  warehouse_code: string;
+  rack: string;
+  bin: string;
   location_status: string;
   created_by: string;
   created_date: string;
   updated_by: string | null;
   updated_date: string | null;
-  warehouse_code: string;
-  bin: string;
-  location_name_erp: string;
-  print_status: string | null;
-  print_by: string | null;
-  print_date: string | null;
-  capacity: number;
 }
 
 const BinMaster: React.FC = () => {
   const [warehouseValue, setWarehouseValue] = useState('');
   const [warehouseCodes, setWarehouseCodes] = useState<WarehouseCode[]>([]);
   const [locations, setLocations] = useState<WarehouseLocation[]>([]);
-  const [location, setLocation] = useState('');
+  const [rack, setRack] = useState('');
   const [bin, setBin] = useState('');
   const [status, setStatus] = useState('Active');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -94,7 +90,7 @@ const BinMaster: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const locationSapRef = useRef<HTMLInputElement>(null);
+  const rackRef = useRef<HTMLInputElement>(null);
   const binRef = useRef<HTMLInputElement>(null);
 
   // Function to get User_ID from the JWT token
@@ -160,7 +156,7 @@ const BinMaster: React.FC = () => {
   const filteredData = useMemo(() => {
     return locations.filter(item => {
       const searchableFields: (keyof WarehouseLocation)[] = [
-        'location_name_erp',
+        'rack',
         'warehouse_code',
         'bin',
         'updated_by',
@@ -206,9 +202,9 @@ const BinMaster: React.FC = () => {
       toast.error('Please select the warehouse');
       return;
     }
-    if (!location.trim()) {
-      toast.error('Please enter the location');
-      locationSapRef.current?.focus();
+    if (!rack.trim()) {
+      toast.error('Please enter the rack');
+      rackRef.current?.focus();
       return;
     }
     if (!bin.trim()) {
@@ -228,17 +224,17 @@ const BinMaster: React.FC = () => {
     }
 
     const newLocationData = {
-      WarehouseCode: warehouseValue.trim(),
-      LocationNameSap: location.trim(),
-      Bin: bin.trim(),
-      User: userID.trim(),
-      WStatus: status.trim(),
+      warehouse_code: warehouseValue.trim(),
+      rack: rack.trim(),
+      bin: bin.trim(),
+      user: userID.trim(),
+      location_status: status.trim(),
     };
 
     setIsSaving(true);
     try {
       const response = await axios.post(
-        `/api/master/insert-wh-location`,
+        `/api/masters/wh-location/insert`,
         newLocationData,
         {
           headers: {
@@ -274,9 +270,9 @@ const BinMaster: React.FC = () => {
       toast.error('Please select the warehouse');
       return;
     }
-    if (!location.trim()) {
-      toast.error('Please enter the location');
-      locationSapRef.current?.focus();
+    if (!rack.trim()) {
+      toast.error('Please enter the rack');
+      rackRef.current?.focus();
       return;
     }
     if (!bin.trim()) {
@@ -296,12 +292,12 @@ const BinMaster: React.FC = () => {
     }
 
     const updatedLocationData = {
-      Id: selectedLocation.id,
-      WarehouseCode: warehouseValue.trim(),
-      LocationNameSap: location.trim(),
-      Bin: bin.trim(),
-      User: userID.trim(),
-      Status: status.trim(),
+      id: selectedLocation.id,
+      warehouse_code: warehouseValue.trim(),
+      rack: rack.trim(),
+      bin: bin.trim(),
+      user: userID.trim(),
+      location_status: status.trim(),
     };
 
     setIsUpdating(true);
@@ -339,7 +335,7 @@ const BinMaster: React.FC = () => {
 
   const handleClear = () => {
     setWarehouseValue('');
-    setLocation('');
+    setRack('');
     setBin('');
     setStatus('Active');
     setSelectedLocation(null);
@@ -352,7 +348,7 @@ const BinMaster: React.FC = () => {
     setSelectedLocation(selectedData);
     setOldData(selectedData);
     setWarehouseValue(selectedData.warehouse_code);
-    setLocation(selectedData.location_name_erp);
+    setRack(selectedData.rack);
     setBin(selectedData.bin || '');
     setStatus(selectedData.location_status || 'Active');
     setIsUpdating(true);
@@ -385,8 +381,12 @@ const BinMaster: React.FC = () => {
     setFileUploading(true);
 
     try {
+      const userID = getUserID();
       const formData = new FormData();
       formData.append('excelFile', selectedFile);
+      if (userID) {
+        formData.append('username', userID);
+      }
 
       const response = await axios.post(
         `/api/master/upload-wh-location-excel`,
@@ -457,13 +457,13 @@ const BinMaster: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="locationSAP">Location SAP *</Label>
+                <Label htmlFor="rack">Rack *</Label>
                 <Input
-                  ref={locationSapRef}
-                  id="locationSAP"
+                  ref={rackRef}
+                  id="rack"
                   required
-                  value={location}
-                  onChange={e => setLocation(e.target.value)}
+                  value={rack}
+                  onChange={e => setRack(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -552,10 +552,10 @@ const BinMaster: React.FC = () => {
                         Your Excel file must contain the following headers:
                       </p>
                       <ul className="list-disc space-y-1 pl-5">
-                        <li>Storage Type (Bartech)</li>
-                        <li>Storage Type (SAP)</li>
-                        <li>Storage Bin (SAP & Bartech)</li>
-                        <li>Bin Status (SAP)</li>
+                        <li>warehouse_code</li>
+                        <li>rack</li>
+                        <li>bin</li>
+                        <li>location_status</li>
                       </ul>
                       <p className="mt-2">
                         If your file doesn't match this format, it will be
@@ -647,25 +647,25 @@ const BinMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Action</TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Warehouse Code
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Location SAP
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                      Rack
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">Bin</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Bin</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Status</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created On
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated On
                     </TableHead>
                   </TableRow>
@@ -692,7 +692,7 @@ const BinMaster: React.FC = () => {
                         <TableCell className="font-medium">
                           {row.warehouse_code}
                         </TableCell>
-                        <TableCell>{row.location_name_erp}</TableCell>
+                        <TableCell>{row.rack}</TableCell>
                         <TableCell>{row.bin || ''}</TableCell>
                         <TableCell>
                           <span

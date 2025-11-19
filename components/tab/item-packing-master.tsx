@@ -444,33 +444,33 @@ const ItemPackingMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Action</TableHead>
-                    <TableHead className="whitespace-nowrap">Item No</TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Item No</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Customer No
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Packing Code
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Qty Per UOM
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Description
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       UOM Major Value
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created on
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated on
                     </TableHead>
                   </TableRow>

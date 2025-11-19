@@ -24,6 +24,8 @@ import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
 import Cookies from 'js-cookie';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import TableSearch from '@/utils/tableSearch';
 import { Badge } from '@/components/ui/badge';
@@ -183,12 +185,9 @@ const FGLabelPrintingReport: React.FC = () => {
     toast.success('Excel exported successfully');
   };
 
-  const exportToPdf = async (): Promise<void> => {
+  const exportToPdf = (): void => {
     try {
-      const jsPDF = (await import('jspdf')).default;
-      await import('jspdf-autotable');
-
-      const doc = new jsPDF('l', 'mm', 'a4');
+      const doc = new jsPDF('l', 'mm', 'a4') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Production Order No', dataKey: 'production_order_no' },
@@ -220,7 +219,7 @@ const FGLabelPrintingReport: React.FC = () => {
       doc.setFontSize(18);
       doc.text('FG Label Printing Report', 14, 22);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         columns: columns,
         body: formattedData,
         startY: 30,
@@ -238,16 +237,20 @@ const FGLabelPrintingReport: React.FC = () => {
           9: { cellWidth: 32 },
         },
         headStyles: { fillColor: [66, 66, 66] },
-        didDrawPage: (data: any) => {
-          doc.setFontSize(8);
-          doc.text(
-            `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
-            doc.internal.pageSize.width / 2,
-            doc.internal.pageSize.height - 10,
-            { align: 'center' }
-          );
-        },
       });
+
+      // Add page numbers after table is generated
+      const totalPagesGenerated = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPagesGenerated; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+          `Page ${i} of ${totalPagesGenerated}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+      }
 
       const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
       doc.save(`FG_LABEL_PRINTING_REPORT_${formattedDateTime}.pdf`);
@@ -273,23 +276,14 @@ const FGLabelPrintingReport: React.FC = () => {
     const totalItems = new Set(filteredData.map(item => item.item_code)).size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
     const totalLabels = filteredData.length;
-    const totalQuantity = filteredData.reduce(
-      (sum, item) => sum + item.quantity,
-      0
-    );
-    const totalPrintQuantity = filteredData.reduce(
-      (sum, item) => sum + item.print_quantity,
-      0
-    );
+
 
     return {
       totalOrders,
       totalItems,
       totalLots,
       totalLabels,
-      totalQuantity,
-      totalPrintQuantity,
-    };
+   };
   };
 
   const stats = getDashboardStats();
@@ -419,7 +413,7 @@ const FGLabelPrintingReport: React.FC = () => {
       {reportData.length > 0 ? (
         <>
           {/* Analytics Cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -461,32 +455,6 @@ const FGLabelPrintingReport: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalLabels}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Quantity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.totalQuantity.toFixed(2)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Print Quantity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.totalPrintQuantity.toFixed(2)}
-                </div>
               </CardContent>
             </Card>
           </div>

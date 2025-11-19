@@ -68,10 +68,10 @@ interface UpdateApiResponse {
 }
 
 const UOMMaster: React.FC = () => {
+  const requiredHeaders = ['Code', 'Description', 'International Standard Code'];
   const [uomCode, setUomCode] = useState<string>('');
   const [unitDesc, setUnitDesc] = useState<string>('');
-  const [internationalStandardCode, setInternationalStandardCode] =
-    useState<string>('');
+  const [internationalStandardCode, setInternationalStandardCode] = useState<string>('');
   const [data, setData] = useState<UnitData[]>([]);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
@@ -369,8 +369,8 @@ const UOMMaster: React.FC = () => {
 
   const downloadSampleFile = () => {
     const link = document.createElement('a');
-    link.href = '/uom_sample_upload.csv';
-    link.download = 'uom_sample_upload.csv';
+    link.href = '/uom_sample_upload.xlsx';
+    link.download = 'uom_sample_upload.xlsx';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -504,9 +504,11 @@ const UOMMaster: React.FC = () => {
                           <br />
                           <strong>Required Columns:</strong>
                           <ul className="mt-2 list-disc pl-5">
-                            <li>uom_code (Required)</li>
-                            <li>description (Required)</li>
-                            <li>international_standard_code (Optional)</li>
+                            {requiredHeaders.map((header, index) => (
+                              <li key={header}>
+                                {header} ({index < 2 ? 'Required' : 'Optional'})
+                              </li>
+                            ))}
                           </ul>
                           <br />
                           Download the sample file for reference.
@@ -571,26 +573,26 @@ const UOMMaster: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="whitespace-nowrap">Action</TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       UOM Code
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Description
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       International Standard Code
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Created on
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated by
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap font-semibold text-foreground">
                       Updated on
                     </TableHead>
                   </TableRow>

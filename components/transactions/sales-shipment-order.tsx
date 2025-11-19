@@ -424,12 +424,10 @@ const SalesShipmentOrder: React.FC = () => {
       return;
     }
 
-    // Check if at least one line item has users assigned
-    const hasAnyAssignment = Object.values(lineItemUsers).some(
-      users => users.length > 0
-    );
-    if (!hasAnyAssignment) {
-      toast.error('Please select at least one user to assign');
+    // Check if all line items have users assigned
+    const allAssigned = shipmentDetails.every(item => (lineItemUsers[`${item.lot_no}`] || []).length > 0);
+    if (!allAssigned) {
+      toast.error('Please assign at least one user to each line item');
       return;
     }
 
@@ -854,7 +852,7 @@ const SalesShipmentOrder: React.FC = () => {
               <div className="flex items-end gap-2 lg:col-span-2">
                 <Button
                   onClick={handleAssignUser}
-                  disabled={shipmentDetails.length === 0 || isAssigning}
+                  disabled={shipmentDetails.length === 0 || isAssigning || !shipmentDetails.every(item => (lineItemUsers[`${item.lot_no}`] || []).length > 0)}
                   className="flex-1"
                 >
                   {isAssigning ? (

@@ -27,6 +27,8 @@ import * as XLSX from 'xlsx';
 import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import TableSearch from '@/utils/tableSearch';
 import { Badge } from '@/components/ui/badge';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Pagination,
   PaginationContent,
@@ -180,12 +182,9 @@ const FGPutAwayReport: React.FC = () => {
     toast.success('Excel exported successfully');
   };
 
-  const exportToPdf = async (): Promise<void> => {
+  const exportToPdf = (): void => {
     try {
-      const jsPDF = (await import('jspdf')).default;
-      await import('jspdf-autotable');
-
-      const doc = new jsPDF('l', 'mm', 'a4');
+      const doc = new jsPDF('l', 'mm', 'a4') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Production Order No', dataKey: 'production_order_no' },
@@ -215,7 +214,7 @@ const FGPutAwayReport: React.FC = () => {
       doc.setFontSize(18);
       doc.text('FG Put Away Report', 14, 22);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         columns: columns,
         body: formattedData,
         startY: 30,
@@ -232,16 +231,20 @@ const FGPutAwayReport: React.FC = () => {
           8: { cellWidth: 35 },
         },
         headStyles: { fillColor: [66, 66, 66] },
-        didDrawPage: (data: any) => {
-          doc.setFontSize(8);
-          doc.text(
-            `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
-            doc.internal.pageSize.width / 2,
-            doc.internal.pageSize.height - 10,
-            { align: 'center' }
-          );
-        },
       });
+
+      // Add page numbers after table is generated
+      const totalPagesGenerated = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPagesGenerated; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+          `Page ${i} of ${totalPagesGenerated}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+      }
 
       const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
       doc.save(`FG_PUT_AWAY_REPORT_${formattedDateTime}.pdf`);
@@ -448,7 +451,7 @@ const FGPutAwayReport: React.FC = () => {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Boxes
+                  Total Boxes/Serial No
                 </CardTitle>
               </CardHeader>
               <CardContent>

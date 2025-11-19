@@ -128,15 +128,25 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setMfgDate(
-      selectedMfgDate ? selectedMfgDate.toISOString().split('T')[0] : ''
-    );
+    if (selectedMfgDate) {
+      const year = selectedMfgDate.getFullYear();
+      const month = String(selectedMfgDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedMfgDate.getDate()).padStart(2, '0');
+      setMfgDate(`${year}-${month}-${day}`);
+    } else {
+      setMfgDate('');
+    }
   }, [selectedMfgDate]);
 
   useEffect(() => {
-    setExpDate(
-      selectedExpDate ? selectedExpDate.toISOString().split('T')[0] : ''
-    );
+    if (selectedExpDate) {
+      const year = selectedExpDate.getFullYear();
+      const month = String(selectedExpDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedExpDate.getDate()).padStart(2, '0');
+      setExpDate(`${year}-${month}-${day}`);
+    } else {
+      setExpDate('');
+    }
   }, [selectedExpDate]);
 
   const fetchRecentOrders = async () => {
@@ -306,10 +316,12 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     const totalQty = Number(qty);
     const qtyPerLabelValue = Number(qtyPerLabel);
 
-    // Calculate number of labels: Total Qty ÷ Qty per Label
-    const numLabels = Math.floor(totalQty / qtyPerLabelValue);
+    // Calculate number of full labels and remainder
+    const numFullLabels = Math.floor(totalQty / qtyPerLabelValue);
+    const remainder = totalQty % qtyPerLabelValue;
+    const totalLabels = numFullLabels + (remainder > 0 ? 1 : 0);
 
-    if (numLabels <= 0) {
+    if (totalLabels <= 0) {
       toast.error(
         'Total quantity must be at least equal to quantity per label'
       );
@@ -345,21 +357,30 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
       const generatedSerials: SerialNumber[] = [];
 
-      for (let i = 0; i < numLabels; i++) {
-        const labelQty = qtyPerLabelValue;
-
+      // Generate full labels
+      for (let i = 0; i < numFullLabels; i++) {
         const serialNo = `${orderDetails.production_order_no}|${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + i}`;
 
         generatedSerials.push({
           serialNo,
-          qty: labelQty,
+          qty: qtyPerLabelValue,
+        });
+      }
+
+      // Generate label for remainder if any
+      if (remainder > 0) {
+        const serialNo = `${orderDetails.production_order_no}|${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + numFullLabels}`;
+
+        generatedSerials.push({
+          serialNo,
+          qty: remainder,
         });
       }
 
       setSerialNumbers(generatedSerials);
       setCurrentPage(1); // Reset to first page
       toast.success(
-        `Generated ${numLabels} label${numLabels > 1 ? 's' : ''} (${qtyPerLabelValue} ${orderDetails.uom_code} each)`
+        `Generated ${totalLabels} label${totalLabels > 1 ? 's' : ''}`
       );
 
       // Scroll to the Generated Serial Numbers card
@@ -779,6 +800,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                           step="0.01"
                           value={qtyPerLabel}
                           onChange={handleQtyPerLabelChange}
+                          onWheel={(e) => e.currentTarget.blur()}
                           placeholder="Enter qty per label"
                           className={cn(
                             'w-32',
@@ -987,6 +1009,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                               e.target.value
                             )
                           }
+                          onWheel={(e) => e.currentTarget.blur()}
                           className="w-24"
                         />
                       </TableCell>

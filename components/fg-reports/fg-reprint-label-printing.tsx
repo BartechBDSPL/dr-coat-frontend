@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,8 @@ import { DateTime } from 'luxon';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
+import { getUserID } from '@/utils/getFromSession';
+import CustomDropdown from '@/components/CustomDropdown';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +36,17 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 
+interface DropdownOption {
+  value: string;
+  label: string;
+}
+
+interface PrinterData {
+  printer_name: string;
+  printer_ip: string;
+  dpi: string;
+}
+
 interface ReprintData {
   production_order_no: string;
   item_code: string;
@@ -43,11 +56,12 @@ interface ReprintData {
   customer_name: string;
   finished_quantity: number;
   uom: string;
+  reprint_by: string;
   quantity: number;
   serial_no: string;
   print_quantity: number;
   print_date: string;
-  print_by: string;
+  reprint_reason: string;
 }
 
 interface ReprintInsertData {
@@ -61,11 +75,12 @@ interface ReprintInsertData {
   uom: string;
   quantity: number;
   serial_no: string;
-  print_by: string;
+  nt: number;
   print_quantity: number;
-  mfg_date: string;
-  exp_date: string;
-  reason: string;
+  reprint_by: string;
+  reprint_reason: string;
+  printer_ip: string;
+  dpi: string;
 }
 
 const FGReprintLabelPrinting: React.FC = () => {
@@ -81,10 +96,45 @@ const FGReprintLabelPrinting: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showReprintDialog, setShowReprintDialog] = useState(false);
   const [reprintReason, setReprintReason] = useState('');
-  const [numberOfLabels, setNumberOfLabels] = useState<number>(1);
-  const [mfgDate, setMfgDate] = useState<Date | undefined>(new Date());
-  const [expDate, setExpDate] = useState<Date | undefined>(new Date());
+  const [printers, setPrinters] = useState<PrinterData[]>([]);
+  const [selectedPrinter, setSelectedPrinter] = useState<string>('');
+  const [printerOptions, setPrinterOptions] = useState<DropdownOption[]>([]);
+  const [isFetchingPrinters, setIsFetchingPrinters] = useState(false);
   const token = Cookies.get('token');
+
+  useEffect(() => {
+    fetchPrinters();
+  }, []);
+
+  const fetchPrinters = async () => {
+    setIsFetchingPrinters(true);
+    try {
+      const response = await fetch(`/api/hht/printer-data`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch printers');
+      }
+
+      const data: PrinterData[] = await response.json();
+      setPrinters(data);
+
+      const options: DropdownOption[] = data.map(printer => ({
+        value: printer.printer_ip,
+        label: `${printer.printer_name} - ${printer.printer_ip}`,
+      }));
+
+      setPrinterOptions(options);
+    } catch (error: any) {
+      console.error('Error fetching printers:', error);
+      toast.error('Failed to fetch printers');
+    } finally {
+      setIsFetchingPrinters(false);
+    }
+  };
 
   const handleSearch = async () => {
     if (fromDate && toDate && fromDate > toDate) {
@@ -141,9 +191,7 @@ const FGReprintLabelPrinting: React.FC = () => {
     setSearchClicked(false);
     setSelectedItems(new Set());
     setReprintReason('');
-    setNumberOfLabels(1);
-    setMfgDate(new Date());
-    setExpDate(new Date());
+    setSelectedPrinter('');
   };
 
   const handleSelectItem = (serialNo: string) => {
@@ -178,13 +226,16 @@ const FGReprintLabelPrinting: React.FC = () => {
       return;
     }
 
-    if (numberOfLabels < 1) {
-      toast.error('Number of labels must be at least 1');
+    if (!selectedPrinter) {
+      toast.error('Please select a printer');
       return;
     }
 
-    if (mfgDate && expDate && mfgDate > expDate) {
-      toast.error('Manufacturing Date cannot be greater than Expiry Date');
+    // Get selected printer data
+    const printerData = printers.find(p => p.printer_ip === selectedPrinter);
+
+    if (!printerData) {
+      toast.error('Invalid printer selection');
       return;
     }
 
@@ -207,15 +258,12 @@ const FGReprintLabelPrinting: React.FC = () => {
           uom: item.uom,
           quantity: item.quantity,
           serial_no: item.serial_no,
-          print_by: item.print_by,
-          print_quantity: numberOfLabels,
-          mfg_date: mfgDate
-            ? DateTime.fromJSDate(mfgDate).toFormat("yyyy-MM-dd'T'HH:mm:ss")
-            : DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ss"),
-          exp_date: expDate
-            ? DateTime.fromJSDate(expDate).toFormat("yyyy-MM-dd'T'HH:mm:ss")
-            : DateTime.now().toFormat("yyyy-MM-dd'T'HH:mm:ss"),
-          reason: reprintReason.trim(),
+          nt: 1,
+          print_quantity: item.print_quantity,
+          reprint_by: getUserID(),
+          reprint_reason: reprintReason.trim(),
+          printer_ip: printerData.printer_ip,
+          dpi: printerData.dpi,
         };
 
         const response = await fetch(`/api/reprint/fg-reprint-label-insert`, {
@@ -239,11 +287,19 @@ const FGReprintLabelPrinting: React.FC = () => {
       setShowReprintDialog(false);
       setSelectedItems(new Set());
       setReprintReason('');
-      setNumberOfLabels(1);
-      setMfgDate(new Date());
-      setExpDate(new Date());
+      setSelectedPrinter('');
 
-      // Refresh data
+      // Clear search form and results
+      setProductionOrderNo('');
+      setItemCode('');
+      setItemDescription('');
+      setLotNo('');
+      setFromDate(new Date());
+      setToDate(new Date());
+      setReportData([]);
+      setSearchClicked(false);
+
+      // Refresh data (though it will be empty now)
       handleSearch();
     } catch (error) {
       console.error('Error reprinting labels:', error);
@@ -261,14 +317,7 @@ const FGReprintLabelPrinting: React.FC = () => {
     const totalItems = new Set(reportData.map(item => item.item_code)).size;
     const totalLots = new Set(reportData.map(item => item.lot_no)).size;
     const totalLabels = reportData.length;
-    const totalQuantity = reportData.reduce(
-      (sum, item) => sum + item.quantity,
-      0
-    );
-    const totalPrintQuantity = reportData.reduce(
-      (sum, item) => sum + item.print_quantity,
-      0
-    );
+
     const uniqueCustomers = new Set(reportData.map(item => item.customer_no))
       .size;
 
@@ -277,8 +326,6 @@ const FGReprintLabelPrinting: React.FC = () => {
       totalItems,
       totalLots,
       totalLabels,
-      totalQuantity,
-      totalPrintQuantity,
       uniqueCustomers,
     };
   };
@@ -397,7 +444,7 @@ const FGReprintLabelPrinting: React.FC = () => {
               </Popover>
             </div>
 
-            <div className="flex items-end gap-2 lg:col-span-3">
+            <div className="flex items-end gap-2">
               <Button
                 onClick={handleSearch}
                 disabled={isLoading}
@@ -420,7 +467,7 @@ const FGReprintLabelPrinting: React.FC = () => {
       {reportData.length > 0 ? (
         <>
           {/* Analytics Cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -462,32 +509,6 @@ const FGReprintLabelPrinting: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalLabels}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Quantity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.totalQuantity.toFixed(2)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Print Quantity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.totalPrintQuantity}
-                </div>
               </CardContent>
             </Card>
 
@@ -577,7 +598,7 @@ const FGReprintLabelPrinting: React.FC = () => {
                             .setZone('GMT')
                             .toFormat('yyyy-MM-dd HH:mm:ss')}
                         </TableCell>
-                        <TableCell>{row.print_by}</TableCell>
+                        <TableCell>{row.reprint_by}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -620,77 +641,22 @@ const FGReprintLabelPrinting: React.FC = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="numberOfLabels">Number of Labels *</Label>
-              <Input
-                id="numberOfLabels"
-                type="number"
-                min="1"
-                value={numberOfLabels}
-                onChange={e => setNumberOfLabels(parseInt(e.target.value) || 1)}
-                placeholder="Enter number of labels"
+              <Label htmlFor="printer">Assign Printer *</Label>
+              <CustomDropdown
+                options={printerOptions}
+                value={selectedPrinter}
+                onValueChange={setSelectedPrinter}
+                placeholder="Select printer..."
+                searchPlaceholder="Search printers..."
+                emptyText="No printers found"
+                loading={isFetchingPrinters}
+                disabled={isFetchingPrinters || printerOptions.length === 0}
               />
-            </div>
-            <div className="grid gap-2">
-              <Label>Manufacturing Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={'outline'}
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !mfgDate && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {mfgDate ? (
-                      DateTime.fromJSDate(mfgDate).toLocaleString(
-                        DateTime.DATE_FULL
-                      )
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={mfgDate}
-                    onSelect={setMfgDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid gap-2">
-              <Label>Expiry Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={'outline'}
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !expDate && 'text-muted-foreground'
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {expDate ? (
-                      DateTime.fromJSDate(expDate).toLocaleString(
-                        DateTime.DATE_FULL
-                      )
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={expDate}
-                    onSelect={setExpDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              {printerOptions.length === 0 && !isFetchingPrinters && (
+                <p className="text-xs text-red-500">
+                  No printers available. Please configure printers first.
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>

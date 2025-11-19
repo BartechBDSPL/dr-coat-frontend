@@ -40,6 +40,8 @@ import { DateTime } from 'luxon';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import TableSearch from '@/utils/tableSearch';
 
@@ -55,8 +57,9 @@ interface ReprintReportData {
   quantity: number;
   serial_no: string;
   print_quantity: number;
-  print_date: string;
-  print_by: string;
+  reprint_by: string;
+  reprint_date: string;
+  reprint_reason: string;
 }
 
 const FGReprintLabelReport: React.FC = () => {
@@ -84,7 +87,7 @@ const FGReprintLabelReport: React.FC = () => {
         'serial_no',
         'customer_no',
         'customer_name',
-        'print_by',
+        'reprint_by',
       ];
       return searchableFields.some(key => {
         const value = item[key];
@@ -177,10 +180,11 @@ const FGReprintLabelReport: React.FC = () => {
         Quantity: row.quantity,
         UOM: row.uom,
         'Print Quantity': row.print_quantity,
-        'Print Date': DateTime.fromISO(row.print_date)
+        'Reprint Date': DateTime.fromISO(row.reprint_date)
           .setZone('GMT')
           .toFormat('yyyy-MM-dd HH:mm:ss'),
-        'Print By': row.print_by,
+        'Reprint By': row.reprint_by,
+        'Reprint Reason': row.reprint_reason,
       }))
     );
 
@@ -198,12 +202,9 @@ const FGReprintLabelReport: React.FC = () => {
     toast.success('Excel exported successfully');
   };
 
-  const exportToPdf = async (): Promise<void> => {
+  const exportToPdf = (): void => {
     try {
-      const jsPDF = (await import('jspdf')).default;
-      await import('jspdf-autotable');
-
-      const doc = new jsPDF('l', 'mm', 'a4');
+      const doc = new jsPDF('l', 'mm', 'a4') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Production Order No', dataKey: 'production_order_no' },
@@ -216,8 +217,9 @@ const FGReprintLabelReport: React.FC = () => {
         { header: 'Quantity', dataKey: 'quantity' },
         { header: 'UOM', dataKey: 'uom' },
         { header: 'Print Qty', dataKey: 'print_quantity' },
-        { header: 'Print Date', dataKey: 'print_date' },
-        { header: 'Print By', dataKey: 'print_by' },
+        { header: 'Reprint Date', dataKey: 'reprint_date' },
+        { header: 'Reprint By', dataKey: 'reprint_by' },
+        { header: 'Reprint Reason', dataKey: 'reprint_reason' },
       ];
 
       const formattedData = filteredData.map((row, index) => ({
@@ -232,16 +234,17 @@ const FGReprintLabelReport: React.FC = () => {
         quantity: row.quantity,
         uom: row.uom,
         print_quantity: row.print_quantity,
-        print_date: DateTime.fromISO(row.print_date)
+        reprint_date: DateTime.fromISO(row.reprint_date)
           .setZone('GMT')
           .toFormat('yyyy-MM-dd HH:mm:ss'),
-        print_by: row.print_by,
+        reprint_by: row.reprint_by,
+        reprint_reason: row.reprint_reason,
       }));
 
       doc.setFontSize(18);
       doc.text('FG Reprint Label Report', 14, 22);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         columns: columns,
         body: formattedData,
         startY: 30,
@@ -260,18 +263,23 @@ const FGReprintLabelReport: React.FC = () => {
           10: { cellWidth: 15 },
           11: { cellWidth: 30 },
           12: { cellWidth: 20 },
+          13: { cellWidth: 25 },
         },
         headStyles: { fillColor: [66, 66, 66] },
-        didDrawPage: (data: any) => {
-          doc.setFontSize(8);
-          doc.text(
-            `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
-            doc.internal.pageSize.width / 2,
-            doc.internal.pageSize.height - 10,
-            { align: 'center' }
-          );
-        },
       });
+
+      // Add page numbers after table is generated
+      const totalPagesGenerated = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPagesGenerated; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+          `Page ${i} of ${totalPagesGenerated}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+      }
 
       const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
       doc.save(`FG_REPRINT_LABEL_REPORT_${formattedDateTime}.pdf`);
@@ -297,14 +305,7 @@ const FGReprintLabelReport: React.FC = () => {
     const totalItems = new Set(filteredData.map(item => item.item_code)).size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
     const totalReprints = filteredData.length;
-    const totalQuantity = filteredData.reduce(
-      (sum, item) => sum + item.quantity,
-      0
-    );
-    const totalPrintQuantity = filteredData.reduce(
-      (sum, item) => sum + item.print_quantity,
-      0
-    );
+
     const uniqueCustomers = new Set(filteredData.map(item => item.customer_no))
       .size;
 
@@ -313,8 +314,6 @@ const FGReprintLabelReport: React.FC = () => {
       totalItems,
       totalLots,
       totalReprints,
-      totalQuantity,
-      totalPrintQuantity,
       uniqueCustomers,
     };
   };
@@ -433,7 +432,7 @@ const FGReprintLabelReport: React.FC = () => {
               </Popover>
             </div>
 
-            <div className="flex items-end gap-2 lg:col-span-3">
+            <div className="flex items-end gap-2">
               <Button
                 onClick={handleSearch}
                 disabled={isLoading}
@@ -456,7 +455,7 @@ const FGReprintLabelReport: React.FC = () => {
       {reportData.length > 0 ? (
         <>
           {/* Analytics Cards */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -504,32 +503,6 @@ const FGReprintLabelReport: React.FC = () => {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Total Quantity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.totalQuantity.toFixed(2)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Print Quantity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.totalPrintQuantity}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Unique Customers
                 </CardTitle>
               </CardHeader>
@@ -552,9 +525,9 @@ const FGReprintLabelReport: React.FC = () => {
                   <Button onClick={exportToExcel} variant="outline" size="sm">
                     <FaFileExcel className="mr-2" /> Export Excel
                   </Button>
-                  <Button onClick={exportToPdf} variant="outline" size="sm">
+                  {/* <Button onClick={exportToPdf} variant="outline" size="sm">
                     <FaFilePdf className="mr-2" /> Export PDF
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
             </CardHeader>
@@ -596,8 +569,9 @@ const FGReprintLabelReport: React.FC = () => {
                       <TableHead>Quantity</TableHead>
                       <TableHead>UOM</TableHead>
                       <TableHead>Print Quantity</TableHead>
-                      <TableHead>Print Date</TableHead>
-                      <TableHead>Print By</TableHead>
+                      <TableHead>Reprint Date</TableHead>
+                      <TableHead>Reprint By</TableHead>
+                      <TableHead>Reprint Reason</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -615,11 +589,12 @@ const FGReprintLabelReport: React.FC = () => {
                         <TableCell>{row.uom}</TableCell>
                         <TableCell>{row.print_quantity}</TableCell>
                         <TableCell>
-                          {DateTime.fromISO(row.print_date)
+                          {DateTime.fromISO(row.reprint_date)
                             .setZone('GMT')
                             .toFormat('yyyy-MM-dd HH:mm:ss')}
                         </TableCell>
-                        <TableCell>{row.print_by}</TableCell>
+                        <TableCell>{row.reprint_by}</TableCell>
+                        <TableCell>{row.reprint_reason}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

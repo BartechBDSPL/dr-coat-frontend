@@ -41,6 +41,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import TableSearch from '@/utils/tableSearch';
 
 interface StockTransferPickingData {
@@ -198,12 +200,9 @@ const FGStockTransferPickingReport: React.FC = () => {
     toast.success('Excel exported successfully');
   };
 
-  const exportToPdf = async (): Promise<void> => {
+  const exportToPdf = (): void => {
     try {
-      const jsPDF = (await import('jspdf')).default;
-      await import('jspdf-autotable');
-
-      const doc = new jsPDF('l', 'mm', 'a4');
+      const doc = new jsPDF('l', 'mm', 'a4') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Transfer No', dataKey: 'stock_transfer_number' },
@@ -241,7 +240,7 @@ const FGStockTransferPickingReport: React.FC = () => {
       doc.setFontSize(18);
       doc.text('FG Stock Transfer Picking Report', 14, 22);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         columns: columns,
         body: formattedData,
         startY: 30,
@@ -262,16 +261,20 @@ const FGStockTransferPickingReport: React.FC = () => {
           12: { cellWidth: 15 },
         },
         headStyles: { fillColor: [66, 66, 66] },
-        didDrawPage: (data: any) => {
-          doc.setFontSize(8);
-          doc.text(
-            `Page ${data.pageNumber} of ${doc.getNumberOfPages()}`,
-            doc.internal.pageSize.width / 2,
-            doc.internal.pageSize.height - 10,
-            { align: 'center' }
-          );
-        },
       });
+
+      // Add page numbers after table is generated
+      const totalPagesGenerated = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPagesGenerated; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+          `Page ${i} of ${totalPagesGenerated}`,
+          doc.internal.pageSize.width / 2,
+          doc.internal.pageSize.height - 10,
+          { align: 'center' }
+        );
+      }
 
       const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
       doc.save(`FG_STOCK_TRANSFER_PICKING_${formattedDateTime}.pdf`);
