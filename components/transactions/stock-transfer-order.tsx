@@ -103,7 +103,9 @@ const StockTransferOrder: React.FC = () => {
   const [isLoadingRecent, setIsLoadingRecent] = useState(false);
   const [fromDate, setFromDate] = useState<Date | undefined>(new Date());
   const [toDate, setToDate] = useState<Date | undefined>(new Date());
-  const [transferOrderNumbers, setTransferOrderNumbers] = useState<string[]>([]);
+  const [transferOrderNumbers, setTransferOrderNumbers] = useState<string[]>(
+    []
+  );
   const [isFetchingOrders, setIsFetchingOrders] = useState(false);
   const orderNoRef = useRef<HTMLInputElement>(null);
   const token = Cookies.get('token');
@@ -201,7 +203,8 @@ const StockTransferOrder: React.FC = () => {
         }
       );
 
-      if (!response.ok) throw new Error('Failed to fetch transfer order numbers');
+      if (!response.ok)
+        throw new Error('Failed to fetch transfer order numbers');
 
       const result = await response.json();
 
@@ -578,7 +581,10 @@ const StockTransferOrder: React.FC = () => {
                   <CustomDropdown
                     value={transferOrderNo}
                     onValueChange={setTransferOrderNo}
-                    options={transferOrderNumbers.map(num => ({ value: num, label: num }))}
+                    options={transferOrderNumbers.map(num => ({
+                      value: num,
+                      label: num,
+                    }))}
                     placeholder="Select or Enter Transfer Order Number"
                     searchPlaceholder="Search transfer order..."
                     emptyText="No transfer orders found"
@@ -602,54 +608,54 @@ const StockTransferOrder: React.FC = () => {
 
               {/* User Assignment */}
               <div className="lg:col-span-5">
-              <Label htmlFor="assignUser">
-                Assign to Users (Global) *
-                <span className="ml-2 text-xs text-muted-foreground">
-                  {orderDetails.length === 0
-                    ? '(Fetch details first)'
-                    : '(Applied to all items)'}
-                </span>
-              </Label>
-              <MultiSelect
-                options={activeUsers}
-                defaultValue={selectedUsers}
-                onValueChange={setSelectedUsers}
-                placeholder={
-                  orderDetails.length === 0
-                    ? 'Fetch order details first'
-                    : 'Select users for all items'
-                }
-                maxCount={2}
-                className={
-                  orderDetails.length === 0
-                    ? 'cursor-not-allowed opacity-50'
-                    : ''
-                }
-              />
-            </div>
+                <Label htmlFor="assignUser">
+                  Assign to Users (Global) *
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {orderDetails.length === 0
+                      ? '(Fetch details first)'
+                      : '(Applied to all items)'}
+                  </span>
+                </Label>
+                <MultiSelect
+                  options={activeUsers}
+                  defaultValue={selectedUsers}
+                  onValueChange={setSelectedUsers}
+                  placeholder={
+                    orderDetails.length === 0
+                      ? 'Fetch order details first'
+                      : 'Select users for all items'
+                  }
+                  maxCount={2}
+                  className={
+                    orderDetails.length === 0
+                      ? 'cursor-not-allowed opacity-50'
+                      : ''
+                  }
+                />
+              </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-end gap-2 lg:col-span-2">
-              <Button
-                onClick={handleAssignUser}
-                disabled={orderDetails.length === 0 || isAssigning}
-                className="flex-1"
-              >
-                {isAssigning ? (
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <UserPlus className="mr-2 h-4 w-4" />
-                )}
-                Assign
-              </Button>
-              <Button
-                onClick={handleReset}
-                variant="outline"
-                disabled={isLoading || isAssigning}
-              >
-                Reset
-              </Button>
-            </div>
+              {/* Action Buttons */}
+              <div className="flex items-end gap-2 lg:col-span-2">
+                <Button
+                  onClick={handleAssignUser}
+                  disabled={orderDetails.length === 0 || isAssigning}
+                  className="flex-1"
+                >
+                  {isAssigning ? (
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <UserPlus className="mr-2 h-4 w-4" />
+                  )}
+                  Assign
+                </Button>
+                <Button
+                  onClick={handleReset}
+                  variant="outline"
+                  disabled={isLoading || isAssigning}
+                >
+                  Reset
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

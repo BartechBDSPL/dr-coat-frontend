@@ -6,12 +6,7 @@ import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -180,9 +175,16 @@ const FGShipmentPickingReport: React.FC = () => {
     );
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'FG Shipment Picking Report');
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'FG Shipment Picking Report'
+    );
     const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
-    XLSX.writeFile(workbook, `FG_SHIPMENT_PICKING_REPORT_${formattedDateTime}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `FG_SHIPMENT_PICKING_REPORT_${formattedDateTime}.xlsx`
+    );
     toast.success('Excel exported successfully');
   };
 
@@ -267,9 +269,8 @@ const FGShipmentPickingReport: React.FC = () => {
 
   // Analytics
   const getDashboardStats = () => {
-    const totalShipments = new Set(
-      filteredData.map(item => item.shipment_no)
-    ).size;
+    const totalShipments = new Set(filteredData.map(item => item.shipment_no))
+      .size;
     const totalItems = new Set(filteredData.map(item => item.item_code)).size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
     const totalQuantity = filteredData.reduce(
@@ -373,11 +374,7 @@ const FGShipmentPickingReport: React.FC = () => {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {toDate ? (
-                      format(toDate, 'PPP')
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
+                    {toDate ? format(toDate, 'PPP') : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -590,7 +587,9 @@ const FGShipmentPickingReport: React.FC = () => {
                     })}
                     <PaginationItem>
                       <PaginationNext
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        onClick={() =>
+                          setPage(p => Math.min(totalPages, p + 1))
+                        }
                         className={
                           page === totalPages
                             ? 'pointer-events-none opacity-50'

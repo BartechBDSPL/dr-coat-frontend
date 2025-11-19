@@ -277,7 +277,9 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     const totalQty = Number(qty);
 
     if (qtyPerLabelValue > totalQty) {
-      toast.error(`Quantity per label cannot be greater than total quantity (${totalQty})`);
+      toast.error(
+        `Quantity per label cannot be greater than total quantity (${totalQty})`
+      );
       return;
     }
 
@@ -303,12 +305,14 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
     const totalQty = Number(qty);
     const qtyPerLabelValue = Number(qtyPerLabel);
-    
+
     // Calculate number of labels: Total Qty ÷ Qty per Label
     const numLabels = Math.floor(totalQty / qtyPerLabelValue);
-    
+
     if (numLabels <= 0) {
-      toast.error('Total quantity must be at least equal to quantity per label');
+      toast.error(
+        'Total quantity must be at least equal to quantity per label'
+      );
       return;
     }
 
@@ -354,7 +358,9 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
       setSerialNumbers(generatedSerials);
       setCurrentPage(1); // Reset to first page
-      toast.success(`Generated ${numLabels} label${numLabels > 1 ? 's' : ''} (${qtyPerLabelValue} ${orderDetails.uom_code} each)`);
+      toast.success(
+        `Generated ${numLabels} label${numLabels > 1 ? 's' : ''} (${qtyPerLabelValue} ${orderDetails.uom_code} each)`
+      );
 
       // Scroll to the Generated Serial Numbers card
       setTimeout(() => {
@@ -378,19 +384,25 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
     const updatedSerials = [...serialNumbers];
     updatedSerials[index].qty = qtyValue;
-    
+
     // Calculate total of all serial quantities
-    const totalSerialQty = updatedSerials.reduce((sum, serial) => sum + serial.qty, 0);
+    const totalSerialQty = updatedSerials.reduce(
+      (sum, serial) => sum + serial.qty,
+      0
+    );
     const expectedQty = Number(qty);
-    
+
     // Check if total exceeds expected quantity
     if (totalSerialQty > expectedQty) {
-      toast.error(`Total quantity (${totalSerialQty.toFixed(2)}) cannot exceed the expected quantity (${expectedQty.toFixed(2)}). Please adjust the quantities.`, {
-        duration: 5000,
-      });
+      toast.error(
+        `Total quantity (${totalSerialQty.toFixed(2)}) cannot exceed the expected quantity (${expectedQty.toFixed(2)}). Please adjust the quantities.`,
+        {
+          duration: 5000,
+        }
+      );
       return;
     }
-    
+
     setSerialNumbers(updatedSerials);
   };
 
@@ -435,14 +447,14 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
     if (missingFields.length > 0) {
       toast.error(
-        `Please fill the following required fields: ${missingFields.map(f => f === 'printer' ? 'Assign Printer' : f).join(', ')}`
+        `Please fill the following required fields: ${missingFields.map(f => (f === 'printer' ? 'Assign Printer' : f)).join(', ')}`
       );
       return;
     }
 
     // Get selected printer data
     const printerData = printers.find(p => p.printer_ip === selectedPrinter);
-    
+
     if (!printerData) {
       toast.error('Invalid printer selection');
       return;
@@ -737,7 +749,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                       <TableHead>Remaining Print Qty</TableHead>
                       <TableHead>Total Qty</TableHead>
                       <TableHead>
-                        Qty per Label ({orderDetails.uom_code}) <span className="text-red-500">*</span>
+                        Qty per Label ({orderDetails.uom_code}){' '}
+                        <span className="text-red-500">*</span>
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -769,7 +782,9 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                           placeholder="Enter qty per label"
                           className={cn(
                             'w-32',
-                            invalidFields.has('qtyPerLabel') ? 'field-blink' : ''
+                            invalidFields.has('qtyPerLabel')
+                              ? 'field-blink'
+                              : ''
                           )}
                         />
                       </TableCell>
@@ -879,9 +894,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                   Assign Printer <span className="text-red-500">*</span>
                 </Label>
                 <div
-                  className={
-                    invalidFields.has('printer') ? 'field-blink' : ''
-                  }
+                  className={invalidFields.has('printer') ? 'field-blink' : ''}
                 >
                   <CustomDropdown
                     options={printerOptions}

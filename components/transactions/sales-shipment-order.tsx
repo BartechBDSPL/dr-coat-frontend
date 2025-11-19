@@ -115,7 +115,9 @@ const SalesShipmentOrder: React.FC = () => {
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [lineItemUsers, setLineItemUsers] = useState<LineItemUsers>({});
-  const [lineItemShipping, setLineItemShipping] = useState<LineItemShipping>({});
+  const [lineItemShipping, setLineItemShipping] = useState<LineItemShipping>(
+    {}
+  );
   const [activeUsers, setActiveUsers] = useState<DropdownOption[]>([]);
   const [recentShipments, setRecentShipments] = useState<RecentShipment[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(false);
@@ -297,7 +299,7 @@ const SalesShipmentOrder: React.FC = () => {
       const result: ApiResponse = await response.json();
       // Check if data is from API or already assigned
 
-      if(result.Status === 'F') {
+      if (result.Status === 'F') {
         toast.error(result.Message || 'Failed to fetch shipment details');
         setShipmentDetails([]);
         setLineItemUsers({});
@@ -307,11 +309,11 @@ const SalesShipmentOrder: React.FC = () => {
         // Show dialog for reassignment
         setIsFromAPI(false);
         setShowReassignDialog(true);
-        
+
         // Still load the data for display
         if (result.data && result.data.length > 0) {
           setShipmentDetails(result.data);
-          
+
           // Initialize line item users and shipping from existing data
           const initialLineItemUsers: LineItemUsers = {};
           const initialLineItemShipping: LineItemShipping = {};
@@ -319,7 +321,7 @@ const SalesShipmentOrder: React.FC = () => {
 
           result.data.forEach(item => {
             const key = `${item.lot_no}`;
-            
+
             if (item.assigned_user) {
               const users = item.assigned_user
                 .split(',')
@@ -367,7 +369,7 @@ const SalesShipmentOrder: React.FC = () => {
 
         result.data.forEach(item => {
           const key = `${item.lot_no}`;
-          
+
           if (item.assigned_user) {
             const users = item.assigned_user
               .split(',')
@@ -692,7 +694,9 @@ const SalesShipmentOrder: React.FC = () => {
                   Select users globally - they will automatically sync to all
                   line items
                 </li>
-                <li>Enter truck and driver details globally - applied to all items</li>
+                <li>
+                  Enter truck and driver details globally - applied to all items
+                </li>
                 <li>Modify users per line item in the table below if needed</li>
                 <li>Each line item can have different users assigned</li>
               </ul>
@@ -793,7 +797,10 @@ const SalesShipmentOrder: React.FC = () => {
                   <CustomDropdown
                     value={shipmentNo}
                     onValueChange={setShipmentNo}
-                    options={shipmentNumbers.map(num => ({ value: num, label: num }))}
+                    options={shipmentNumbers.map(num => ({
+                      value: num,
+                      label: num,
+                    }))}
                     placeholder="Select or Enter Shipment Number"
                     searchPlaceholder="Search shipment..."
                     emptyText="No shipments found"
@@ -1000,7 +1007,9 @@ const SalesShipmentOrder: React.FC = () => {
                     const key = `${item.lot_no}`;
                     return (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{index + 1}</TableCell>
+                        <TableCell className="font-medium">
+                          {index + 1}
+                        </TableCell>
                         <TableCell className="font-mono text-sm">
                           {item.item_code}
                         </TableCell>
@@ -1062,7 +1071,9 @@ const SalesShipmentOrder: React.FC = () => {
                   <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-3">
                     {globalTruckNo && (
                       <div>
-                        <span className="text-muted-foreground">Truck No: </span>
+                        <span className="text-muted-foreground">
+                          Truck No:{' '}
+                        </span>
                         <Badge variant="outline">{globalTruckNo}</Badge>
                       </div>
                     )}
@@ -1084,9 +1095,7 @@ const SalesShipmentOrder: React.FC = () => {
 
               {Object.keys(lineItemUsers).length > 0 && (
                 <div className="border-t pt-2">
-                  <div className="mb-2 text-sm font-medium">
-                    Users by Item:
-                  </div>
+                  <div className="mb-2 text-sm font-medium">Users by Item:</div>
                   <div className="space-y-2 text-xs">
                     {Object.entries(lineItemUsers)
                       .filter(([_, users]) => users.length > 0)
@@ -1197,11 +1206,11 @@ const SalesShipmentOrder: React.FC = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{shipment.truck_no || '-'}</Badge>
+                        <Badge variant="outline">
+                          {shipment.truck_no || '-'}
+                        </Badge>
                       </TableCell>
-                      <TableCell>
-                        {shipment.driver_name || '-'}
-                      </TableCell>
+                      <TableCell>{shipment.driver_name || '-'}</TableCell>
                       <TableCell>
                         {getStatusBadge(shipment.picked_status)}
                       </TableCell>
@@ -1237,13 +1246,15 @@ const SalesShipmentOrder: React.FC = () => {
             </DialogTitle>
             <DialogDescription className="space-y-2">
               <p>
-                All line items in this shipment have already been assigned to users.
+                All line items in this shipment have already been assigned to
+                users.
               </p>
               <p className="font-medium text-foreground">
                 Do you want to reassign users to these items?
               </p>
               <p className="text-xs text-muted-foreground">
-                Click "Reassign" to update the user assignments, or "Cancel" to go back.
+                Click "Reassign" to update the user assignments, or "Cancel" to
+                go back.
               </p>
             </DialogDescription>
           </DialogHeader>

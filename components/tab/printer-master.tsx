@@ -185,10 +185,10 @@ const PalletMaster: React.FC = () => {
     setPlantCode(row.plant_code);
     setIsEditing(true);
     setSelectedUnit(row.id?.toString() || row.printer_sr_no);
-    
+
     // Scroll to top of the page to show the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
+
     // insertAuditTrail({
     //   AppType: "Web",
     //   Activity: "Pallet Master",
@@ -359,7 +359,11 @@ const PalletMaster: React.FC = () => {
     }
     setIsUpdating(true);
     try {
-      const oldUnit = data.find(item => item.id?.toString() === selectedUnit || item.printer_sr_no === selectedUnit);
+      const oldUnit = data.find(
+        item =>
+          item.id?.toString() === selectedUnit ||
+          item.printer_sr_no === selectedUnit
+      );
 
       const updatedUnit = {
         id: selectedUnit,
@@ -614,12 +618,14 @@ const PalletMaster: React.FC = () => {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               <div className="space-y-2">
                 <Label htmlFor="plantCode">Plant Code *</Label>
-                <Select 
-                  value={plantCode} 
+                <Select
+                  value={plantCode}
                   onValueChange={setPlantCode}
                   disabled={isEditing}
                 >
-                  <SelectTrigger className={isEditing ? 'bg-muted cursor-not-allowed' : ''}>
+                  <SelectTrigger
+                    className={isEditing ? 'cursor-not-allowed bg-muted' : ''}
+                  >
                     <SelectValue placeholder="Select plant code..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -665,7 +671,7 @@ const PalletMaster: React.FC = () => {
                   required
                   ref={printerSrNoRef}
                   disabled={isEditing}
-                  className={isEditing ? 'bg-muted cursor-not-allowed' : ''}
+                  className={isEditing ? 'cursor-not-allowed bg-muted' : ''}
                 />
                 {isEditing && (
                   <p className="text-xs text-muted-foreground">
@@ -774,7 +780,8 @@ const PalletMaster: React.FC = () => {
                 />
               </div>
               <div className="text-sm text-muted-foreground">
-                Total: {filteredData.length} printer{filteredData.length !== 1 ? 's' : ''}
+                Total: {filteredData.length} printer
+                {filteredData.length !== 1 ? 's' : ''}
               </div>
             </div>
 
@@ -802,37 +809,57 @@ const PalletMaster: React.FC = () => {
                   </TableRow>
                 ) : paginatedData.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={10}
+                      className="py-8 text-center text-muted-foreground"
+                    >
                       No printers found
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginatedData.map(row => (
-                    <TableRow 
+                    <TableRow
                       key={row.id || row.printer_sr_no}
-                      className={selectedUnit === (row.id?.toString() || row.printer_sr_no) ? 'bg-muted/50' : ''}
+                      className={
+                        selectedUnit ===
+                        (row.id?.toString() || row.printer_sr_no)
+                          ? 'bg-muted/50'
+                          : ''
+                      }
                     >
                       <TableCell>
                         <Button
                           size="sm"
-                          variant={selectedUnit === (row.id?.toString() || row.printer_sr_no) ? 'default' : 'outline'}
+                          variant={
+                            selectedUnit ===
+                            (row.id?.toString() || row.printer_sr_no)
+                              ? 'default'
+                              : 'outline'
+                          }
                           onClick={() => handleRowSelect(row)}
                         >
-                          {selectedUnit === (row.id?.toString() || row.printer_sr_no) ? 'Selected' : 'Select'}
+                          {selectedUnit ===
+                          (row.id?.toString() || row.printer_sr_no)
+                            ? 'Selected'
+                            : 'Select'}
                         </Button>
                       </TableCell>
-                      <TableCell className="font-medium">{row.printer_name}</TableCell>
+                      <TableCell className="font-medium">
+                        {row.printer_name}
+                      </TableCell>
                       <TableCell>{row.printer_make}</TableCell>
                       <TableCell>{row.printer_sr_no}</TableCell>
                       <TableCell>{row.printer_ip}</TableCell>
                       <TableCell>{row.asset_code}</TableCell>
                       <TableCell>{row.dpi}</TableCell>
                       <TableCell>
-                        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                          row.status === 'active' 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                            row.status === 'active'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                          }`}
+                        >
                           {row.status}
                         </span>
                       </TableCell>
