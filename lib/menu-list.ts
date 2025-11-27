@@ -261,9 +261,9 @@ export function getMenuList(pathname: string): Group[] {
           value: '9',
           submenus: [
             {
-              href: '/reprint-fg-label-printing',
-              label: 'Reprint FG Label Printing',
-              active: pathname === '/reprint-fg-label-printing',
+              href: '/reprint-request',
+              label: 'Reprint Request',
+              active: pathname === '/reprint-request',
               value: '9_1',
             },
           ],
@@ -304,6 +304,12 @@ export function getMenuList(pathname: string): Group[] {
               label: 'Session Master',
               active: pathname === '/session-master',
               value: '6_5',
+            },
+            {
+              href: '/reprint-approval',
+              label: 'Reprint Approval',
+              active: pathname === '/reprint-approval',
+              value: '6_6',
             },
           ],
         },

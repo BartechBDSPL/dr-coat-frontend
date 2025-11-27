@@ -39,6 +39,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import CustomDropdown from '../CustomDropdown';
+import axios from '@/lib/axios-config';
 import {
   Popover,
   PopoverContent,
@@ -121,6 +122,9 @@ const SalesShipmentOrder: React.FC = () => {
   const [activeUsers, setActiveUsers] = useState<DropdownOption[]>([]);
   const [recentShipments, setRecentShipments] = useState<RecentShipment[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(false);
+  const [warehouses, setWarehouses] = useState<DropdownOption[]>([]);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [globalTruckNo, setGlobalTruckNo] = useState('');
   const [globalDriverName, setGlobalDriverName] = useState('');
   const [globalDriverContact, setGlobalDriverContact] = useState('');
@@ -135,7 +139,7 @@ const SalesShipmentOrder: React.FC = () => {
 
   useEffect(() => {
     shipmentNoRef.current?.focus();
-    fetchActiveUsers();
+    fetchWarehouses();
     fetchRecentShipments();
   }, []);
 
@@ -167,12 +171,39 @@ const SalesShipmentOrder: React.FC = () => {
     }
   }, [globalTruckNo, globalDriverName, globalDriverContact, shipmentDetails]);
 
-  const fetchActiveUsers = async () => {
+  const fetchWarehouses = async () => {
     try {
-      const response = await fetch(`/api/admin/active-user-ids`, {
+      const response = await axios.get('/api/master/get-all-wh-code');
+      const warehouseOptions: DropdownOption[] = response.data.map(
+        (item: { warehouse_code: string }) => ({
+          value: item.warehouse_code,
+          label: item.warehouse_code,
+        })
+      );
+      setWarehouses(warehouseOptions);
+    } catch (error: any) {
+      console.error('Error fetching warehouses:', error);
+      toast.error('Failed to fetch warehouses');
+    }
+  };
+
+  const fetchUsersByWarehouse = async (warehouseCode: string) => {
+    if (!warehouseCode) {
+      setActiveUsers([]);
+      return;
+    }
+
+    setIsLoadingUsers(true);
+    try {
+      const response = await fetch(`/api/admin/get-user-ids-by-warehouse`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({
+          warehouse_code: warehouseCode,
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -184,10 +215,24 @@ const SalesShipmentOrder: React.FC = () => {
       }));
 
       setActiveUsers(userOptions);
+      
+      if (userOptions.length === 0) {
+        toast.info('No users found for selected warehouse');
+      }
     } catch (error: any) {
-      console.error('Error fetching users:', error);
-      toast.error('Failed to fetch active users');
+      console.error('Error fetching users by warehouse:', error);
+      toast.error('Failed to fetch users for selected warehouse');
+      setActiveUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
     }
+  };
+
+  const handleWarehouseChange = (warehouseCode: string) => {
+    setSelectedWarehouse(warehouseCode);
+    setSelectedUsers([]);
+    setLineItemUsers({});
+    fetchUsersByWarehouse(warehouseCode);
   };
 
   const fetchRecentShipments = async () => {
@@ -783,6 +828,26 @@ const SalesShipmentOrder: React.FC = () => {
               </div>
             </div>
 
+            {/* Warehouse Selection Row */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div>
+                <Label htmlFor="warehouse">
+                  Warehouse Code *
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    (Select to load users)
+                  </span>
+                </Label>
+                <CustomDropdown
+                  options={warehouses}
+                  value={selectedWarehouse}
+                  onValueChange={handleWarehouseChange}
+                  placeholder="Select warehouse code"
+                  searchPlaceholder="Search warehouse..."
+                  emptyText="No warehouses found"
+                />
+              </div>
+            </div>
+
             {/* First Row: Shipment Number and User Assignment */}
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
               {/* Shipment Number Input with Dropdown */}
@@ -827,7 +892,9 @@ const SalesShipmentOrder: React.FC = () => {
                 <Label htmlFor="assignUser">
                   Assign to Users (Global) *
                   <span className="ml-2 text-xs text-muted-foreground">
-                    {shipmentDetails.length === 0
+                    {!selectedWarehouse
+                      ? '(Select warehouse first)'
+                      : shipmentDetails.length === 0
                       ? '(Fetch details first)'
                       : '(Applied to all items)'}
                   </span>
@@ -837,13 +904,20 @@ const SalesShipmentOrder: React.FC = () => {
                   defaultValue={selectedUsers}
                   onValueChange={setSelectedUsers}
                   placeholder={
-                    shipmentDetails.length === 0
+                    !selectedWarehouse
+                      ? 'Select warehouse first'
+                      : isLoadingUsers
+                      ? 'Loading users...'
+                      : shipmentDetails.length === 0
                       ? 'Fetch shipment details first'
+                      : activeUsers.length === 0
+                      ? 'No users available for this warehouse'
                       : 'Select users for all items'
                   }
                   maxCount={2}
+                  disabled={!selectedWarehouse || isLoadingUsers || shipmentDetails.length === 0}
                   className={
-                    shipmentDetails.length === 0
+                    !selectedWarehouse || isLoadingUsers || shipmentDetails.length === 0
                       ? 'cursor-not-allowed opacity-50'
                       : ''
                   }

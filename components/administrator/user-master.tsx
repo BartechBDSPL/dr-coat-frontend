@@ -189,17 +189,15 @@ const UserMaster: React.FC = () => {
 
   const fetchPlantNames = async () => {
     try {
-      const response = await axios.get(
-        '/api/master/warehouse/get-all-plant-code'
-      );
+      const response = await axios.get('/api/master/get-all-wh-code');
       setPlantOptions(
-        response.data.map((item: { plant_code: string }) => ({
-          value: item.plant_code,
-          label: item.plant_code,
+        response.data.map((item: { warehouse_code: string }) => ({
+          value: item.warehouse_code,
+          label: item.warehouse_code,
         }))
       );
     } catch (error: any) {
-      console.error('Error fetching plant names:', error);
+      console.error('Error fetching warehouse codes:', error);
     }
   };
 
@@ -252,7 +250,7 @@ const UserMaster: React.FC = () => {
 
   const handleSave = async () => {
     if (!formData.PlantCode) {
-      toast.error('Please select plant');
+      toast.error('Please select warehouse');
       return;
     }
     if (!formData.User_Role) {
@@ -325,7 +323,7 @@ const UserMaster: React.FC = () => {
 
   const handleUpdate = async () => {
     if (!formData.PlantCode) {
-      toast.error('Please select plant');
+      toast.error('Please select warehouse');
       return;
     }
     if (!formData.User_Role) {
@@ -484,17 +482,17 @@ const UserMaster: React.FC = () => {
                 }
               `}</style>
               <div className="space-y-2">
-                <Label htmlFor="PlantCode">Plant *</Label>
+                <Label htmlFor="PlantCode">Warehouse Code *</Label>
                 <CustomDropdown
                   options={plantOptions}
                   value={formData.PlantCode}
                   onValueChange={handlePlantChange}
-                  placeholder="Select plant code"
-                  searchPlaceholder="Search plant code..."
-                  emptyText="No plant code found."
+                  placeholder="Select warehouse code"
+                  searchPlaceholder="Search warehouse code..."
+                  emptyText="No warehouse code found."
                 />
                 <Label className="mt-1 block text-sm text-muted-foreground">
-                  Only active plants will be visible here
+                  Only active warehouses will be visible here
                 </Label>
               </div>
               <div className="space-y-2">
@@ -827,7 +825,7 @@ const UserMaster: React.FC = () => {
                       Locked Status
                     </TableHead>
                     <TableHead className="font-semibold text-foreground">
-                      Plant Code
+                      Warehouse Code
                     </TableHead>
                     <TableHead className="font-semibold text-foreground">
                       Email ID

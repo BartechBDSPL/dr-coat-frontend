@@ -41,6 +41,14 @@ import {
 import { cn } from '@/lib/utils';
 import { DateTime } from 'luxon';
 import { getUserID } from '@/utils/getFromSession';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface RecentProductionOrder {
   production_order_no: string;
@@ -77,6 +85,12 @@ interface ProductionOrderDetails {
   updated_date?: string;
 }
 
+interface WeightInfo {
+  baseWeight: number;
+  tareWeight: number;
+  totalWeight: number;
+}
+
 interface SerialNumber {
   serialNo: string;
   qty: number;
@@ -100,7 +114,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [recentOrders, setRecentOrders] = useState<DropdownOption[]>([]);
   const [qty, setQty] = useState<string>('');
-  const [qtyPerLabel, setQtyPerLabel] = useState<string>('');
+  const [baseWeight, setBaseWeight] = useState<string>('');
+  const [tareWeight, setTareWeight] = useState<string>('');
   const [serialNumbers, setSerialNumbers] = useState<SerialNumber[]>([]);
   const [isGeneratingSerials, setIsGeneratingSerials] = useState(false);
   const [isFetchingRecentOrders, setIsFetchingRecentOrders] = useState(true);
@@ -116,10 +131,17 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   const [selectedPrinter, setSelectedPrinter] = useState<string>('');
   const [printerOptions, setPrinterOptions] = useState<DropdownOption[]>([]);
   const [isFetchingPrinters, setIsFetchingPrinters] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const orderNoRef = useRef<HTMLInputElement>(null);
-  const qtyPerLabelRef = useRef<HTMLInputElement>(null);
+  const baseWeightRef = useRef<HTMLInputElement>(null);
+  const tareWeightRef = useRef<HTMLInputElement>(null);
   const serialNumbersCardRef = useRef<HTMLDivElement>(null);
   const token = Cookies.get('token');
+
+  // Calculate total weight
+  const totalWeight = baseWeight && tareWeight 
+    ? (Number(baseWeight) + Number(tareWeight)).toFixed(2)
+    : '';
 
   useEffect(() => {
     orderNoRef.current?.focus();
@@ -253,7 +275,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       setOrderDetails(data);
       setSerialNumbers([]);
       setQty(data.remaining_qty.toString());
-      setQtyPerLabel('');
+      setBaseWeight('');
+      setTareWeight('');
       toast.success(data.Message || 'Order details fetched successfully');
     } catch (error: any) {
       console.error('Error fetching order details:', error);
@@ -264,18 +287,18 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     }
   };
 
-  const handleQtyPerLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBaseWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const qtyPerLabelValue = Number(value);
+    const baseWeightValue = Number(value);
 
     if (value === '') {
-      setQtyPerLabel('');
+      setBaseWeight('');
       setSerialNumbers([]);
       return;
     }
 
-    if (qtyPerLabelValue <= 0) {
-      toast.error('Quantity per label must be greater than 0');
+    if (baseWeightValue <= 0) {
+      toast.error('Base weight must be greater than 0');
       return;
     }
 
@@ -286,20 +309,44 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
     const totalQty = Number(qty);
 
-    if (qtyPerLabelValue > totalQty) {
+    if (baseWeightValue > totalQty) {
       toast.error(
-        `Quantity per label cannot be greater than total quantity (${totalQty})`
+        `Base weight cannot be greater than total quantity (${totalQty})`
       );
       return;
     }
 
-    setQtyPerLabel(value);
+    setBaseWeight(value);
+    setSerialNumbers([]);
+  };
+
+  const handleTareWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const tareWeightValue = Number(value);
+
+    if (value === '') {
+      setTareWeight('');
+      setSerialNumbers([]);
+      return;
+    }
+
+    if (tareWeightValue < 0) {
+      toast.error('Tare weight cannot be negative');
+      return;
+    }
+
+    setTareWeight(value);
     setSerialNumbers([]);
   };
 
   const generateSerialNumbers = async () => {
-    if (!qtyPerLabel || Number(qtyPerLabel) <= 0) {
-      toast.error('Please enter a valid quantity per label');
+    if (!baseWeight || Number(baseWeight) <= 0) {
+      toast.error('Please enter a valid base weight');
+      return;
+    }
+
+    if (!tareWeight || Number(tareWeight) < 0) {
+      toast.error('Please enter a valid tare weight');
       return;
     }
 
@@ -314,16 +361,16 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     }
 
     const totalQty = Number(qty);
-    const qtyPerLabelValue = Number(qtyPerLabel);
+    const baseWeightValue = Number(baseWeight);
 
     // Calculate number of full labels and remainder
-    const numFullLabels = Math.floor(totalQty / qtyPerLabelValue);
-    const remainder = totalQty % qtyPerLabelValue;
+    const numFullLabels = Math.floor(totalQty / baseWeightValue);
+    const remainder = totalQty % baseWeightValue;
     const totalLabels = numFullLabels + (remainder > 0 ? 1 : 0);
 
     if (totalLabels <= 0) {
       toast.error(
-        'Total quantity must be at least equal to quantity per label'
+        'Total quantity must be at least equal to base weight'
       );
       return;
     }
@@ -363,7 +410,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
         generatedSerials.push({
           serialNo,
-          qty: qtyPerLabelValue,
+          qty: baseWeightValue,
         });
       }
 
@@ -458,7 +505,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
     const missingFields: string[] = [];
     if (!productionOrderNo.trim()) missingFields.push('productionOrderNo');
-    if (!qtyPerLabel.trim()) missingFields.push('qtyPerLabel');
+    if (!baseWeight.trim()) missingFields.push('baseWeight');
+    if (!tareWeight.trim()) missingFields.push('tareWeight');
     if (!qty.trim()) missingFields.push('qty');
     if (!selectedMfgDate) missingFields.push('mfgDate');
     if (!selectedExpDate) missingFields.push('expDate');
@@ -467,11 +515,27 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     setInvalidFields(new Set(missingFields));
 
     if (missingFields.length > 0) {
+      const fieldLabels: { [key: string]: string } = {
+        productionOrderNo: 'Production Order No',
+        baseWeight: 'Base Weight',
+        tareWeight: 'Tare Weight',
+        qty: 'Total Quantity',
+        mfgDate: 'Manufacturing Date',
+        expDate: 'Expiry Date',
+        printer: 'Assign Printer'
+      };
       toast.error(
-        `Please fill the following required fields: ${missingFields.map(f => (f === 'printer' ? 'Assign Printer' : f)).join(', ')}`
+        `Please fill the following required fields: ${missingFields.map(f => fieldLabels[f]).join(', ')}`
       );
       return;
     }
+
+    // Open confirmation dialog
+    setIsConfirmDialogOpen(true);
+  };
+
+  const confirmPrintLabels = async () => {
+    setIsConfirmDialogOpen(false);
 
     // Get selected printer data
     const printerData = printers.find(p => p.printer_ip === selectedPrinter);
@@ -507,7 +571,10 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         remaining_qty: orderDetails!.remaining_qty - Number(qty),
         printer_ip: printerData.printer_ip,
         dpi: printerData.dpi,
-      };
+        base_weight: Number(baseWeight),
+        tare_weight: Number(tareWeight),
+        total_weight: Number(totalWeight),
+      }
 
       const response = await fetch(
         `/api/transactions/fg-label-printing-insert`,
@@ -538,7 +605,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       setProductionOrderNo('');
       setOrderDetails(null);
       setQty('');
-      setQtyPerLabel('');
+      setBaseWeight('');
+      setTareWeight('');
       setSerialNumbers([]);
       setCurrentPage(1);
       setMfgDate('');
@@ -563,7 +631,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     setProductionOrderNo('');
     setOrderDetails(null);
     setQty('');
-    setQtyPerLabel('');
+    setBaseWeight('');
+    setTareWeight('');
     setSerialNumbers([]);
     setCurrentPage(1);
     setMfgDate('');
@@ -770,8 +839,15 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                       <TableHead>Remaining Print Qty</TableHead>
                       <TableHead>Total Qty</TableHead>
                       <TableHead>
-                        Qty per Label ({orderDetails.uom_code}){' '}
+                        Base Weight ({orderDetails.uom_code}){' '}
                         <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead>
+                        Tare Weight ({orderDetails.uom_code}){' '}
+                        <span className="text-red-500">*</span>
+                      </TableHead>
+                      <TableHead>
+                        Total Weight ({orderDetails.uom_code})
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -793,21 +869,50 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Input
-                          id="qtyPerLabel"
-                          ref={qtyPerLabelRef}
+                          id="baseWeight"
+                          ref={baseWeightRef}
                           type="number"
                           min="0.01"
                           step="0.01"
-                          value={qtyPerLabel}
-                          onChange={handleQtyPerLabelChange}
+                          value={baseWeight}
+                          onChange={handleBaseWeightChange}
                           onWheel={e => e.currentTarget.blur()}
-                          placeholder="Enter qty per label"
+                          placeholder="Enter base weight"
                           className={cn(
-                            'w-32',
-                            invalidFields.has('qtyPerLabel')
+                            'w-36',
+                            invalidFields.has('baseWeight')
                               ? 'field-blink'
                               : ''
                           )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          id="tareWeight"
+                          ref={tareWeightRef}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={tareWeight}
+                          onChange={handleTareWeightChange}
+                          onWheel={e => e.currentTarget.blur()}
+                          placeholder="Enter tare weight"
+                          className={cn(
+                            'w-36',
+                            invalidFields.has('tareWeight')
+                              ? 'field-blink'
+                              : ''
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          id="totalWeight"
+                          type="text"
+                          value={totalWeight}
+                          disabled
+                          className="w-32 bg-muted font-semibold"
+                          placeholder="Auto-calculated"
                         />
                       </TableCell>
                     </TableRow>
@@ -819,8 +924,10 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
               <Button
                 onClick={generateSerialNumbers}
                 disabled={
-                  !qtyPerLabel ||
-                  Number(qtyPerLabel) <= 0 ||
+                  !baseWeight ||
+                  Number(baseWeight) <= 0 ||
+                  !tareWeight ||
+                  Number(tareWeight) < 0 ||
                   !qty ||
                   Number(qty) <= 0 ||
                   isGeneratingSerials
@@ -1077,6 +1184,33 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Confirmation Dialog */}
+      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Print Labels</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to print the labels?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p><strong>Tare Weight:</strong> {tareWeight} {orderDetails?.uom_code}</p>
+            <p><strong>Total Weight:</strong> {totalWeight} {orderDetails?.uom_code}</p>
+            <p><strong>Base Weight:</strong> {baseWeight} {orderDetails?.uom_code}</p>
+            <p><strong>Total Serial Numbers:</strong> {serialNumbers.length}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmPrintLabels} disabled={isPrinting}>
+              {isPrinting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Print
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

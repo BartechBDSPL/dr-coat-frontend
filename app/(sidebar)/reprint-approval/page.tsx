@@ -8,11 +8,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import FGReprintLabelPrinting from '@/components/fg-reports/fg-reprint-label-printing';
+import ReprintApproval from '@/components/administrator/reprint-approval';
 
-export default function FGReprintLabelPrintingPage() {
+export default function DashboardPage() {
   return (
-    <ContentLayout title="FG Reprint Label Printing">
+    <ContentLayout title="Printer Master">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -22,11 +22,11 @@ export default function FGReprintLabelPrintingPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>FG Reprint Label Printing</BreadcrumbPage>
+            <BreadcrumbPage>Reprint Approval</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <FGReprintLabelPrinting />
+      <ReprintApproval />
     </ContentLayout>
   );
 }

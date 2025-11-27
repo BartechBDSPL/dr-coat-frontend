@@ -35,6 +35,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface DropdownOption {
   value: string;
@@ -204,11 +205,11 @@ const FGReprintLabelPrinting: React.FC = () => {
     setSelectedItems(newSelected);
   };
 
-  const handleSelectAll = () => {
-    if (selectedItems.size === reportData.length) {
-      setSelectedItems(new Set());
-    } else {
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
       setSelectedItems(new Set(reportData.map(item => item.serial_no)));
+    } else {
+      setSelectedItems(new Set());
     }
   };
 
@@ -546,14 +547,12 @@ const FGReprintLabelPrinting: React.FC = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={
                             selectedItems.size === reportData.length &&
                             reportData.length > 0
                           }
-                          onChange={handleSelectAll}
-                          className="cursor-pointer"
+                          onCheckedChange={handleSelectAll}
                         />
                       </TableHead>
                       <TableHead>Sr No</TableHead>
@@ -575,11 +574,9 @@ const FGReprintLabelPrinting: React.FC = () => {
                     {reportData.map((row, index) => (
                       <TableRow key={row.serial_no}>
                         <TableCell>
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={selectedItems.has(row.serial_no)}
-                            onChange={() => handleSelectItem(row.serial_no)}
-                            className="cursor-pointer"
+                            onCheckedChange={() => handleSelectItem(row.serial_no)}
                           />
                         </TableCell>
                         <TableCell>{index + 1}</TableCell>
