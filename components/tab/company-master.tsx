@@ -70,7 +70,7 @@ const CompanyMasterForm: React.FC = () => {
   const [oldData, setOldData] = useState<CompanyData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  // for search and pagination
+
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -147,7 +147,7 @@ const CompanyMasterForm: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -190,17 +190,6 @@ const CompanyMasterForm: React.FC = () => {
         toast.success(responseData.Message);
         fetchData();
         handleCancel();
-        // Insert audit trail for save action
-        // insertAuditTrail({
-        //   AppType: "Web",
-        //   Activity: "Company Master",
-        //   Action: `New Company Added by ${getUserID()}`,
-        //   NewData: JSON.stringify(newCompanyData),
-        //   OldData: "",
-        //   Remarks: "",
-        //   UserId: getUserID(),
-        //   PlantCode: ""
-        // });
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -227,17 +216,6 @@ const CompanyMasterForm: React.FC = () => {
     );
     setSelectedCID(selectedData.company_id);
     setIsUpdateMode(true);
-    // Insert audit trail for edit action
-    // insertAuditTrail({
-    //   AppType: "Web",
-    //   Activity: "Company Master",
-    //   Action: `Company Edit Initiated by ${getUserID()}`,
-    //   NewData: "",
-    //   OldData: JSON.stringify(selectedData),
-    //   Remarks: "",
-    //   UserId: getUserID(),
-    //   PlantCode: ""
-    // });
   };
 
   const handleCancel = () => {
@@ -287,7 +265,7 @@ const CompanyMasterForm: React.FC = () => {
         fetchData();
         handleCancel();
         toast.success(responseData.Message);
-        // Prepare audit data
+
         const changedFields: string[] = [];
         if (oldData.company_name !== formData.companyName)
           changedFields.push(
@@ -307,18 +285,6 @@ const CompanyMasterForm: React.FC = () => {
           changedFields.push(
             `Status: ${oldData.company_status} -> ${formData.companyStatus}`
           );
-
-        // Insert audit trail for update action
-        // insertAuditTrail({
-        //   AppType: "Web",
-        //   Activity: "Company Master",
-        //   Action: `Company Updated by ${getUserID()}`,
-        //   NewData: changedFields.join(", "),
-        //   OldData: JSON.stringify(oldData),
-        //   Remarks: "",
-        //   UserId: getUserID(),
-        //   PlantCode: ""
-        // });
       }
     } catch (error: any) {
       console.error('Error updating company:', error);
@@ -554,7 +520,6 @@ const CompanyMasterForm: React.FC = () => {
               </Table>
             </div>
 
-            {/* Pagination Component */}
             <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
               <div className="text-center sm:text-left">
                 {filteredData.length > 0

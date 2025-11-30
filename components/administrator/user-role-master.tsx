@@ -95,7 +95,7 @@ const hhtAccessOptions = [
 
 const UserRoleMaster: React.FC = () => {
   const [userRole, setUserRole] = useState('');
-  const [webAccess, setWebAccess] = useState<string[]>(['6_3']); // Set default to Change Password
+  const [webAccess, setWebAccess] = useState<string[]>(['6_3']);
   const [hhtAccess, setHhtAccess] = useState<string[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -104,7 +104,6 @@ const UserRoleMaster: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Search and pagination states
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -116,7 +115,6 @@ const UserRoleMaster: React.FC = () => {
     fetchUserRoles();
   }, []);
 
-  // Filter and pagination logic
   const filteredData = useMemo(() => {
     return userRoles.filter(role => {
       const searchableFields: (keyof UserRole)[] = [
@@ -148,7 +146,7 @@ const UserRoleMaster: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -493,7 +491,6 @@ const UserRoleMaster: React.FC = () => {
                 </div>
               </div>
 
-              {/* Pagination Component */}
               <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <div className="text-sm text-muted-foreground">
                   {filteredData.length > 0

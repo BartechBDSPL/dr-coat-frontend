@@ -95,7 +95,6 @@ const WarehouseMaster: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,17 +109,6 @@ const WarehouseMaster: React.FC = () => {
 
       await fetchWarehouseData();
       await delay(50);
-
-      // await insertAuditTrail({
-      //   AppType: "Web",
-      //   Activity: "Warehouse Master",
-      //   Action: `Warehouse Master Opened by ${getUserID()}`,
-      //   NewData: "",
-      //   OldData: "",
-      //   Remarks: "",
-      //   UserId: getUserID(),
-      //   PlantCode: getUserPlant()
-      // });
     };
 
     executeSequentially();
@@ -174,7 +162,6 @@ const WarehouseMaster: React.FC = () => {
       setIsLoading(false);
     }
   };
-  // Logic for pagination
 
   const filteredData = useMemo(() => {
     return warehouseData.filter(item => {
@@ -208,7 +195,7 @@ const WarehouseMaster: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -642,7 +629,6 @@ const WarehouseMaster: React.FC = () => {
                 </div>
               </div>
 
-              {/* Pagination Component */}
               <div className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <div className="text-sm text-muted-foreground">
                   {filteredData.length > 0

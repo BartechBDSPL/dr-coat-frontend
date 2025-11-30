@@ -118,7 +118,6 @@ const UserMaster: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Search and pagination states
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -138,7 +137,6 @@ const UserMaster: React.FC = () => {
     fetchUsers();
   }, []);
 
-  // Filter and pagination logic
   const filteredData = useMemo(() => {
     return users.filter(user => {
       const searchableFields: (keyof User)[] = [
@@ -175,7 +173,7 @@ const UserMaster: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -673,10 +671,7 @@ const UserMaster: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {/* <div className="space-y-2">
-                <Label htmlFor="PassExpDays">Password Exp Days *</Label>
-                <Input id="PassExpDays" name="PassExpDays" value={formData.PassExpDays} onChange={handleInputChange} required type="number" />
-              </div> */}
+
               <div className="space-y-2">
                 <Label htmlFor="Status">Status</Label>
                 <Select
@@ -704,7 +699,6 @@ const UserMaster: React.FC = () => {
               </div>
             </div>
 
-            {/* Change Password on First Login Option - Only show when creating new user */}
             {!isEditing && (
               <div className="mt-6 rounded-lg border border-muted bg-muted/30 p-4">
                 <div className="flex items-start space-x-3">
@@ -819,8 +813,7 @@ const UserMaster: React.FC = () => {
                     <TableHead className="font-semibold text-foreground">
                       Status
                     </TableHead>
-                    {/* <TableHead>Web menu Access</TableHead>
-                <TableHead>HHT menu Access</TableHead> */}
+
                     <TableHead className="font-semibold text-foreground">
                       Locked Status
                     </TableHead>
@@ -865,8 +858,7 @@ const UserMaster: React.FC = () => {
                           {user.user_status || 'Unknown'}
                         </Badge>
                       </TableCell>
-                      {/* <TableCell>{user.web_menu_access}</TableCell>
-                    <TableCell>{user.hht_menu_access}</TableCell> */}
+
                       <TableCell>{user.locked}</TableCell>
                       <TableCell>{user.plant_code}</TableCell>
                       <TableCell>{user.email}</TableCell>
@@ -876,7 +868,6 @@ const UserMaster: React.FC = () => {
                 </TableBody>
               </Table>
 
-              {/* Pagination Component */}
               <div className="md:text-md mt-4 flex items-center justify-between text-sm">
                 <div>
                   {filteredData.length > 0

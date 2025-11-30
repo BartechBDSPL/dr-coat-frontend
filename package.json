@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx && prettier --check .",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix && prettier --write ."
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix && prettier --write .",
+    "comments:remove": "node scripts/remove-comments.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -53,6 +54,7 @@
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.542.0",
     "luxon": "^3.7.2",
+    "motion": "^12.23.24",
     "next": "14.2.5",
     "next-themes": "^0.4.6",
     "nextra": "^3.2.3",

@@ -31,7 +31,6 @@ import {
 import CustomDropdown from '../CustomDropdown';
 import { toast } from 'sonner';
 
-// import insertAuditTrail from '@/utils/insertAudit';
 import { delay } from '@/utils/delay';
 import TableSearch from '@/utils/tableSearch';
 import { Loading } from '@/components/loading';
@@ -67,7 +66,6 @@ interface PlantDetail {
   barcode: string;
 }
 
-// Function to get user_id from the JWT token
 const getUserID = () => {
   const token = Cookies.get('token');
   if (token) {
@@ -96,7 +94,7 @@ const PlantMasterForm = () => {
   const [companyName, setCompanyName] = useState('');
   const [selectedPlantId, setSelectedPlantId] = useState<number | null>(null);
   const [oldData, setOldData] = useState<PlantDetail | null>(null);
-  // for search and pagination
+
   const token = Cookies.get('token');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -114,16 +112,6 @@ const PlantMasterForm = () => {
       await delay(50);
       fetchPlantDetails();
       await delay(50);
-      // await insertAuditTrail({
-      //   AppType: "Web",
-      //   Activity: "Plant Master",
-      //   Action: `Plant Master Opened by ${getUserID()}`,
-      //   NewData: "",
-      //   OldData: "",
-      //   Remarks: "",
-      //   UserId: getUserID(),
-      //   PlantCode: ""
-      // });
     };
     fetchDataSequentially();
   }, []);
@@ -157,7 +145,6 @@ const PlantMasterForm = () => {
     }
   };
 
-  // Logic for pagination
   const filteredData = useMemo(() => {
     return data.filter(item => {
       const searchableFields: (keyof PlantDetail)[] = [
@@ -193,7 +180,7 @@ const PlantMasterForm = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -233,18 +220,6 @@ const PlantMasterForm = () => {
     setStatus(row.plant_status);
     setIsUpdateMode(true);
     setSelectedPlantId(row.plant_id);
-
-    // // Insert audit trail for edit action
-    // insertAuditTrail({
-    //   AppType: "Web",
-    //   Activity: "Plant Master",
-    //   Action: `Plant Edit Initiated by ${getUserID()}`,
-    //   NewData: "",
-    //   OldData: JSON.stringify(row),
-    //   Remarks: "",
-    //   UserId: getUserID(),
-    //   PlantCode: row.plant_code
-    // });
   };
 
   const handleSave = async () => {
@@ -285,18 +260,6 @@ const PlantMasterForm = () => {
         toast.success(responseData.Message);
         fetchPlantDetails();
         handleCancel();
-
-        // // Insert audit trail for save action
-        // insertAuditTrail({
-        //   AppType: "Web",
-        //   Activity: "Plant Master",
-        //   Action: `New Plant Added by ${getUserID()}`,
-        //   NewData: JSON.stringify(newPlantData),
-        //   OldData: "",
-        //   Remarks: "",
-        //   UserId: getUserID(),
-        //   PlantCode: plantCode
-        // });
       } else if (responseData.Status === 'F') {
         toast.error(responseData.Message);
       }
@@ -348,10 +311,9 @@ const PlantMasterForm = () => {
         toast.error(responseData.Message);
       } else if (responseData.Status === 'T') {
         toast.success(responseData.Message);
-        fetchPlantDetails(); // Refresh the table
-        handleCancel(); // Reset the form
+        fetchPlantDetails();
+        handleCancel();
 
-        // Prepare audit data
         const changedFields: string[] = [];
         if (oldData.plant_name !== plantName)
           changedFields.push(
@@ -365,18 +327,6 @@ const PlantMasterForm = () => {
           changedFields.push(`State: ${oldData.state} -> ${state}`);
         if (oldData.plant_status !== status)
           changedFields.push(`Status: ${oldData.plant_status} -> ${status}`);
-
-        // Insert audit trail for update action
-        // insertAuditTrail({
-        //   AppType: "Web",
-        //   Activity: "Plant Master",
-        //   Action: `Plant Updated by ${getUserID()}`,
-        //   NewData: changedFields.join(", "),
-        //   OldData: JSON.stringify(oldData),
-        //   Remarks: "",
-        //   UserId: getUserID(),
-        //   PlantCode: plantCode
-        // });
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -645,7 +595,7 @@ const PlantMasterForm = () => {
                 </TableBody>
               </Table>
             </div>
-            {/* Pagination Component */}
+
             <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
               <div className="text-center sm:text-left">
                 {filteredData.length > 0

@@ -83,7 +83,6 @@ const ItemPackingMaster: React.FC = () => {
   const packingCodeRef = useRef<HTMLInputElement>(null);
   const userID = getUserID();
 
-  // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,14 +102,12 @@ const ItemPackingMaster: React.FC = () => {
       setIsLoading(true);
       setLoadingMessage('Loading Item Packing data...');
 
-      // After 4 seconds, change the message
       timer4s = setTimeout(() => {
         setLoadingMessage(
           'Fetching details from API, this might take a moment...'
         );
       }, 4000);
 
-      // After 10 seconds, change the message again
       timer10s = setTimeout(() => {
         setLoadingMessage('Hang on, almost there...');
       }, 10000);
@@ -164,7 +161,7 @@ const ItemPackingMaster: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -533,7 +530,6 @@ const ItemPackingMaster: React.FC = () => {
               </Table>
             </div>
 
-            {/* Pagination Component */}
             <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
               <div className="text-center sm:text-left">
                 {filteredData.length > 0

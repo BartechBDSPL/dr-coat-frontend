@@ -48,7 +48,6 @@ export function ThemeSelector() {
                 'flex items-center gap-3'
               )}
             >
-              {/* Simple theme color preview */}
               <div className="flex shrink-0 gap-1">
                 <div
                   className="h-3 w-3 rounded-full border border-border"
@@ -64,7 +63,6 @@ export function ThemeSelector() {
                 />
               </div>
 
-              {/* Theme details */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{theme.name}</span>

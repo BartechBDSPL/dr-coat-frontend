@@ -232,7 +232,6 @@ const FGReprintLabelPrinting: React.FC = () => {
       return;
     }
 
-    // Get selected printer data
     const printerData = printers.find(p => p.printer_ip === selectedPrinter);
 
     if (!printerData) {
@@ -290,7 +289,6 @@ const FGReprintLabelPrinting: React.FC = () => {
       setReprintReason('');
       setSelectedPrinter('');
 
-      // Clear search form and results
       setProductionOrderNo('');
       setItemCode('');
       setItemDescription('');
@@ -300,7 +298,6 @@ const FGReprintLabelPrinting: React.FC = () => {
       setReportData([]);
       setSearchClicked(false);
 
-      // Refresh data (though it will be empty now)
       handleSearch();
     } catch (error) {
       console.error('Error reprinting labels:', error);
@@ -310,7 +307,6 @@ const FGReprintLabelPrinting: React.FC = () => {
     }
   };
 
-  // Analytics
   const getDashboardStats = () => {
     const totalOrders = new Set(
       reportData.map(item => item.production_order_no)
@@ -467,7 +463,6 @@ const FGReprintLabelPrinting: React.FC = () => {
 
       {reportData.length > 0 ? (
         <>
-          {/* Analytics Cards */}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
@@ -527,7 +522,6 @@ const FGReprintLabelPrinting: React.FC = () => {
             </Card>
           </div>
 
-          {/* Data Table */}
           <Card>
             <CardHeader>
               <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -576,7 +570,9 @@ const FGReprintLabelPrinting: React.FC = () => {
                         <TableCell>
                           <Checkbox
                             checked={selectedItems.has(row.serial_no)}
-                            onCheckedChange={() => handleSelectItem(row.serial_no)}
+                            onCheckedChange={() =>
+                              handleSelectItem(row.serial_no)
+                            }
                           />
                         </TableCell>
                         <TableCell>{index + 1}</TableCell>

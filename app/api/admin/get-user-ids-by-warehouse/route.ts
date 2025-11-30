@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       `${BACKEND_URL}/api/admin/get-user-ids-by-warehouse`,
       body,
       {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
@@ -26,9 +26,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response.data, {
       status: 200,
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        'Cache-Control':
+          'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+        Pragma: 'no-cache',
+        Expires: '0',
       },
     });
   } catch (error: any) {
@@ -37,7 +38,8 @@ export async function POST(request: NextRequest) {
     if (error.response) {
       return NextResponse.json(
         {
-          error: error.response.data?.error || 'Failed to fetch users by warehouse',
+          error:
+            error.response.data?.error || 'Failed to fetch users by warehouse',
         },
         { status: error.response.status }
       );

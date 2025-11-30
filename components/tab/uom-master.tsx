@@ -89,23 +89,13 @@ const UOMMaster: React.FC = () => {
   const descRef = useRef<HTMLInputElement>(null);
   const internationalRef = useRef<HTMLInputElement>(null);
   const userID = getUserID();
-  // for search and pagination
+
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   useEffect(() => {
     const executeSequentially = async () => {
       await fetchData();
-      // await insertAuditTrail({
-      //   AppType: "Web",
-      //   Activity: "UOM Master",
-      //   Action: `UOM Master Opened by ${getUserID()}`,
-      //   NewData: "",
-      //   OldData: "",
-      //   Remarks: "",
-      //   UserId: getUserID(),
-      //   PlantCode: getUserPlant()
-      // });
     };
     executeSequentially();
   }, []);
@@ -139,16 +129,6 @@ const UOMMaster: React.FC = () => {
     setInternationalStandardCode(row.international_standard_code || '');
     setSelectedUnit(row);
     setIsEditing(true);
-    // insertAuditTrail({
-    //   AppType: "Web",
-    //   Activity: "UOM Master",
-    //   Action: `UOM Edit Initiated by ${getUserID()}`,
-    //   NewData: "",
-    //   OldData: JSON.stringify(row),
-    //   Remarks: "",
-    //   UserId: getUserID(),
-    //   PlantCode: getUserPlant()
-    // });
   };
 
   const handleCancel = () => {
@@ -193,16 +173,6 @@ const UOMMaster: React.FC = () => {
         toast.success(Message);
         fetchData();
         handleCancel();
-        // insertAuditTrail({
-        //   AppType: 'Web',
-        //   Activity: 'UOM Master',
-        //   Action: `New UOM Added by ${getUserID()}`,
-        //   NewData: JSON.stringify(newUnitData),
-        //   OldData: '',
-        //   Remarks: '',
-        //   UserId: getUserID(),
-        //   PlantCode: getUserPlant(),
-        // });
       }
     } catch (error: any) {
       console.error(error);
@@ -246,17 +216,6 @@ const UOMMaster: React.FC = () => {
         toast.success(Message);
         fetchData();
         handleCancel();
-
-        // insertAuditTrail({
-        //   AppType: "Web",
-        //   Activity: "UOM Master",
-        //   Action: `UOM Updated by ${getUserID()}`,
-        //   NewData: JSON.stringify(updatedUnit),
-        //   OldData: JSON.stringify(selectedUnit),
-        //   Remarks: "",
-        //   UserId: getUserID(),
-        //   PlantCode: getUserPlant()
-        // });
       } else if (Status === 'F') {
         toast.error(Message);
       } else {
@@ -303,7 +262,7 @@ const UOMMaster: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,7 +277,6 @@ const UOMMaster: React.FC = () => {
       return;
     }
 
-    // Validate file extension
     const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
     if (fileExt !== 'xlsx' && fileExt !== 'xls') {
       toast.error('Please upload an Excel file (.xlsx or .xls)');
@@ -364,7 +322,7 @@ const UOMMaster: React.FC = () => {
     } finally {
       setFileUploading(false);
       setSelectedFile(null);
-      // Reset the file input
+
       const fileInput = document.getElementById(
         'excel-upload'
       ) as HTMLInputElement;
@@ -470,7 +428,6 @@ const UOMMaster: React.FC = () => {
               </Button>
             </div>
 
-            {/* Excel Upload Section */}
             <div className="border-t pt-6">
               <div className="mb-4">
                 <h3 className="text-lg font-medium">Excel Upload</h3>
@@ -657,7 +614,6 @@ const UOMMaster: React.FC = () => {
               </Table>
             </div>
 
-            {/* Pagination Component */}
             <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
               <div className="text-center sm:text-left">
                 {filteredData.length > 0

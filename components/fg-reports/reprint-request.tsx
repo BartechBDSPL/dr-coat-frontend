@@ -26,7 +26,6 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
 import { getUserID } from '@/utils/getFromSession';
-import CustomDropdown from '@/components/CustomDropdown';
 import {
   Dialog,
   DialogContent,
@@ -47,7 +46,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface DropdownOption {
   value: string;
@@ -98,12 +103,10 @@ const ReprintRequest: React.FC = () => {
   const [reprintReason, setReprintReason] = useState('');
   const token = Cookies.get('token');
 
-  // Pagination and search states
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Approved requests states
   const [approvedRequests, setApprovedRequests] = useState<any[]>([]);
   const [approvedItemsPerPage, setApprovedItemsPerPage] = useState(10);
   const [approvedCurrentPage, setApprovedCurrentPage] = useState(1);
@@ -152,19 +155,22 @@ const ReprintRequest: React.FC = () => {
 
   const handleSearchTable = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const fetchApprovedRequests = async () => {
     setIsLoadingApproved(true);
     try {
-      const response = await fetch('/api/transactions/reprint-request-get-printing-pending', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        '/api/transactions/reprint-request-get-printing-pending',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
@@ -209,15 +215,23 @@ const ReprintRequest: React.FC = () => {
     setCurrentPage(1);
   }, []);
 
-  // Approved requests filtering and pagination
   const filteredApprovedData = useMemo(() => {
     return approvedRequests.filter(item => {
-      const searchableFields = ['request_by', 'serial_no', 'status', 'approved_by', 'reprint_reason'];
+      const searchableFields = [
+        'request_by',
+        'serial_no',
+        'status',
+        'approved_by',
+        'reprint_reason',
+      ];
       return searchableFields.some(key => {
         const value = item[key];
         return (
           value != null &&
-          value.toString().toLowerCase().includes(approvedSearchTerm.toLowerCase())
+          value
+            .toString()
+            .toLowerCase()
+            .includes(approvedSearchTerm.toLowerCase())
         );
       });
     });
@@ -225,7 +239,10 @@ const ReprintRequest: React.FC = () => {
 
   const paginatedApprovedData = useMemo(() => {
     const startIndex = (approvedCurrentPage - 1) * approvedItemsPerPage;
-    return filteredApprovedData.slice(startIndex, startIndex + approvedItemsPerPage);
+    return filteredApprovedData.slice(
+      startIndex,
+      startIndex + approvedItemsPerPage
+    );
   }, [filteredApprovedData, approvedCurrentPage, approvedItemsPerPage]);
 
   const totalApprovedPages = useMemo(
@@ -246,8 +263,6 @@ const ReprintRequest: React.FC = () => {
     setApprovedItemsPerPage(Number(value));
     setApprovedCurrentPage(1);
   }, []);
-
-
 
   const handleSearch = async () => {
     if (fromDate && toDate && fromDate > toDate) {
@@ -375,12 +390,13 @@ const ReprintRequest: React.FC = () => {
         return;
       }
 
-      toast.success(`Successfully submitted reprint request for ${selectedItems.size} label(s)`);
+      toast.success(
+        `Successfully submitted reprint request for ${selectedItems.size} label(s)`
+      );
       setShowReprintDialog(false);
       setSelectedItems(new Set());
       setReprintReason('');
 
-      // Clear search form and results
       setProductionOrderNo('');
       setItemCode('');
       setItemDescription('');
@@ -410,7 +426,6 @@ const ReprintRequest: React.FC = () => {
 
     if (!selectedPrintRequest) return;
 
-    // Get selected printer data
     const printerData = printers.find(p => p.printer_ip === selectedPrinter);
 
     if (!printerData) {
@@ -457,7 +472,6 @@ const ReprintRequest: React.FC = () => {
     }
   };
 
-  // Analytics
   const getDashboardStats = () => {
     const totalOrders = new Set(
       reportData.map(item => item.production_order_no)
@@ -614,7 +628,6 @@ const ReprintRequest: React.FC = () => {
 
       {reportData.length > 0 ? (
         <>
-          {/* Analytics Cards */}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
@@ -674,11 +687,12 @@ const ReprintRequest: React.FC = () => {
             </Card>
           </div>
 
-          {/* Data Table */}
           <Card>
             <CardHeader>
               <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-                <CardTitle>Label Data ({filteredData.length} records)</CardTitle>
+                <CardTitle>
+                  Label Data ({filteredData.length} records)
+                </CardTitle>
                 <Button
                   onClick={handleReprintClick}
                   disabled={selectedItems.size === 0}
@@ -746,10 +760,14 @@ const ReprintRequest: React.FC = () => {
                         <TableCell>
                           <Checkbox
                             checked={selectedItems.has(row.serial_no)}
-                            onCheckedChange={() => handleSelectItem(row.serial_no)}
+                            onCheckedChange={() =>
+                              handleSelectItem(row.serial_no)
+                            }
                           />
                         </TableCell>
-                        <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </TableCell>
                         <TableCell>{row.production_order_no}</TableCell>
                         <TableCell>{row.item_code}</TableCell>
                         <TableCell>{row.item_description}</TableCell>
@@ -772,7 +790,6 @@ const ReprintRequest: React.FC = () => {
                 </Table>
               </div>
 
-              {/* Pagination Component */}
               <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
                 <div className="text-center sm:text-left">
                   {filteredData.length > 0
@@ -854,7 +871,8 @@ const ReprintRequest: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Submit Reprint Request</DialogTitle>
             <DialogDescription>
-              Submit reprint request for {selectedItems.size} selected item(s). Request will be processed after approval.
+              Submit reprint request for {selectedItems.size} selected item(s).
+              Request will be processed after approval.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -883,10 +901,11 @@ const ReprintRequest: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Approved Requests Table */}
       <Card className="mt-5">
         <CardHeader>
-          <CardTitle>Approved Requests - Pending Print ({filteredApprovedData.length})</CardTitle>
+          <CardTitle>
+            Approved Requests - Pending Print ({filteredApprovedData.length})
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -929,19 +948,37 @@ const ReprintRequest: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">Action</TableHead>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">Sr No</TableHead>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">Requested By</TableHead>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">Request Date</TableHead>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">View Serials</TableHead>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">Total Serials</TableHead>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">Approved By</TableHead>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">Approved Date</TableHead>
-                      <TableHead className="whitespace-nowrap font-semibold text-foreground">Reason</TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        Action
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        Sr No
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        Requested By
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        Request Date
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        View Serials
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        Total Serials
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        Approved By
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        Approved Date
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap font-semibold text-foreground">
+                        Reason
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedApprovedData.map((request) => (
+                    {paginatedApprovedData.map(request => (
                       <TableRow key={request.sr_no}>
                         <TableCell>
                           <Button
@@ -953,7 +990,9 @@ const ReprintRequest: React.FC = () => {
                             Print
                           </Button>
                         </TableCell>
-                        <TableCell className="font-medium">{request.sr_no}</TableCell>
+                        <TableCell className="font-medium">
+                          {request.sr_no}
+                        </TableCell>
                         <TableCell>{request.request_by}</TableCell>
                         <TableCell className="whitespace-nowrap">
                           {DateTime.fromISO(request.request_date)
@@ -982,7 +1021,10 @@ const ReprintRequest: React.FC = () => {
                                 .toFormat('yyyy-MM-dd HH:mm:ss')
                             : '-'}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate" title={request.reprint_reason}>
+                        <TableCell
+                          className="max-w-xs truncate"
+                          title={request.reprint_reason}
+                        >
                           {request.reprint_reason}
                         </TableCell>
                       </TableRow>
@@ -1002,7 +1044,9 @@ const ReprintRequest: React.FC = () => {
                     <PaginationContent>
                       <PaginationItem>
                         <PaginationPrevious
-                          onClick={() => handleApprovedPageChange(approvedCurrentPage - 1)}
+                          onClick={() =>
+                            handleApprovedPageChange(approvedCurrentPage - 1)
+                          }
                           className={
                             approvedCurrentPage === 1
                               ? 'pointer-events-none opacity-50'
@@ -1022,7 +1066,9 @@ const ReprintRequest: React.FC = () => {
                             <PaginationItem key={pageNumber}>
                               <PaginationLink
                                 isActive={pageNumber === approvedCurrentPage}
-                                onClick={() => handleApprovedPageChange(pageNumber)}
+                                onClick={() =>
+                                  handleApprovedPageChange(pageNumber)
+                                }
                               >
                                 {pageNumber}
                               </PaginationLink>
@@ -1038,7 +1084,9 @@ const ReprintRequest: React.FC = () => {
                       })}
                       <PaginationItem>
                         <PaginationNext
-                          onClick={() => handleApprovedPageChange(approvedCurrentPage + 1)}
+                          onClick={() =>
+                            handleApprovedPageChange(approvedCurrentPage + 1)
+                          }
                           className={
                             approvedCurrentPage === totalApprovedPages
                               ? 'pointer-events-none opacity-50'
@@ -1055,38 +1103,53 @@ const ReprintRequest: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Print Dialog */}
       <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Print Labels</DialogTitle>
             <DialogDescription>
-              Select a printer to print {selectedPrintRequest?.total_number_of_serial} label(s)
+              Select a printer to print{' '}
+              {selectedPrintRequest?.total_number_of_serial} label(s)
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="serial-numbers">Serial Numbers ({selectedPrintRequest?.total_number_of_serial})</Label>
-              <div className="max-h-60 overflow-y-auto rounded-md border border-border p-3 bg-muted/30 space-y-2">
-                {selectedPrintRequest?.serial_no.split('$').map((serial: string, index: number) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-background rounded-md border border-border">
-                    <span className="text-sm font-medium text-muted-foreground min-w-[2rem]">
-                      {index + 1}.
-                    </span>
-                    <span className="font-mono text-sm text-foreground flex-1">{serial}</span>
-                  </div>
-                ))}
+              <Label htmlFor="serial-numbers">
+                Serial Numbers ({selectedPrintRequest?.total_number_of_serial})
+              </Label>
+              <div className="max-h-60 space-y-2 overflow-y-auto rounded-md border border-border bg-muted/30 p-3">
+                {selectedPrintRequest?.serial_no
+                  .split('$')
+                  .map((serial: string, index: number) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 rounded-md border border-border bg-background p-2"
+                    >
+                      <span className="min-w-[2rem] text-sm font-medium text-muted-foreground">
+                        {index + 1}.
+                      </span>
+                      <span className="flex-1 font-mono text-sm text-foreground">
+                        {serial}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="printer">Select Printer *</Label>
-              <Select value={selectedPrinter} onValueChange={setSelectedPrinter}>
+              <Select
+                value={selectedPrinter}
+                onValueChange={setSelectedPrinter}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a printer" />
                 </SelectTrigger>
                 <SelectContent>
-                  {printers.map((printer) => (
-                    <SelectItem key={printer.printer_ip} value={printer.printer_ip}>
+                  {printers.map(printer => (
+                    <SelectItem
+                      key={printer.printer_ip}
+                      value={printer.printer_ip}
+                    >
                       {printer.printer_name} - {printer.printer_ip}
                     </SelectItem>
                   ))}
@@ -1105,29 +1168,33 @@ const ReprintRequest: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button onClick={handlePrintConfirm} disabled={isPrinting || !selectedPrinter}>
+            <Button
+              onClick={handlePrintConfirm}
+              disabled={isPrinting || !selectedPrinter}
+            >
               {isPrinting ? 'Printing...' : 'Print'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* View Serial Numbers Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Serial Numbers ({selectedSerials.length})</DialogTitle>
+            <DialogTitle className="text-foreground">
+              Serial Numbers ({selectedSerials.length})
+            </DialogTitle>
           </DialogHeader>
-          <div className="max-h-96 overflow-y-auto space-y-2 pr-2">
+          <div className="max-h-96 space-y-2 overflow-y-auto pr-2">
             {selectedSerials.map((serial, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2 p-3 bg-muted rounded-md border border-border"
+                className="flex items-center gap-2 rounded-md border border-border bg-muted p-3"
               >
                 <span className="text-sm font-medium text-muted-foreground">
                   {index + 1}.
                 </span>
-                <span className="font-mono text-sm text-foreground flex-1">
+                <span className="flex-1 font-mono text-sm text-foreground">
                   {serial}
                 </span>
               </div>

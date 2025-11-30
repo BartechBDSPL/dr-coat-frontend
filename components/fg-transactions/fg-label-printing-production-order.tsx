@@ -138,10 +138,10 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   const serialNumbersCardRef = useRef<HTMLDivElement>(null);
   const token = Cookies.get('token');
 
-  // Calculate total weight
-  const totalWeight = baseWeight && tareWeight 
-    ? (Number(baseWeight) + Number(tareWeight)).toFixed(2)
-    : '';
+  const totalWeight =
+    baseWeight && tareWeight
+      ? (Number(baseWeight) + Number(tareWeight)).toFixed(2)
+      : '';
 
   useEffect(() => {
     orderNoRef.current?.focus();
@@ -363,22 +363,18 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     const totalQty = Number(qty);
     const baseWeightValue = Number(baseWeight);
 
-    // Calculate number of full labels and remainder
     const numFullLabels = Math.floor(totalQty / baseWeightValue);
     const remainder = totalQty % baseWeightValue;
     const totalLabels = numFullLabels + (remainder > 0 ? 1 : 0);
 
     if (totalLabels <= 0) {
-      toast.error(
-        'Total quantity must be at least equal to base weight'
-      );
+      toast.error('Total quantity must be at least equal to base weight');
       return;
     }
 
     setIsGeneratingSerials(true);
 
     try {
-      // Fetch starting serial number
       const response = await fetch(
         `/api/transactions/production-order/serial-no`,
         {
@@ -404,7 +400,6 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
       const generatedSerials: SerialNumber[] = [];
 
-      // Generate full labels
       for (let i = 0; i < numFullLabels; i++) {
         const serialNo = `${orderDetails.production_order_no}|${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + i}`;
 
@@ -414,7 +409,6 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         });
       }
 
-      // Generate label for remainder if any
       if (remainder > 0) {
         const serialNo = `${orderDetails.production_order_no}|${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + numFullLabels}`;
 
@@ -425,12 +419,11 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       }
 
       setSerialNumbers(generatedSerials);
-      setCurrentPage(1); // Reset to first page
+      setCurrentPage(1);
       toast.success(
         `Generated ${totalLabels} label${totalLabels > 1 ? 's' : ''}`
       );
 
-      // Scroll to the Generated Serial Numbers card
       setTimeout(() => {
         serialNumbersCardRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -453,14 +446,12 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     const updatedSerials = [...serialNumbers];
     updatedSerials[index].qty = qtyValue;
 
-    // Calculate total of all serial quantities
     const totalSerialQty = updatedSerials.reduce(
       (sum, serial) => sum + serial.qty,
       0
     );
     const expectedQty = Number(qty);
 
-    // Check if total exceeds expected quantity
     if (totalSerialQty > expectedQty) {
       toast.error(
         `Total quantity (${totalSerialQty.toFixed(2)}) cannot exceed the expected quantity (${expectedQty.toFixed(2)}). Please adjust the quantities.`,
@@ -522,7 +513,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         qty: 'Total Quantity',
         mfgDate: 'Manufacturing Date',
         expDate: 'Expiry Date',
-        printer: 'Assign Printer'
+        printer: 'Assign Printer',
       };
       toast.error(
         `Please fill the following required fields: ${missingFields.map(f => fieldLabels[f]).join(', ')}`
@@ -530,14 +521,12 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       return;
     }
 
-    // Open confirmation dialog
     setIsConfirmDialogOpen(true);
   };
 
   const confirmPrintLabels = async () => {
     setIsConfirmDialogOpen(false);
 
-    // Get selected printer data
     const printerData = printers.find(p => p.printer_ip === selectedPrinter);
 
     if (!printerData) {
@@ -574,19 +563,16 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         base_weight: Number(baseWeight),
         tare_weight: Number(tareWeight),
         total_weight: Number(totalWeight),
-      }
+      };
 
-      const response = await fetch(
-        `/api/transactions/fg-label-printing-insert`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await fetch(`/api/existing-data/insert-label-printing`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to print labels');
@@ -601,7 +587,6 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
 
       toast.success(data.Message || 'Labels printed successfully!');
 
-      // Reset all states
       setProductionOrderNo('');
       setOrderDetails(null);
       setQty('');
@@ -617,7 +602,6 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       setInvalidFields(new Set());
       orderNoRef.current?.focus();
 
-      // Refetch recent orders
       fetchRecentOrders();
     } catch (error: any) {
       console.error('Error printing labels:', error);
@@ -663,15 +647,15 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         dangerouslySetInnerHTML={{
           __html: `
           @keyframes field-blink {
-            0%, 100% { 
-              opacity: 1; 
-              background-color: transparent; 
-              border-color: hsl(var(--input)); 
+            0%, 100% {
+              opacity: 1;
+              background-color: transparent;
+              border-color: hsl(var(--input));
             }
-            50% { 
-              opacity: 0.8; 
-              background-color: rgba(239, 68, 68, 0.15); 
-              border-color: rgb(239, 68, 68); 
+            50% {
+              opacity: 0.8;
+              background-color: rgba(239, 68, 68, 0.15);
+              border-color: rgb(239, 68, 68);
             }
           }
           .field-blink {
@@ -680,7 +664,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         `,
         }}
       />
-      {/* Production Order Input Section */}
+
       <Card>
         <CardHeader>
           <CardTitle>Production Order Details</CardTitle>
@@ -730,7 +714,6 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Order Details Display */}
       {orderDetails && (
         <Card>
           <CardHeader>
@@ -819,14 +802,12 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         </Card>
       )}
 
-      {/* Print Quantity Section */}
       {orderDetails && (
         <Card>
           <CardHeader>
             <CardTitle>Label Generation</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Order Details Table */}
             <div className="mt-6">
               <div className="rounded-md border">
                 <Table>
@@ -880,9 +861,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                           placeholder="Enter base weight"
                           className={cn(
                             'w-36',
-                            invalidFields.has('baseWeight')
-                              ? 'field-blink'
-                              : ''
+                            invalidFields.has('baseWeight') ? 'field-blink' : ''
                           )}
                         />
                       </TableCell>
@@ -899,9 +878,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                           placeholder="Enter tare weight"
                           className={cn(
                             'w-36',
-                            invalidFields.has('tareWeight')
-                              ? 'field-blink'
-                              : ''
+                            invalidFields.has('tareWeight') ? 'field-blink' : ''
                           )}
                         />
                       </TableCell>
@@ -943,7 +920,6 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         </Card>
       )}
 
-      {/* Date Selection Section */}
       {orderDetails && (
         <Card>
           <CardHeader>
@@ -1047,7 +1023,6 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         </Card>
       )}
 
-      {/* Serial Numbers Table */}
       {serialNumbers.length > 0 && (
         <Card ref={serialNumbersCardRef}>
           <CardHeader>
@@ -1185,7 +1160,6 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         </Card>
       )}
 
-      {/* Confirmation Dialog */}
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1195,13 +1169,27 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <p><strong>Tare Weight:</strong> {tareWeight} {orderDetails?.uom_code}</p>
-            <p><strong>Total Weight:</strong> {totalWeight} {orderDetails?.uom_code}</p>
-            <p><strong>Base Weight:</strong> {baseWeight} {orderDetails?.uom_code}</p>
-            <p><strong>Total Serial Numbers:</strong> {serialNumbers.length}</p>
+            <p>
+              <strong>Tare Weight:</strong> {tareWeight}{' '}
+              {orderDetails?.uom_code}
+            </p>
+            <p>
+              <strong>Total Weight:</strong> {totalWeight}{' '}
+              {orderDetails?.uom_code}
+            </p>
+            <p>
+              <strong>Base Weight:</strong> {baseWeight}{' '}
+              {orderDetails?.uom_code}
+            </p>
+            <p>
+              <strong>Total Serial Numbers:</strong> {serialNumbers.length}
+            </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button onClick={confirmPrintLabels} disabled={isPrinting}>

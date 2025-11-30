@@ -22,8 +22,7 @@ export async function POST(request: NextRequest) {
     if (error.response) {
       return NextResponse.json(
         {
-          error:
-            error.response.data?.error || 'Failed to print reprint labels',
+          error: error.response.data?.error || 'Failed to print reprint labels',
         },
         { status: error.response.status }
       );

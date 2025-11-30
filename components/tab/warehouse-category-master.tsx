@@ -77,7 +77,7 @@ const WarehouseCategoryMaster: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  // for search and pagination
+
   const warehouseCategoryCodeRef = useRef<HTMLInputElement>(null);
   const warehouseCategoryDesccRef = useRef<HTMLInputElement>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -111,16 +111,6 @@ const WarehouseCategoryMaster: React.FC = () => {
   useEffect(() => {
     const executeSequentially = async () => {
       fetchData();
-      // await insertAuditTrail({
-      //   AppType: "Web",
-      //   Activity: "Warehouse Category Master",
-      //   Action: `Warehouse Category Master Opened by ${getUserID()}`,
-      //   NewData: "",
-      //   OldData: "",
-      //   Remarks: "",
-      //   UserId: getUserID(),
-      //   PlantCode: getUserPlant()
-      // });
     };
     executeSequentially();
   }, [fetchData]);
@@ -155,7 +145,7 @@ const WarehouseCategoryMaster: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -173,16 +163,6 @@ const WarehouseCategoryMaster: React.FC = () => {
     setSelectedCategoryCode(row.category_code);
     setIsEditing(true);
     setOldData(row);
-    // insertAuditTrail({
-    //   AppType: "Web",
-    //   Activity: "Warehouse Category Master",
-    //   Action: `Category Edit Initiated by ${getUserID()}`,
-    //   NewData: "",
-    //   OldData: JSON.stringify(row),
-    //   Remarks: "",
-    //   UserId: getUserID(),
-    //   PlantCode: row.category_code
-    // });
   };
 
   const handleCancel = () => {
@@ -306,17 +286,6 @@ const WarehouseCategoryMaster: React.FC = () => {
             changedFields.push(
               `Category Desc: ${oldData.category_desc} -> ${categoryDesc}`
             );
-
-          // insertAuditTrail({
-          //   AppType: "Web",
-          //   Activity: "Warehouse Category Master",
-          //   Action: `Category Updated by ${getUserID()}`,
-          //   NewData: changedFields.join(", "),
-          //   OldData: JSON.stringify(oldData),
-          //   Remarks: "",
-          //   UserId: getUserID(),
-          //   PlantCode: categoryCode
-          // });
         }
       }
     } catch (error: any) {
@@ -518,7 +487,6 @@ const WarehouseCategoryMaster: React.FC = () => {
               </Table>
             </div>
 
-            {/* Pagination Component */}
             <div className="mt-4 flex flex-col items-center justify-between space-y-2 text-xs sm:flex-row sm:space-y-0 sm:text-sm">
               <div className="text-center sm:text-left">
                 {filteredData.length > 0

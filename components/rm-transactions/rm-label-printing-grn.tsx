@@ -98,7 +98,6 @@ const RMLabelPrintingGRN: React.FC = () => {
       const data: GRNDetails = await response.json();
       setGrnDetails(data);
 
-      // Set table items
       setTableItems([
         {
           item_code: data.item_code,
@@ -150,7 +149,6 @@ const RMLabelPrintingGRN: React.FC = () => {
 
   return (
     <div className="mt-5 space-y-6">
-      {/* GRN Input Section */}
       <Card>
         <CardHeader>
           <CardTitle>GRN Details</CardTitle>
@@ -190,7 +188,6 @@ const RMLabelPrintingGRN: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* GRN Details Display */}
       {grnDetails && (
         <Card>
           <CardHeader>
@@ -243,7 +240,6 @@ const RMLabelPrintingGRN: React.FC = () => {
         </Card>
       )}
 
-      {/* Items Table */}
       {tableItems.length > 0 && (
         <Card>
           <CardHeader>

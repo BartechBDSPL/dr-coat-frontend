@@ -56,7 +56,6 @@ interface SessionData {
   updated_on: string;
 }
 
-// Zod schema for session validation
 const sessionSchema = z
   .object({
     session_time: z
@@ -107,7 +106,7 @@ const SessionMasterForm: React.FC = () => {
   const [isValid, setIsValid] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  // for search and pagination
+
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -119,7 +118,6 @@ const SessionMasterForm: React.FC = () => {
     fetchData();
   }, []);
 
-  // Real-time validation effect
   useEffect(() => {
     if (!isEditMode) {
       setValidationErrors({});
@@ -202,7 +200,7 @@ const SessionMasterForm: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -327,7 +325,6 @@ const SessionMasterForm: React.FC = () => {
 
   return (
     <>
-      {/* Information Card */}
       <Card className="mx-auto mt-5 w-full border-border bg-card">
         <CardContent className="p-4 md:p-6">
           <Alert className="border-accent bg-accent/10">
@@ -343,7 +340,6 @@ const SessionMasterForm: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Form Card */}
       <Card className="mx-auto mt-5 w-full border-border bg-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-lg text-foreground md:text-xl">
@@ -422,7 +418,6 @@ const SessionMasterForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Validation Status Indicator */}
             {isEditMode && (
               <div className="mt-4 rounded-md border p-3">
                 <div className="flex items-center gap-2">
@@ -475,7 +470,6 @@ const SessionMasterForm: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Table Card */}
       <Card className="mx-auto mt-5 w-full border-border bg-card">
         <CardContent className="p-4 md:p-6">
           <div className="mt-4 md:mt-8">
@@ -593,7 +587,6 @@ const SessionMasterForm: React.FC = () => {
               </Table>
             </div>
 
-            {/* Pagination Component */}
             <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
               <div className="text-center text-muted-foreground sm:text-left">
                 {filteredData.length > 0

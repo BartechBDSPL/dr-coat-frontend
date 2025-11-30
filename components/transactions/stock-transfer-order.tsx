@@ -120,7 +120,6 @@ const StockTransferOrder: React.FC = () => {
     fetchRecentOrders();
   }, []);
 
-  // Update all line items when global users change
   useEffect(() => {
     if (orderDetails.length > 0 && selectedUsers.length >= 0) {
       const updatedLineItemUsers: LineItemUsers = {};
@@ -175,7 +174,7 @@ const StockTransferOrder: React.FC = () => {
       }));
 
       setActiveUsers(userOptions);
-      
+
       if (userOptions.length === 0) {
         toast.info('No users found for selected warehouse');
       }
@@ -304,29 +303,25 @@ const StockTransferOrder: React.FC = () => {
 
       const data = await response.json();
 
-      // Handle error response
       if (data.Status === 'F' || (!Array.isArray(data) && data.Message)) {
         toast.error(data.Message || 'Stock transfer order not found in ERP');
         setOrderDetails([]);
         return;
       }
 
-      // Handle success
       if (Array.isArray(data) && data.length > 0) {
         setOrderDetails(data);
 
-        // Initialize line item users from existing assign_user data
         const initialLineItemUsers: LineItemUsers = {};
         const allAssignedUsers = new Set<string>();
 
         data.forEach(item => {
           if (item.assign_user) {
-            // Split comma-separated users and populate
             const users = item.assign_user
               .split(',')
               .map((u: string) => u.trim());
             initialLineItemUsers[item.line_no] = users;
-            // Collect all unique users
+
             users.forEach((user: string) => allAssignedUsers.add(user));
           } else {
             initialLineItemUsers[item.line_no] = [];
@@ -335,7 +330,6 @@ const StockTransferOrder: React.FC = () => {
 
         setLineItemUsers(initialLineItemUsers);
 
-        // Set global users from the first item's assign_user or collect all unique users
         if (allAssignedUsers.size > 0) {
           setSelectedUsers(Array.from(allAssignedUsers));
         }
@@ -377,11 +371,9 @@ const StockTransferOrder: React.FC = () => {
     try {
       for (const item of orderDetails) {
         try {
-          // Get users for this line item
           const lineUsers = lineItemUsers[item.line_no] || [];
 
           if (lineUsers.length === 0) {
-            // Skip if no users assigned to this item
             continue;
           }
 
@@ -428,7 +420,6 @@ const StockTransferOrder: React.FC = () => {
         }
       }
 
-      // Show results
       if (successCount > 0) {
         toast.success(`Successfully assigned ${successCount} items`);
       }
@@ -438,7 +429,6 @@ const StockTransferOrder: React.FC = () => {
         });
       }
 
-      // Reset and refresh
       if (successCount > 0) {
         setTransferOrderNo('');
         setOrderDetails([]);
@@ -464,7 +454,6 @@ const StockTransferOrder: React.FC = () => {
   };
 
   const handleLineItemUsersChange = (lineNo: number, users: string[]) => {
-    // When users change for a specific line item, update only that line
     setLineItemUsers(prev => ({
       ...prev,
       [lineNo]: users,
@@ -510,7 +499,6 @@ const StockTransferOrder: React.FC = () => {
 
   return (
     <div className="mt-5 space-y-6">
-      {/* Order Entry Section */}
       <Card>
         <CardHeader>
           <div className="space-y-2">
@@ -533,7 +521,6 @@ const StockTransferOrder: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Date Range Selection Row */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <Label>From Date</Label>
@@ -611,7 +598,6 @@ const StockTransferOrder: React.FC = () => {
               </div>
             </div>
 
-            {/* Warehouse Selection Row */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <Label htmlFor="warehouse">
@@ -631,9 +617,7 @@ const StockTransferOrder: React.FC = () => {
               </div>
             </div>
 
-            {/* Transfer Order Number and User Assignment Row */}
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              {/* Transfer Order Number Input with Dropdown */}
               <div className="lg:col-span-5">
                 <Label htmlFor="transferOrderNo">
                   Transfer Order Number *
@@ -670,7 +654,6 @@ const StockTransferOrder: React.FC = () => {
                 </div>
               </div>
 
-              {/* User Assignment */}
               <div className="lg:col-span-5">
                 <Label htmlFor="assignUser">
                   Assign to Users (Global) *
@@ -678,8 +661,8 @@ const StockTransferOrder: React.FC = () => {
                     {!selectedWarehouse
                       ? '(Select warehouse first)'
                       : orderDetails.length === 0
-                      ? '(Fetch details first)'
-                      : '(Applied to all items)'}
+                        ? '(Fetch details first)'
+                        : '(Applied to all items)'}
                   </span>
                 </Label>
                 <MultiSelect
@@ -690,16 +673,18 @@ const StockTransferOrder: React.FC = () => {
                     !selectedWarehouse
                       ? 'Select warehouse first'
                       : isLoadingUsers
-                      ? 'Loading users...'
-                      : orderDetails.length === 0
-                      ? 'Fetch order details first'
-                      : activeUsers.length === 0
-                      ? 'No users available'
-                      : 'Select users for all items'
+                        ? 'Loading users...'
+                        : orderDetails.length === 0
+                          ? 'Fetch order details first'
+                          : activeUsers.length === 0
+                            ? 'No users available'
+                            : 'Select users for all items'
                   }
                   maxCount={2}
                   className={
-                    !selectedWarehouse || orderDetails.length === 0 || isLoadingUsers
+                    !selectedWarehouse ||
+                    orderDetails.length === 0 ||
+                    isLoadingUsers
                       ? 'cursor-not-allowed opacity-50'
                       : ''
                   }
@@ -707,7 +692,6 @@ const StockTransferOrder: React.FC = () => {
                 />
               </div>
 
-              {/* Action Buttons */}
               <div className="flex items-end gap-2 lg:col-span-2">
                 <Button
                   onClick={handleAssignUser}
@@ -740,14 +724,12 @@ const StockTransferOrder: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Order Details Section */}
       {orderDetails.length > 0 && (
         <Card>
           <CardHeader>
             <div className="space-y-4">
               <CardTitle>Transfer Order Details</CardTitle>
 
-              {/* Header Information - Disabled Inputs */}
               <div className="grid grid-cols-1 gap-4 rounded-lg bg-muted/50 p-4 md:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">
@@ -855,7 +837,6 @@ const StockTransferOrder: React.FC = () => {
               </Table>
             </div>
 
-            {/* Summary */}
             <div className="mt-4 space-y-3 rounded-lg bg-muted/50 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Total Items:</span>
@@ -913,7 +894,6 @@ const StockTransferOrder: React.FC = () => {
         </Card>
       )}
 
-      {/* Recent Orders Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">

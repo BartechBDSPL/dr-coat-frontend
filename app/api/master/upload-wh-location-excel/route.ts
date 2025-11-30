@@ -8,7 +8,6 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get('token')?.value || '';
     const formData = await req.formData();
 
-    // Create a new FormData object for the backend request
     const backendFormData = new FormData();
     const excelFile = formData.get('excelFile') as File;
     const username = formData.get('username') as string;

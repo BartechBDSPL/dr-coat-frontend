@@ -108,7 +108,7 @@ const PalletMaster: React.FC = () => {
   const assetCodeRef = useRef<HTMLInputElement>(null);
   const defaultPrinterRef = useRef<HTMLInputElement>(null);
   const token = Cookies.get('token');
-  // for search and pagination
+
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -121,16 +121,6 @@ const PalletMaster: React.FC = () => {
       await delay(50);
       await fetchPlantCodes();
       await delay(50);
-      // await insertAuditTrail({
-      //   AppType: "Web",
-      //   Activity: "UOM Master",
-      //   Action: `UOM Master Opened by ${getUserID()}`,
-      //   NewData: "",
-      //   OldData: "",
-      //   Remarks: "",
-      //   UserId: getUserID(),
-      //   PlantCode: getUserPlant()
-      // });
     };
     executeSequentially();
   }, []);
@@ -186,19 +176,7 @@ const PalletMaster: React.FC = () => {
     setIsEditing(true);
     setSelectedUnit(row.id?.toString() || row.printer_sr_no);
 
-    // Scroll to top of the page to show the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // insertAuditTrail({
-    //   AppType: "Web",
-    //   Activity: "Pallet Master",
-    //   Action: `Pallet Edit Initiated by ${getUserID()}`,
-    //   NewData: "",
-    //   OldData: JSON.stringify(row),
-    //   Remarks: "",
-    //   UserId: getUserID(),
-    //   PlantCode: getUserPlant()
-    // });
   };
 
   const handleCancel = () => {
@@ -289,16 +267,6 @@ const PalletMaster: React.FC = () => {
         });
         fetchData();
         handleCancel();
-        // insertAuditTrail({
-        //   AppType: 'Web',
-        //   Activity: 'UOM Master',
-        //   Action: `New UOM Added by ${getUserID()}`,
-        //   NewData: JSON.stringify(newUnitData),
-        //   OldData: '',
-        //   Remarks: '',
-        //   UserId: getUserID(),
-        //   PlantCode: getUserPlant(),
-        // });
       } else if (Status === 'F') {
         toast(Message, { description: 'Error', position: 'top-right' });
       } else {
@@ -402,17 +370,6 @@ const PalletMaster: React.FC = () => {
         });
         fetchData();
         handleCancel();
-
-        // insertAuditTrail({
-        //   AppType: "Web",
-        //   Activity: "UOM Master",
-        //   Action: `UOM Updated by ${getUserID()}`,
-        //   NewData: JSON.stringify(updatedUnit),
-        //   OldData: JSON.stringify({ Unit: selectedUnit, Description: unitDesc }),
-        //   Remarks: "",
-        //   UserId: getUserID(),
-        //   PlantCode: getUserPlant()
-        // });
       } else if (Status === 'F') {
         toast(Message, { description: 'Error', position: 'top-right' });
       } else {
@@ -502,13 +459,11 @@ const PalletMaster: React.FC = () => {
       );
     }
 
-    // Reset status after 5 seconds
     setTimeout(() => {
       setPingStatus(prev => ({ ...prev, [printerIp]: 'idle' }));
     }, 5000);
   };
 
-  // Update the ping button styles for better visibility
   const pingButtonStyles = `
       @keyframes pulse {
         0% {
@@ -524,7 +479,7 @@ const PalletMaster: React.FC = () => {
           opacity: 1;
         }
       }
-    
+
       @keyframes loading-pulse {
         0% {
           background-color: #6b7280;
@@ -545,14 +500,14 @@ const PalletMaster: React.FC = () => {
           transform: rotate(360deg);
         }
       }
-    
+
       .ping-button {
         position: relative;
         transition: all 0.3s ease;
         min-width: 70px;
         font-weight: 500;
       }
-    
+
       .ping-button.pinging {
         background: #6b7280 !important;
         color: white !important;
@@ -563,21 +518,21 @@ const PalletMaster: React.FC = () => {
         content: '';
         animation: spin 1s linear infinite;
       }
-    
+
       .ping-button.success {
         background: #10B981 !important;
         color: white !important;
         border-color: #10B981 !important;
         animation: pulse 0.5s ease-in-out;
       }
-    
+
       .ping-button.error {
         background: #EF4444 !important;
         color: white !important;
         border-color: #EF4444 !important;
         animation: pulse 0.5s ease-in-out;
       }
-    
+
       .ping-button:not(.pinging):not(.success):not(.error):hover {
         transform: scale(1.05);
         border-color: hsl(var(--primary));
@@ -585,7 +540,6 @@ const PalletMaster: React.FC = () => {
       }
     `;
 
-  // Add the styles to the document
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = pingButtonStyles;
@@ -709,18 +663,7 @@ const PalletMaster: React.FC = () => {
                   ref={assetCodeRef}
                 />
               </div>
-              {/* <div className="space-y-2">
-                <Label htmlFor="status">Default Printer *</Label>
-                <Select value={defaultPrinter} onValueChange={setDefaultPrinter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Yes or No " />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Yes">Yes</SelectItem>
-                    <SelectItem value="No">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div> */}
+
               <div className="space-y-2">
                 <Label htmlFor="status">Status *</Label>
                 <Select value={status} onValueChange={setStatus}>
@@ -907,7 +850,6 @@ const PalletMaster: React.FC = () => {
               </TableBody>
             </Table>
 
-            {/* Pagination Component */}
             <div className="md:text-md mt-4 flex items-center justify-between text-sm">
               <div>
                 {filteredData.length > 0

@@ -101,36 +101,7 @@ export function getMenuList(pathname: string): Group[] {
               active: pathname === '/item-packing-master',
               value: '2_8',
             },
-            // {
-            //   href: "/material-master-existing-stock-upload",
-            //   label: "Material Master Existing Stock Upload",
-            //   active: pathname === "/material-master-existing-stock-upload",
-            //   value: "2_9",
-            // },
-            // {
-            //   href: "/line-master",
-            //   label: "Line Master",
-            //   active: pathname === "/line-master",
-            //   value: "2_9",
-            // },
-            // {
-            //   href: "/shift-master",
-            //   label: "Shift Master",
-            //   active: pathname === "/shift-master",
-            //   value: "2_10",
-            // },
-            // {
-            //   href: "/transporter-master",
-            //   label: "Transporter Master",
-            //   active: pathname === "/transporter-master",
-            //   value: "2_11",
-            // },
-            // {
-            //   href: "/pallet-master",
-            //   label: "Pallet Master",
-            //   active: pathname === "/pallet-master",
-            //   value: "2_12",
-            // },
+
             {
               href: '/printer-master',
               label: 'Printer Master',
@@ -139,21 +110,7 @@ export function getMenuList(pathname: string): Group[] {
             },
           ],
         },
-        // {
-        //   href: '',
-        //   label: 'RM Transaction',
-        //   active: pathname.includes('/heloj'),
-        //   icon: ArrowLeftRight,
-        //   value: '10',
-        //   submenus: [
-        //     {
-        //       href: '/rm-label-printing',
-        //       label: 'RM Label Printing',
-        //       active: pathname === '/rm-label-printing',
-        //       value: '10_1',
-        //     },
-        //   ],
-        // },
+
         {
           href: '',
           label: 'FG Transaction',

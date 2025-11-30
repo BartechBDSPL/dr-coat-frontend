@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
     const response = await axios.get(
       `${BACKEND_URL}/api/transactions/reprint-request-get-pending`,
       {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
     return NextResponse.json(response.data);

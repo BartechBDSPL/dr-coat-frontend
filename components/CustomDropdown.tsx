@@ -55,14 +55,12 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
     value ||
     placeholder;
 
-  // Modified filtering logic to be case-insensitive and more permissive
   const filteredOptions = safeOptions.filter(
     option =>
       option.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
       option.value.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // New function to check if the search query matches any existing option
   const isExactMatch = useCallback(() => {
     return safeOptions.some(
       option =>
@@ -144,7 +142,6 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
               </CommandItem>
             )}
 
-            {/* Show filtered options */}
             {filteredOptions.map(option => (
               <CommandItem
                 key={option.value}

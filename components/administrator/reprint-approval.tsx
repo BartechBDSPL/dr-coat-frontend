@@ -59,8 +59,9 @@ interface ReprintRequest {
 }
 
 const ReprintApproval: React.FC = () => {
-  const [selectedRequest, setSelectedRequest] =
-    useState<ReprintRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<ReprintRequest | null>(
+    null
+  );
   const [pendingRequests, setPendingRequests] = useState<ReprintRequest[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showReject, setShowReject] = useState(false);
@@ -130,9 +131,7 @@ const ReprintApproval: React.FC = () => {
           fetchPendingRequests();
         }, 2000);
 
-        toast.success(
-          response.data.Message || 'Request approved successfully'
-        );
+        toast.success(response.data.Message || 'Request approved successfully');
         return true;
       } else {
         setIsError(true);
@@ -583,18 +582,20 @@ const ReprintApproval: React.FC = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Serial Numbers</DialogTitle>
+            <DialogTitle className="text-foreground">
+              Serial Numbers
+            </DialogTitle>
           </DialogHeader>
-          <div className="max-h-60 overflow-y-auto space-y-2">
+          <div className="max-h-60 space-y-2 overflow-y-auto">
             {selectedSerials.map((serial, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2 p-3 bg-muted rounded-md border border-border"
+                className="flex items-center gap-2 rounded-md border border-border bg-muted p-3"
               >
                 <span className="text-sm font-medium text-muted-foreground">
                   {index + 1}.
                 </span>
-                <span className="font-mono text-sm text-foreground flex-1">
+                <span className="flex-1 font-mono text-sm text-foreground">
                   {serial}
                 </span>
               </div>

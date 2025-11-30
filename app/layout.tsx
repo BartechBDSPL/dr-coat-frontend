@@ -14,7 +14,6 @@ import './globals.css';
 import DemoLayout from './demo-layout';
 import { ToastContainer } from 'react-toastify';
 
-// Load all the fonts used across different themes
 const inter = Inter({ subsets: ['latin'] });
 const sourceSerif4 = Source_Serif_4({ subsets: ['latin'] });
 const jetBrainsMono = JetBrains_Mono({ subsets: ['latin'] });

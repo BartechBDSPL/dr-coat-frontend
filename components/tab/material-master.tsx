@@ -96,7 +96,6 @@ const MaterialMaster: React.FC = () => {
   const itemDescRef = useRef<HTMLInputElement>(null);
   const userID = getUserID();
 
-  // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -116,14 +115,12 @@ const MaterialMaster: React.FC = () => {
       setIsLoading(true);
       setLoadingMessage('Loading Material data...');
 
-      // After 4 seconds, change the message
       timer4s = setTimeout(() => {
         setLoadingMessage(
           'Fetching details from API, this might take a moment...'
         );
       }, 4000);
 
-      // After 10 seconds, change the message again
       timer10s = setTimeout(() => {
         setLoadingMessage('Hang on, almost there...');
       }, 10000);
@@ -181,7 +178,7 @@ const MaterialMaster: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -565,87 +562,6 @@ const MaterialMaster: React.FC = () => {
                 Cancel
               </Button>
             </div>
-
-            {/* Excel Upload Section - Commented out for now */}
-            {/* <div className="border-t pt-6">
-              <div className="mb-4">
-                <h3 className="text-lg font-medium">Excel Upload</h3>
-                <p className="text-sm text-muted-foreground">
-                  Upload Material data from Excel file
-                </p>
-              </div>
-              
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                <div className="flex-1">
-                  <Label htmlFor="excel-upload">Select Excel File</Label>
-                  <Input
-                    id="excel-upload"
-                    type="file"
-                    accept=".xlsx,.xls"
-                    onChange={handleFileChange}
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Info className="mr-2 h-4 w-4" />
-                        Sample Format
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="max-w-3xl">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Excel Upload Format</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          <div className="space-y-4">
-                            <p>Please use the following format for uploading Material Master data:</p>
-                            <div className="rounded-md bg-muted p-4">
-                              <p className="mb-2 font-semibold">Required columns (in order):</p>
-                              <ol className="list-decimal space-y-1 pl-5 text-sm">
-                                <li>Item Code</li>
-                                <li>Item Description</li>
-                                <li>Inventory Posting Group</li>
-                                <li>Category L1</li>
-                                <li>Category L2</li>
-                                <li>Category L3</li>
-                                <li>Base UOM</li>
-                                <li>Hazardous (Yes/No)</li>
-                                <li>Approval Status</li>
-                                <li>Item Tracking Code</li>
-                              </ol>
-                            </div>
-                            <p className="text-sm">
-                              Download the sample file below to see the correct format.
-                            </p>
-                          </div>
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Close</AlertDialogCancel>
-                        <AlertDialogAction onClick={downloadSampleFile}>
-                          Download Sample
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                  
-                  <Button
-                    onClick={handleUploadFile}
-                    disabled={!selectedFile || fileUploading}
-                    size="sm"
-                  >
-                    {fileUploading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Upload className="mr-2 h-4 w-4" />
-                    )}
-                    {fileUploading ? 'Uploading...' : 'Upload'}
-                  </Button>
-                </div>
-              </div>
-            </div> */}
           </form>
         </CardContent>
       </Card>
@@ -784,7 +700,6 @@ const MaterialMaster: React.FC = () => {
               </Table>
             </div>
 
-            {/* Pagination Component */}
             <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
               <div className="text-center sm:text-left">
                 {filteredData.length > 0

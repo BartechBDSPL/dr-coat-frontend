@@ -241,7 +241,6 @@ const FGMaterialReturnReport: React.FC = () => {
         headStyles: { fillColor: [66, 66, 66] },
       });
 
-      // Add page numbers after table is generated
       const totalPagesGenerated = doc.internal.getNumberOfPages();
       for (let i = 1; i <= totalPagesGenerated; i++) {
         doc.setPage(i);
@@ -263,14 +262,12 @@ const FGMaterialReturnReport: React.FC = () => {
     }
   };
 
-  // Pagination
   const totalItems = filteredData.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  // Analytics
   const getDashboardStats = () => {
     const totalShipments = new Set(filteredData.map(item => item.shipment_no))
       .size;
@@ -413,7 +410,6 @@ const FGMaterialReturnReport: React.FC = () => {
 
       {reportData.length > 0 ? (
         <>
-          {/* Analytics Cards */}
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
@@ -460,7 +456,6 @@ const FGMaterialReturnReport: React.FC = () => {
             </Card>
           </div>
 
-          {/* Data Table */}
           <Card>
             <CardHeader>
               <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -537,7 +532,6 @@ const FGMaterialReturnReport: React.FC = () => {
                 </Table>
               </div>
 
-              {/* Pagination */}
               <div className="mt-4 flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <div className="text-sm text-muted-foreground">
                   Showing {startIndex + 1} to {endIndex} of {totalItems} entries

@@ -143,7 +143,6 @@ const SalesShipmentOrder: React.FC = () => {
     fetchRecentShipments();
   }, []);
 
-  // Update all line items when global users change
   useEffect(() => {
     if (shipmentDetails.length > 0 && selectedUsers.length >= 0) {
       const updatedLineItemUsers: LineItemUsers = {};
@@ -155,7 +154,6 @@ const SalesShipmentOrder: React.FC = () => {
     }
   }, [selectedUsers]);
 
-  // Update all line items when global shipping info changes
   useEffect(() => {
     if (shipmentDetails.length > 0) {
       const updatedLineItemShipping: LineItemShipping = {};
@@ -215,7 +213,7 @@ const SalesShipmentOrder: React.FC = () => {
       }));
 
       setActiveUsers(userOptions);
-      
+
       if (userOptions.length === 0) {
         toast.info('No users found for selected warehouse');
       }
@@ -342,7 +340,6 @@ const SalesShipmentOrder: React.FC = () => {
       if (!response.ok) throw new Error('Failed to fetch shipment details');
 
       const result: ApiResponse = await response.json();
-      // Check if data is from API or already assigned
 
       if (result.Status === 'F') {
         toast.error(result.Message || 'Failed to fetch shipment details');
@@ -351,15 +348,12 @@ const SalesShipmentOrder: React.FC = () => {
         setLineItemShipping({});
         return;
       } else if (result.isFromAPI === false) {
-        // Show dialog for reassignment
         setIsFromAPI(false);
         setShowReassignDialog(true);
 
-        // Still load the data for display
         if (result.data && result.data.length > 0) {
           setShipmentDetails(result.data);
 
-          // Initialize line item users and shipping from existing data
           const initialLineItemUsers: LineItemUsers = {};
           const initialLineItemShipping: LineItemShipping = {};
           const allAssignedUsers = new Set<string>();
@@ -377,7 +371,6 @@ const SalesShipmentOrder: React.FC = () => {
               initialLineItemUsers[key] = [];
             }
 
-            // Initialize shipping info
             initialLineItemShipping[key] = {
               truck_no: item.truck_no || '',
               driver_name: item.driver_name || '',
@@ -392,7 +385,6 @@ const SalesShipmentOrder: React.FC = () => {
             setSelectedUsers(Array.from(allAssignedUsers));
           }
 
-          // Set global shipping info from the first item
           if (result.data[0]) {
             setGlobalTruckNo(result.data[0].truck_no || '');
             setGlobalDriverName(result.data[0].driver_name || '');
@@ -402,12 +394,10 @@ const SalesShipmentOrder: React.FC = () => {
         return;
       }
 
-      // Handle the response structure when isFromAPI is true
       if (result.isFromAPI && result.data && result.data.length > 0) {
         setIsFromAPI(true);
         setShipmentDetails(result.data);
 
-        // Initialize line item users and shipping from existing data
         const initialLineItemUsers: LineItemUsers = {};
         const initialLineItemShipping: LineItemShipping = {};
         const allAssignedUsers = new Set<string>();
@@ -425,7 +415,6 @@ const SalesShipmentOrder: React.FC = () => {
             initialLineItemUsers[key] = [];
           }
 
-          // Initialize shipping info
           initialLineItemShipping[key] = {
             truck_no: item.truck_no || '',
             driver_name: item.driver_name || '',
@@ -440,7 +429,6 @@ const SalesShipmentOrder: React.FC = () => {
           setSelectedUsers(Array.from(allAssignedUsers));
         }
 
-        // Set global shipping info from the first item
         if (result.data[0]) {
           setGlobalTruckNo(result.data[0].truck_no || '');
           setGlobalDriverName(result.data[0].driver_name || '');
@@ -469,7 +457,6 @@ const SalesShipmentOrder: React.FC = () => {
       return;
     }
 
-    // Check if all line items have users assigned
     const allAssigned = shipmentDetails.every(
       item => (lineItemUsers[`${item.lot_no}`] || []).length > 0
     );
@@ -484,7 +471,6 @@ const SalesShipmentOrder: React.FC = () => {
     const errors: string[] = [];
 
     try {
-      // If isFromAPI is false, use the reassignment endpoint
       if (!isFromAPI) {
         for (const item of shipmentDetails) {
           try {
@@ -529,7 +515,6 @@ const SalesShipmentOrder: React.FC = () => {
           }
         }
 
-        // Show results for reassignment
         if (successCount > 0) {
           toast.success(`Successfully reassigned ${successCount} items`);
         }
@@ -539,7 +524,6 @@ const SalesShipmentOrder: React.FC = () => {
           });
         }
 
-        // Reset and refresh
         if (successCount > 0) {
           setShipmentNo('');
           setShipmentDetails([]);
@@ -555,7 +539,6 @@ const SalesShipmentOrder: React.FC = () => {
           shipmentNoRef.current?.focus();
         }
       } else {
-        // Original insert logic for new assignments
         for (const item of shipmentDetails) {
           try {
             const key = `${item.lot_no}`;
@@ -581,21 +564,21 @@ const SalesShipmentOrder: React.FC = () => {
                   Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                  entry_no: '', // Will be generated by backend
+                  entry_no: '',
                   order_no: item.order_no,
                   shipment_no: item.shipment_no,
-                  sell_to_customer_no: '', // Add if available
-                  sell_to_customer_name: '', // Add if available
-                  order_date: '', // Add if available
+                  sell_to_customer_no: '',
+                  sell_to_customer_name: '',
+                  order_date: '',
                   posting_date: DateTime.now().toFormat('yyyy-MM-dd'),
-                  external_document_no: '', // Add if available
+                  external_document_no: '',
                   item_code: item.item_code,
                   item_description: item.item_description,
                   variant_code: '',
-                  location_code: '', // Add if available
+                  location_code: '',
                   quantity: item.quantity,
                   packing_details: item.packing_details || '',
-                  uom: 'KGS', // Default, update as needed
+                  uom: 'KGS',
                   lot_no: item.lot_no,
                   truck_no: shippingInfo.truck_no,
                   driver_name: shippingInfo.driver_name,
@@ -620,7 +603,6 @@ const SalesShipmentOrder: React.FC = () => {
           }
         }
 
-        // Show results
         if (successCount > 0) {
           toast.success(`Successfully assigned ${successCount} items`);
         }
@@ -630,7 +612,6 @@ const SalesShipmentOrder: React.FC = () => {
           });
         }
 
-        // Reset and refresh
         if (successCount > 0) {
           setShipmentNo('');
           setShipmentDetails([]);
@@ -724,7 +705,6 @@ const SalesShipmentOrder: React.FC = () => {
 
   return (
     <div className="mt-5 space-y-6">
-      {/* Shipment Entry Section */}
       <Card>
         <CardHeader>
           <div className="space-y-2">
@@ -750,7 +730,6 @@ const SalesShipmentOrder: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Date Range Selection Row */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <Label>From Date</Label>
@@ -828,7 +807,6 @@ const SalesShipmentOrder: React.FC = () => {
               </div>
             </div>
 
-            {/* Warehouse Selection Row */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <Label htmlFor="warehouse">
@@ -848,9 +826,7 @@ const SalesShipmentOrder: React.FC = () => {
               </div>
             </div>
 
-            {/* First Row: Shipment Number and User Assignment */}
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-              {/* Shipment Number Input with Dropdown */}
               <div className="lg:col-span-5">
                 <Label htmlFor="shipmentNo">
                   Shipment Number *
@@ -887,7 +863,6 @@ const SalesShipmentOrder: React.FC = () => {
                 </div>
               </div>
 
-              {/* User Assignment */}
               <div className="lg:col-span-5">
                 <Label htmlFor="assignUser">
                   Assign to Users (Global) *
@@ -895,8 +870,8 @@ const SalesShipmentOrder: React.FC = () => {
                     {!selectedWarehouse
                       ? '(Select warehouse first)'
                       : shipmentDetails.length === 0
-                      ? '(Fetch details first)'
-                      : '(Applied to all items)'}
+                        ? '(Fetch details first)'
+                        : '(Applied to all items)'}
                   </span>
                 </Label>
                 <MultiSelect
@@ -907,24 +882,29 @@ const SalesShipmentOrder: React.FC = () => {
                     !selectedWarehouse
                       ? 'Select warehouse first'
                       : isLoadingUsers
-                      ? 'Loading users...'
-                      : shipmentDetails.length === 0
-                      ? 'Fetch shipment details first'
-                      : activeUsers.length === 0
-                      ? 'No users available for this warehouse'
-                      : 'Select users for all items'
+                        ? 'Loading users...'
+                        : shipmentDetails.length === 0
+                          ? 'Fetch shipment details first'
+                          : activeUsers.length === 0
+                            ? 'No users available for this warehouse'
+                            : 'Select users for all items'
                   }
                   maxCount={2}
-                  disabled={!selectedWarehouse || isLoadingUsers || shipmentDetails.length === 0}
+                  disabled={
+                    !selectedWarehouse ||
+                    isLoadingUsers ||
+                    shipmentDetails.length === 0
+                  }
                   className={
-                    !selectedWarehouse || isLoadingUsers || shipmentDetails.length === 0
+                    !selectedWarehouse ||
+                    isLoadingUsers ||
+                    shipmentDetails.length === 0
                       ? 'cursor-not-allowed opacity-50'
                       : ''
                   }
                 />
               </div>
 
-              {/* Action Buttons */}
               <div className="flex items-end gap-2 lg:col-span-2">
                 <Button
                   onClick={handleAssignUser}
@@ -954,7 +934,6 @@ const SalesShipmentOrder: React.FC = () => {
               </div>
             </div>
 
-            {/* Second Row: Shipping Information (Global) */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
                 <Label htmlFor="globalTruckNo">
@@ -1029,14 +1008,12 @@ const SalesShipmentOrder: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Shipment Details Section */}
       {shipmentDetails.length > 0 && (
         <Card>
           <CardHeader>
             <div className="space-y-4">
               <CardTitle>Shipment Order Details</CardTitle>
 
-              {/* Header Information */}
               <div className="grid grid-cols-1 gap-4 rounded-lg bg-muted/50 p-4 md:grid-cols-2">
                 <div>
                   <Label className="text-xs text-muted-foreground">
@@ -1119,7 +1096,6 @@ const SalesShipmentOrder: React.FC = () => {
               </Table>
             </div>
 
-            {/* Summary */}
             <div className="mt-4 space-y-3 rounded-lg bg-muted/50 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Total Items:</span>
@@ -1205,7 +1181,6 @@ const SalesShipmentOrder: React.FC = () => {
         </Card>
       )}
 
-      {/* Recent Shipments Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -1316,7 +1291,6 @@ const SalesShipmentOrder: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Reassignment Confirmation Dialog */}
       <Dialog open={showReassignDialog} onOpenChange={setShowReassignDialog}>
         <DialogContent>
           <DialogHeader>

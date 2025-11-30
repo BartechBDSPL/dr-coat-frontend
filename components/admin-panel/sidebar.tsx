@@ -38,7 +38,6 @@ export function Sidebar() {
           asChild
         >
           <Link href="/dashboard" className="flex items-center gap-2">
-            {/* <PanelsTopLeft className="w-6 h-6 mr-1" /> */}
             <Image
               src="/logo.png"
               alt="gerresheimer_logo"

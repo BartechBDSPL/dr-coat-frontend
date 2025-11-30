@@ -87,7 +87,6 @@ const BinMaster: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUpdatingLoading, setIsUpdatingLoading] = useState(false);
 
-  // for search and pagination
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -139,7 +138,6 @@ const BinMaster: React.FC = () => {
     }
   };
 
-  // Logic for pagination
   const filteredData = useMemo(() => {
     return locations.filter(item => {
       const searchableFields: (keyof WarehouseLocation)[] = [
@@ -172,7 +170,7 @@ const BinMaster: React.FC = () => {
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term.trim());
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   }, []);
 
   const handlePageChange = useCallback((newPage: number) => {
@@ -354,7 +352,6 @@ const BinMaster: React.FC = () => {
       return;
     }
 
-    // Validate file extension
     const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
     if (fileExt !== 'xlsx' && fileExt !== 'xls') {
       toast.error('Please upload an Excel file (.xlsx or .xls)');
@@ -397,7 +394,7 @@ const BinMaster: React.FC = () => {
     } finally {
       setFileUploading(false);
       setSelectedFile(null);
-      // Reset the file input
+
       const fileInput = document.getElementById(
         'excel-upload'
       ) as HTMLInputElement;
@@ -514,7 +511,6 @@ const BinMaster: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Excel Upload Card */}
       <Card className="mx-auto mt-5 w-full">
         <CardHeader>
           <CardTitle className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -713,7 +709,6 @@ const BinMaster: React.FC = () => {
               </Table>
             </div>
 
-            {/* Pagination Component */}
             <div className="mt-4 flex flex-col items-center justify-between gap-4 text-sm sm:flex-row md:text-base">
               <div className="text-center sm:text-left">
                 {filteredData.length > 0

@@ -9,7 +9,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    // Check for dark mode
     const checkDarkMode = () => {
       const isDark = document.documentElement.classList.contains('dark');
       setTheme(isDark ? 'dark' : 'light');
@@ -17,7 +16,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
     checkDarkMode();
 
-    // Listen for dark mode changes
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,

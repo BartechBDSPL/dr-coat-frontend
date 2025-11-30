@@ -24,7 +24,6 @@ const IdleTimerWrapper: React.FC<IdleTimerWrapperProps> = ({
   const onIdle = async () => {
     if (!isLoginPage) {
       try {
-        // Call logout API
         await fetch('/api/admin/logout', {
           method: 'POST',
           headers: {
@@ -54,7 +53,6 @@ const IdleTimerWrapper: React.FC<IdleTimerWrapperProps> = ({
   });
 
   useEffect(() => {
-    // Reset the timer when the pathname changes (except for the login page)
     if (!isLoginPage) {
       reset();
     }
@@ -67,7 +65,6 @@ const IdleTimerWrapper: React.FC<IdleTimerWrapperProps> = ({
         const currentTime = Math.floor(Date.now() / 1000);
         if (decodedToken.exp < currentTime) {
           try {
-            // Call logout API
             await fetch('/api/admin/logout', {
               method: 'POST',
               headers: {

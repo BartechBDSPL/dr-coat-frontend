@@ -3,25 +3,24 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 interface AnimatedSwitchProps {
-  onComplete: () => Promise<boolean>; // Modified to return Promise<boolean>
-  type?: 'approve' | 'reject'; // Optional type prop for different styles
+  onComplete: () => Promise<boolean>;
+  type?: 'approve' | 'reject';
 }
 
-const AnimatedSwitch: React.FC<AnimatedSwitchProps> = ({ 
-  onComplete, 
-  type = 'approve' 
+const AnimatedSwitch: React.FC<AnimatedSwitchProps> = ({
+  onComplete,
+  type = 'approve',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const constraintsRef = useRef(null);
 
   const handleDragEnd = async (event: any, info: any) => {
-    const threshold = 150; // Adjust this value as needed
+    const threshold = 150;
     if (info.offset.x > threshold && !isCompleted) {
       setIsCompleted(true);
       const success = await onComplete();
       if (!success) {
-        // Reset the switch if the operation failed
         setIsCompleted(false);
       }
     }

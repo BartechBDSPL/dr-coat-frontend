@@ -18,7 +18,6 @@ export async function logError(
   user: string
 ): Promise<void> {
   try {
-    // Determine error details based on the type of error
     let errorMessage: string;
     let errorType: string;
     let errorStack: string = '';
@@ -33,18 +32,15 @@ export async function logError(
       errorType = error.name || error.constructor.name;
       errorStack = error.stack || '';
 
-      // Extract line number from stack trace
       const lineMatch: RegExpMatchArray | null =
         errorStack.match(/:(\d+):\d+\)?$/m);
       errorLineNo = lineMatch ? lineMatch[1] : 'Unknown';
 
-      // Get location (file path) from stack trace
       const locationMatch: RegExpMatchArray | null =
         errorStack.match(/\((.*?):\d+:\d+\)/);
       errorLocation = locationMatch ? locationMatch[1] : 'Unknown';
     }
 
-    // Get client IP (Note: this will be the server's IP in SSR)
     const hostIp: string = await fetch('https://api.ipify.org?format=json')
       .then(response => response.json())
       .then((data: { ip: string }) => data.ip)
@@ -61,7 +57,6 @@ export async function logError(
       Application_Type: 'Web',
     };
 
-    // Send log data to backend
     const response: Response = await fetch(
       `${BACKEND_URL}/api/logging/insert-exception`,
       {

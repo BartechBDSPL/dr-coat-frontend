@@ -86,7 +86,6 @@ export function Menu({ isOpen }: MenuProps) {
 
   const handleLogout = async () => {
     try {
-      // Call logout API
       const response = await fetch('/api/admin/logout', {
         method: 'POST',
         headers: {
@@ -105,7 +104,6 @@ export function Menu({ isOpen }: MenuProps) {
       console.error('Error during logout:', error);
       toast.error('Logout request failed, but you will be logged out locally.');
     } finally {
-      // Always remove token and redirect regardless of API response
       Cookies.remove('token');
       router.push('/login');
     }
@@ -161,7 +159,7 @@ export function Menu({ isOpen }: MenuProps) {
 
                                 <p
                                   className={cn(
-                                    'max-w-[200px] truncate', // Keeping the original truncate behavior
+                                    'max-w-[200px] truncate',
                                     isOpen === false
                                       ? '-translate-x-96 opacity-0'
                                       : 'translate-x-0 opacity-100'

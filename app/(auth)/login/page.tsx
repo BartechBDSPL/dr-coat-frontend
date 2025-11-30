@@ -25,13 +25,12 @@ const LoginForm = () => {
   const searchParams = useSearchParams();
   const userIdRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  // Use state to manage form inputs
+
   const [userId, setUserId] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [returnUrl, setReturnUrl] = useState<string>('');
 
-  // Password change dialog states
   const [showPasswordChangeDialog, setShowPasswordChangeDialog] =
     useState<boolean>(false);
   const [newPassword, setNewPassword] = useState<string>('');
@@ -62,7 +61,6 @@ const LoginForm = () => {
   };
 
   const handlePasswordChange = async () => {
-    // Validation
     if (!newPassword || !confirmNewPassword) {
       toast.error('Please fill in all password fields');
       return;
@@ -78,7 +76,6 @@ const LoginForm = () => {
       return;
     }
 
-    // Password complexity validation
     const hasUpperCase = /[A-Z]/.test(newPassword);
     const hasLowerCase = /[a-z]/.test(newPassword);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(newPassword);

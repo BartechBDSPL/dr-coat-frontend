@@ -48,7 +48,6 @@ import { toast } from 'sonner';
 import { jwtDecode } from 'jwt-decode';
 import { ModeToggle } from '../MoodToggle';
 
-// Define the structure of your user information
 interface UserInfo {
   user_id: string;
   user_name: string;
@@ -63,10 +62,8 @@ interface UserInfo {
   avatarUrl?: string;
 }
 
-// Define the structure of your JWT payload
 interface JwtPayload {
   user: UserInfo;
-  // Add other properties that might be in your JWT payload
 }
 
 export function UserNav() {
@@ -88,7 +85,6 @@ export function UserNav() {
 
   const handleLogout = async () => {
     try {
-      // Call logout API
       const response = await fetch('/api/admin/logout', {
         method: 'POST',
         headers: {
@@ -107,7 +103,6 @@ export function UserNav() {
       console.error('Error during logout:', error);
       toast.error('Logout request failed, but you will be logged out locally.');
     } finally {
-      // Always remove token and redirect regardless of API response
       Cookies.remove('token');
       router.push('/login');
     }
