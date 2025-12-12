@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+        cache: 'no-store',
       }
     );
 
@@ -34,7 +35,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(data, { status: 200 });
+    const nextResponse = NextResponse.json(data, { status: 200 });
+    nextResponse.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+    nextResponse.headers.set('Pragma', 'no-cache');
+    nextResponse.headers.set('Expires', '0');
+    nextResponse.headers.set('Surrogate-Control', 'no-store');
+    return nextResponse;
   } catch (error: any) {
     console.error('Error fetching item codes:', error);
     return NextResponse.json(

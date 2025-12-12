@@ -186,6 +186,49 @@
     box-shadow: var(--shadow-2xl) !important;
   }
 
+  /* Gradient utilities using CSS variables */
+  .gradient-summary {
+    background: linear-gradient(to right, white, hsl(var(--muted)));
+  }
+  .dark .gradient-summary {
+    background: linear-gradient(to right, hsl(var(--card)), hsl(var(--secondary)));
+  }
+
+  .gradient-warehouse {
+    background: linear-gradient(to right, hsl(var(--muted)), hsl(var(--accent)));
+  }
+  .dark .gradient-warehouse {
+    background: linear-gradient(to right, hsl(var(--secondary)), hsl(var(--card)));
+  }
+
+  /* Color utility classes for consistent theming */
+  .text-chart-1 { color: hsl(var(--chart-1)); }
+  .text-chart-2 { color: hsl(var(--chart-2)); }
+  .text-chart-3 { color: hsl(var(--chart-3)); }
+  .text-chart-4 { color: hsl(var(--chart-4)); }
+  .text-chart-5 { color: hsl(var(--chart-5)); }
+  .text-destructive { color: hsl(var(--destructive)); }
+  .text-primary { color: hsl(var(--primary)); }
+  .text-secondary { color: hsl(var(--secondary)); }
+  .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+  .text-foreground { color: hsl(var(--foreground)); }
+
+  .bg-chart-1 { background-color: hsl(var(--chart-1)); }
+  .bg-chart-2 { background-color: hsl(var(--chart-2)); }
+  .bg-chart-3 { background-color: hsl(var(--chart-3)); }
+  .bg-chart-4 { background-color: hsl(var(--chart-4)); }
+  .bg-chart-5 { background-color: hsl(var(--chart-5)); }
+  .bg-destructive { background-color: hsl(var(--destructive)); }
+  .bg-primary { background-color: hsl(var(--primary)); }
+  .bg-secondary { background-color: hsl(var(--secondary)); }
+
+  .border-chart-1 { border-color: hsl(var(--chart-1)); }
+  .border-chart-2 { border-color: hsl(var(--chart-2)); }
+  .border-destructive { border-color: hsl(var(--destructive)); }
+
+  .hover\:bg-chart-1:hover { background-color: hsl(var(--chart-1)); }
+  .hover\:text-chart-1:hover { color: hsl(var(--chart-1)); }
+
   /* Minimal transitions to reduce CPU load */
   :root {
     transition: none;

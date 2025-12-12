@@ -20,10 +20,14 @@ function Calendar({
   disableFutureDates = false,
   formatters,
   components,
+  fromYear,
+  toYear,
   ...props
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>['variant'];
   disableFutureDates?: boolean;
+  fromYear?: number;
+  toYear?: number;
 }) {
   const defaultClassNames = getDefaultClassNames();
 
@@ -34,6 +38,8 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       disabled={disableFutureDates ? { after: today } : props.disabled}
+      fromYear={fromYear}
+      toYear={toYear}
       className={cn(
         'group/calendar bg-background p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,

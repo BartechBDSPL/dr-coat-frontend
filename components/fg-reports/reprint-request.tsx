@@ -405,6 +405,9 @@ const ReprintRequest: React.FC = () => {
       setToDate(new Date());
       setReportData([]);
       setSearchClicked(false);
+
+      // Refresh the pending print requests after successful submission
+      fetchApprovedRequests();
     } catch (error) {
       console.error('Error submitting reprint request:', error);
       toast.error('Failed to submit reprint request');
@@ -981,14 +984,16 @@ const ReprintRequest: React.FC = () => {
                     {paginatedApprovedData.map(request => (
                       <TableRow key={request.sr_no}>
                         <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePrintClick(request)}
-                            className="h-8 border-border px-2 py-1 text-xs hover:bg-primary/20"
-                          >
-                            Print
-                          </Button>
+                          {request.approved_by && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePrintClick(request)}
+                              className="h-8 border-border px-2 py-1 text-xs hover:bg-primary/20"
+                            >
+                              Print
+                            </Button>
+                          )}
                         </TableCell>
                         <TableCell className="font-medium">
                           {request.sr_no}

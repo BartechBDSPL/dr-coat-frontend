@@ -4,6 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package, Boxes } from 'lucide-react';
 import LocationTab from './location-tab';
+import LiveStockTab from './live-stock-tab';
 import OverviewTab from './overview-tab';
 import RMDashboard from './rm-dashboard';
 
@@ -111,6 +112,12 @@ const DashboardPage = () => {
               </TabsTrigger>
 
               <TabsTrigger
+                value="live-stock-tab"
+                className="whitespace-nowrap rounded-md px-5 py-2 text-xs font-medium transition-all duration-200 hover:bg-accent data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-md sm:text-sm"
+              >
+                Live Stock
+              </TabsTrigger>
+              <TabsTrigger
                 value="location"
                 className="whitespace-nowrap rounded-md px-5 py-2 text-xs font-medium transition-all duration-200 hover:bg-accent data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-md sm:text-sm"
               >
@@ -123,6 +130,12 @@ const DashboardPage = () => {
               className="duration-200 animate-in fade-in-50"
             >
               <OverviewTab />
+            </TabsContent>
+            <TabsContent
+              value="live-stock-tab"
+              className="duration-200 animate-in fade-in-50"
+            >
+              <LiveStockTab />
             </TabsContent>
 
             <TabsContent

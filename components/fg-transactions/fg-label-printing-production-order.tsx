@@ -132,7 +132,10 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   const [printerOptions, setPrinterOptions] = useState<DropdownOption[]>([]);
   const [isFetchingPrinters, setIsFetchingPrinters] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const orderNoRef = useRef<HTMLInputElement>(null);
+  const mfgDateRef = useRef<HTMLButtonElement | null>(null);
+  const expDateRef = useRef<HTMLButtonElement | null>(null);
+  const printerRef = useRef<HTMLButtonElement | null>(null);
+  const orderNoRef = useRef<HTMLButtonElement | null>(null);
   const baseWeightRef = useRef<HTMLInputElement>(null);
   const tareWeightRef = useRef<HTMLInputElement>(null);
   const serialNumbersCardRef = useRef<HTMLDivElement>(null);
@@ -518,6 +521,61 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       toast.error(
         `Please fill the following required fields: ${missingFields.map(f => fieldLabels[f]).join(', ')}`
       );
+      // Smooth scroll and focus the first invalid field for improved UX
+      const firstInvalid = missingFields[0];
+      switch (firstInvalid) {
+        case 'productionOrderNo':
+          orderNoRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          orderNoRef.current?.focus();
+          break;
+        case 'baseWeight':
+          baseWeightRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          baseWeightRef.current?.focus();
+          break;
+        case 'tareWeight':
+          tareWeightRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          tareWeightRef.current?.focus();
+          break;
+        case 'mfgDate':
+          mfgDateRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          mfgDateRef.current?.focus();
+          break;
+        case 'expDate':
+          expDateRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          expDateRef.current?.focus();
+          break;
+        case 'printer':
+          printerRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          printerRef.current?.focus();
+          break;
+      }
+      return;
+    }
+
+    if (
+      selectedMfgDate &&
+      selectedExpDate &&
+      selectedExpDate < selectedMfgDate
+    ) {
+      toast.error('Expiry date cannot be older than manufacturing date');
       return;
     }
 
@@ -565,14 +623,17 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
         total_weight: Number(totalWeight),
       };
 
-      const response = await fetch(`/api/existing-data/insert-label-printing`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `/api/transactions/fg-label-printing-insert`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to print labels');
@@ -653,13 +714,19 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
               border-color: hsl(var(--input));
             }
             50% {
-              opacity: 0.8;
-              background-color: rgba(239, 68, 68, 0.15);
-              border-color: rgb(239, 68, 68);
+              opacity: 1;
+              background-color: rgba(255, 0, 0, 0.16);
+              border-color: #ff0000;
+              box-shadow: 0 0 12px rgba(255, 0, 0, 0.2);
             }
           }
           .field-blink {
-            animation: field-blink 1s ease-in-out 3;
+            animation: field-blink 0.7s ease-in-out 6;
+            border-width: 1px;
+          }
+          .field-blink:focus {
+            outline: 3px solid rgba(255, 0, 0, 0.18);
+            outline-offset: 2px;
           }
         `,
         }}
@@ -681,6 +748,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                 }
               >
                 <CustomDropdown
+                  aria-invalid={invalidFields.has('productionOrderNo')}
                   options={recentOrders}
                   value={productionOrderNo}
                   onValueChange={handleOrderNoChange}
@@ -863,6 +931,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                             'w-36',
                             invalidFields.has('baseWeight') ? 'field-blink' : ''
                           )}
+                          aria-invalid={invalidFields.has('baseWeight')}
                         />
                       </TableCell>
                       <TableCell>
@@ -880,6 +949,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                             'w-36',
                             invalidFields.has('tareWeight') ? 'field-blink' : ''
                           )}
+                          aria-invalid={invalidFields.has('tareWeight')}
                         />
                       </TableCell>
                       <TableCell>
@@ -935,6 +1005,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      aria-invalid={invalidFields.has('mfgDate')}
+                      ref={mfgDateRef}
                       className={cn(
                         'w-full justify-start text-left font-normal',
                         !selectedMfgDate && 'text-muted-foreground',
@@ -954,8 +1026,24 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                     <Calendar
                       mode="single"
                       selected={selectedMfgDate}
-                      onSelect={setSelectedMfgDate}
+                      onSelect={date => {
+                        setSelectedMfgDate(date);
+                        if (date && selectedExpDate) {
+                          const mfg = new Date(date);
+                          mfg.setHours(0, 0, 0, 0);
+                          const exp = new Date(selectedExpDate);
+                          exp.setHours(0, 0, 0, 0);
+                          if (exp < mfg) {
+                            setSelectedExpDate(undefined);
+                            toast.error(
+                              'Expiry date reset as it was before the new manufacturing date'
+                            );
+                          }
+                        }
+                      }}
                       disableFutureDates={true}
+                      fromYear={1900}
+                      toYear={2050}
                       initialFocus
                     />
                   </PopoverContent>
@@ -969,10 +1057,14 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      aria-invalid={invalidFields.has('expDate')}
+                      ref={expDateRef}
+                      disabled={!selectedMfgDate}
                       className={cn(
                         'w-full justify-start text-left font-normal',
                         !selectedExpDate && 'text-muted-foreground',
-                        invalidFields.has('expDate') && 'field-blink'
+                        invalidFields.has('expDate') && 'field-blink',
+                        !selectedMfgDate && 'cursor-not-allowed opacity-50'
                       )}
                     >
                       {selectedExpDate ? (
@@ -980,7 +1072,11 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                           DateTime.DATE_FULL
                         )
                       ) : (
-                        <span>Pick a date</span>
+                        <span>
+                          {selectedMfgDate
+                            ? 'Pick a date'
+                            : 'Select manufacturing date first'}
+                        </span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -989,6 +1085,17 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                       mode="single"
                       selected={selectedExpDate}
                       onSelect={setSelectedExpDate}
+                      disabled={date => {
+                        if (!selectedMfgDate) return true;
+                        const mfg = new Date(selectedMfgDate);
+                        mfg.setHours(0, 0, 0, 0);
+                        const checkDate = new Date(date);
+                        checkDate.setHours(0, 0, 0, 0);
+                        return checkDate < mfg;
+                      }}
+                      fromDate={selectedMfgDate}
+                      fromYear={1900}
+                      toYear={2050}
                       initialFocus
                     />
                   </PopoverContent>
@@ -1005,6 +1112,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                     options={printerOptions}
                     value={selectedPrinter}
                     onValueChange={setSelectedPrinter}
+                    ref={printerRef}
+                    aria-invalid={invalidFields.has('printer')}
                     placeholder="Select printer..."
                     searchPlaceholder="Search printers..."
                     emptyText="No printers found"
@@ -1161,41 +1270,113 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       )}
 
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
+        <DialogContent
+          className="w-full rounded-lg p-6 shadow-xl sm:max-w-2xl"
+          role="alertdialog"
+          aria-labelledby="confirm-print-title"
+        >
           <DialogHeader>
-            <DialogTitle>Confirm Print Labels</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to print the labels?
-            </DialogDescription>
+            <div className="flex items-start gap-3">
+              <Printer className="h-6 w-6 text-primary" />
+              <div>
+                <DialogTitle
+                  id="confirm-print-title"
+                  className="flex items-center gap-2"
+                >
+                  Confirm Print Labels
+                </DialogTitle>
+                <DialogDescription>
+                  Please verify the details below before printing. This action
+                  will update stock and print labels to the selected printer.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-2">
-            <p>
-              <strong>Tare Weight:</strong> {tareWeight}{' '}
-              {orderDetails?.uom_code}
-            </p>
-            <p>
-              <strong>Total Weight:</strong> {totalWeight}{' '}
-              {orderDetails?.uom_code}
-            </p>
-            <p>
-              <strong>Base Weight:</strong> {baseWeight}{' '}
-              {orderDetails?.uom_code}
-            </p>
-            <p>
-              <strong>Total Serial Numbers:</strong> {serialNumbers.length}
-            </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Tare Weight</p>
+              <p className="text-base font-medium">
+                {tareWeight} {orderDetails?.uom_code}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Total Weight</p>
+              <p className="text-base font-medium">
+                {totalWeight} {orderDetails?.uom_code}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Base Weight</p>
+              <p className="text-base font-medium">
+                {baseWeight} {orderDetails?.uom_code}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Serials to Print</p>
+              <p className="text-base font-medium">{serialNumbers.length}</p>
+            </div>
+          </div>
+          <div className="mt-4 rounded-md bg-muted p-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">
+                  Production Order
+                </p>
+                <p className="font-medium">
+                  {orderDetails?.production_order_no}
+                </p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Item Code</p>
+                <p className="font-medium">{orderDetails?.item_code}</p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Lot No</p>
+                <p className="font-medium">{orderDetails?.lot_no}</p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Qty</p>
+                <p className="font-medium">{orderDetails?.quantity}</p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Printer</p>
+                <p className="font-medium">
+                  {printers.find(p => p.printer_ip === selectedPrinter)
+                    ?.printer_name || selectedPrinter}
+                </p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">
+                  Vendor / Customer
+                </p>
+                <p className="font-medium">
+                  {orderDetails?.customer_name || '-'}
+                </p>
+              </div>
+            </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsConfirmDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={confirmPrintLabels} disabled={isPrinting}>
-              {isPrinting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Print
-            </Button>
+            <div className="flex w-full items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsConfirmDialogOpen(false)}
+                aria-label="Cancel print"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmPrintLabels}
+                disabled={isPrinting}
+                aria-label="Confirm and print"
+                autoFocus
+              >
+                {isPrinting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Print
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

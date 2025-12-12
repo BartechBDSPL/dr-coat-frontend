@@ -14,6 +14,9 @@ import './globals.css';
 import DemoLayout from './demo-layout';
 import { ToastContainer } from 'react-toastify';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 const inter = Inter({ subsets: ['latin'] });
 const sourceSerif4 = Source_Serif_4({ subsets: ['latin'] });
 const jetBrainsMono = JetBrains_Mono({ subsets: ['latin'] });

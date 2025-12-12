@@ -226,9 +226,17 @@ const FGExistingDataUpload: React.FC = () => {
   const fetchItemCodes = async () => {
     setIsFetchingItemCodes(true);
     try {
-      const response = await fetch('/api/existing-data/get-item-codes', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `/api/existing-data/get-item-codes?t=${Date.now()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Cache-Control': 'no-cache',
+            Pragma: 'no-cache',
+          },
+          cache: 'no-store',
+        }
+      );
       const data = await response.json();
       if (data.Status === 'T') {
         const options = data.data.map((item: any) => ({
@@ -1183,7 +1191,21 @@ const FGExistingDataUpload: React.FC = () => {
                     <Calendar
                       mode="single"
                       selected={selectedMfgDate}
-                      onSelect={setSelectedMfgDate}
+                      onSelect={date => {
+                        setSelectedMfgDate(date);
+                        if (date && selectedExpDate) {
+                          const mfg = new Date(date);
+                          mfg.setHours(0, 0, 0, 0);
+                          const exp = new Date(selectedExpDate);
+                          exp.setHours(0, 0, 0, 0);
+                          if (exp < mfg) {
+                            setSelectedExpDate(undefined);
+                            toast.error(
+                              'Expiry date reset as it was before the new manufacturing date'
+                            );
+                          }
+                        }
+                      }}
                       disableFutureDates={true}
                       initialFocus
                     />
@@ -1198,10 +1220,12 @@ const FGExistingDataUpload: React.FC = () => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      disabled={!selectedMfgDate}
                       className={cn(
                         'w-full justify-start text-left font-normal',
                         !selectedExpDate && 'text-muted-foreground',
-                        invalidFields.has('expDate') && 'field-blink'
+                        invalidFields.has('expDate') && 'field-blink',
+                        !selectedMfgDate && 'cursor-not-allowed opacity-50'
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -1210,7 +1234,11 @@ const FGExistingDataUpload: React.FC = () => {
                           DateTime.DATE_FULL
                         )
                       ) : (
-                        <span>Pick a date</span>
+                        <span>
+                          {selectedMfgDate
+                            ? 'Pick a date'
+                            : 'Select manufacturing date first'}
+                        </span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -1219,6 +1247,15 @@ const FGExistingDataUpload: React.FC = () => {
                       mode="single"
                       selected={selectedExpDate}
                       onSelect={setSelectedExpDate}
+                      disabled={date => {
+                        if (!selectedMfgDate) return true;
+                        const mfg = new Date(selectedMfgDate);
+                        mfg.setHours(0, 0, 0, 0);
+                        const checkDate = new Date(date);
+                        checkDate.setHours(0, 0, 0, 0);
+                        return checkDate < mfg;
+                      }}
+                      fromDate={selectedMfgDate}
                       initialFocus
                     />
                   </PopoverContent>
