@@ -3,7 +3,7 @@
 dist/
 build/
 out/
-
+server.js
 # Dependencies
 node_modules/
 

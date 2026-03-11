@@ -35,7 +35,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { CalendarIcon, AlertCircle } from 'lucide-react';
-import { FaFileExcel } from 'react-icons/fa';
+import { FaFileExcel, FaFilePdf } from 'react-icons/fa';
 import { DateTime } from 'luxon';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -56,7 +56,9 @@ interface ReprintReportData {
   uom: string;
   quantity: number;
   serial_no: string;
-  print_quantity: number;
+  base_weight: number;
+  tare_weight: number;
+  gross_weight: number;
   reprint_by: string;
   reprint_date: string;
   reprint_reason: string;
@@ -179,7 +181,9 @@ const FGReprintLabelReport: React.FC = () => {
         'Serial No': row.serial_no,
         Quantity: row.quantity,
         UOM: row.uom,
-        'Print Quantity': row.print_quantity,
+        'Base Weight': row.base_weight,
+        'Tare Weight': row.tare_weight,
+        'Gross Weight': row.gross_weight,
         'Reprint Date': DateTime.fromISO(row.reprint_date)
           .setZone('GMT')
           .toFormat('yyyy-MM-dd HH:mm:ss'),
@@ -204,7 +208,7 @@ const FGReprintLabelReport: React.FC = () => {
 
   const exportToPdf = (): void => {
     try {
-      const doc = new jsPDF('l', 'mm', 'a4') as any;
+      const doc = new jsPDF('l', 'mm', 'a3') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Production Order No', dataKey: 'production_order_no' },
@@ -216,7 +220,9 @@ const FGReprintLabelReport: React.FC = () => {
         { header: 'Serial No', dataKey: 'serial_no' },
         { header: 'Quantity', dataKey: 'quantity' },
         { header: 'UOM', dataKey: 'uom' },
-        { header: 'Print Qty', dataKey: 'print_quantity' },
+        { header: 'Base Weight', dataKey: 'base_weight' },
+        { header: 'Tare Weight', dataKey: 'tare_weight' },
+        { header: 'Gross Weight', dataKey: 'gross_weight' },
         { header: 'Reprint Date', dataKey: 'reprint_date' },
         { header: 'Reprint By', dataKey: 'reprint_by' },
         { header: 'Reprint Reason', dataKey: 'reprint_reason' },
@@ -233,7 +239,9 @@ const FGReprintLabelReport: React.FC = () => {
         serial_no: row.serial_no,
         quantity: row.quantity,
         uom: row.uom,
-        print_quantity: row.print_quantity,
+        base_weight: row.base_weight,
+        tare_weight: row.tare_weight,
+        gross_weight: row.gross_weight,
         reprint_date: DateTime.fromISO(row.reprint_date)
           .setZone('GMT')
           .toFormat('yyyy-MM-dd HH:mm:ss'),
@@ -248,22 +256,24 @@ const FGReprintLabelReport: React.FC = () => {
         columns: columns,
         body: formattedData,
         startY: 30,
-        styles: { fontSize: 6, cellPadding: 1.5 },
+        styles: { fontSize: 7, cellPadding: 2 },
         columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 25 },
-          2: { cellWidth: 20 },
-          3: { cellWidth: 35 },
-          4: { cellWidth: 25 },
-          5: { cellWidth: 20 },
-          6: { cellWidth: 25 },
-          7: { cellWidth: 35 },
-          8: { cellWidth: 15 },
-          9: { cellWidth: 12 },
-          10: { cellWidth: 15 },
-          11: { cellWidth: 30 },
-          12: { cellWidth: 20 },
-          13: { cellWidth: 25 },
+          0: { cellWidth: 12 },
+          1: { cellWidth: 28 },
+          2: { cellWidth: 22 },
+          3: { cellWidth: 38 },
+          4: { cellWidth: 28 },
+          5: { cellWidth: 22 },
+          6: { cellWidth: 28 },
+          7: { cellWidth: 38 },
+          8: { cellWidth: 18 },
+          9: { cellWidth: 14 },
+          10: { cellWidth: 18 },
+          11: { cellWidth: 18 },
+          12: { cellWidth: 18 },
+          13: { cellWidth: 32 },
+          14: { cellWidth: 22 },
+          15: { cellWidth: 28 },
         },
         headStyles: { fillColor: [66, 66, 66] },
       });
@@ -520,6 +530,9 @@ const FGReprintLabelReport: React.FC = () => {
                   <Button onClick={exportToExcel} variant="outline" size="sm">
                     <FaFileExcel className="mr-2" /> Export Excel
                   </Button>
+                  <Button onClick={exportToPdf} variant="outline" size="sm">
+                    <FaFilePdf className="mr-2" /> Export PDF
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -560,10 +573,12 @@ const FGReprintLabelReport: React.FC = () => {
                       <TableHead>Serial No</TableHead>
                       <TableHead>Quantity</TableHead>
                       <TableHead>UOM</TableHead>
-                      <TableHead>Print Quantity</TableHead>
+                      <TableHead>Base Weight</TableHead>
+                      <TableHead>Tare Weight</TableHead>
+                      <TableHead>Gross Weight</TableHead>
                       <TableHead>Reprint Date</TableHead>
                       <TableHead>Reprint By</TableHead>
-                      <TableHead>Reprint Reason</TableHead>
+                      <TableHead>Request Reason</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -579,7 +594,9 @@ const FGReprintLabelReport: React.FC = () => {
                         <TableCell>{row.serial_no}</TableCell>
                         <TableCell>{row.quantity}</TableCell>
                         <TableCell>{row.uom}</TableCell>
-                        <TableCell>{row.print_quantity}</TableCell>
+                        <TableCell>{row.base_weight}</TableCell>
+                        <TableCell>{row.tare_weight}</TableCell>
+                        <TableCell>{row.gross_weight}</TableCell>
                         <TableCell>
                           {DateTime.fromISO(row.reprint_date)
                             .setZone('GMT')

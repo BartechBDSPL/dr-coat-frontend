@@ -5,7 +5,7 @@ import { BACKEND_URL } from '@/lib/constants';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { grn_no } = body;
+    const { grn_no, created_by } = body;
 
     if (!grn_no) {
       return NextResponse.json(
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const response = await axios.post(
       `${BACKEND_URL}/api/transactions/grn/details`,
-      { grn_no: grn_no.trim() },
+      { grn_no: grn_no.trim(), created_by: created_by },
       {
         headers: { Authorization: `Bearer ${token}` },
       }

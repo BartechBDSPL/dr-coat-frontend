@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
     const response = await axios.post(
       `${BACKEND_URL}/api/transactions/production-order-find-sr-no`,
       {
-        production_order_no: production_order_no.trim(),
         item_code: item_code.trim(),
         lot_no: lot_no.trim(),
       },

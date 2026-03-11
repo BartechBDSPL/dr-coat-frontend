@@ -12,7 +12,7 @@ import ReprintApproval from '@/components/administrator/reprint-approval';
 
 export default function DashboardPage() {
   return (
-    <ContentLayout title="Printer Master">
+    <ContentLayout title="Reprint Approval">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>

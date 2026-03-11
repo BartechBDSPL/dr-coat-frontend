@@ -50,7 +50,8 @@ interface ReportData {
   shipment_no: string;
   item_code: string;
   item_description: string;
-  lot_no: string;
+  shipment_lot_no: string;
+  picked_lot_no: string;
   serial_no: string;
   picked_quantity: number;
   picked_by: string;
@@ -78,7 +79,8 @@ const FGShipmentPickingReport: React.FC = () => {
         'shipment_no',
         'item_code',
         'item_description',
-        'lot_no',
+        'shipment_lot_no',
+        'picked_lot_no',
         'serial_no',
         'picked_by',
       ];
@@ -166,7 +168,8 @@ const FGShipmentPickingReport: React.FC = () => {
         'Shipment No': row.shipment_no,
         'Item Code': row.item_code,
         'Item Description': row.item_description || '-',
-        'Lot No': row.lot_no,
+        'Shipment Lot No': row.shipment_lot_no,
+        'Picked Lot No': row.picked_lot_no,
         'Serial No': row.serial_no,
         'Picked Quantity': row.picked_quantity,
         'Picked By': row.picked_by,
@@ -192,13 +195,14 @@ const FGShipmentPickingReport: React.FC = () => {
 
   const exportToPdf = (): void => {
     try {
-      const doc = new jsPDF('l', 'mm', 'a4') as any;
+      const doc = new jsPDF('l', 'mm', 'a3') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Shipment No', dataKey: 'shipment_no' },
         { header: 'Item Code', dataKey: 'item_code' },
         { header: 'Item Description', dataKey: 'item_description' },
-        { header: 'Lot No', dataKey: 'lot_no' },
+        { header: 'Shipment Lot No', dataKey: 'shipment_lot_no' },
+        { header: 'Picked Lot No', dataKey: 'picked_lot_no' },
         { header: 'Serial No', dataKey: 'serial_no' },
         { header: 'Picked Qty', dataKey: 'picked_quantity' },
         { header: 'Picked By', dataKey: 'picked_by' },
@@ -210,7 +214,8 @@ const FGShipmentPickingReport: React.FC = () => {
         shipment_no: row.shipment_no,
         item_code: row.item_code,
         item_description: row.item_description || '-',
-        lot_no: row.lot_no,
+        shipment_lot_no: row.shipment_lot_no,
+        picked_lot_no: row.picked_lot_no,
         serial_no: row.serial_no,
         picked_quantity: row.picked_quantity,
         picked_by: row.picked_by,
@@ -232,11 +237,12 @@ const FGShipmentPickingReport: React.FC = () => {
           1: { cellWidth: 30 },
           2: { cellWidth: 25 },
           3: { cellWidth: 40 },
-          4: { cellWidth: 25 },
+          4: { cellWidth: 30 },
           5: { cellWidth: 30 },
-          6: { cellWidth: 20 },
-          7: { cellWidth: 25 },
-          8: { cellWidth: 35 },
+          6: { cellWidth: 30 },
+          7: { cellWidth: 20 },
+          8: { cellWidth: 25 },
+          9: { cellWidth: 35 },
         },
         headStyles: { fillColor: [66, 66, 66] },
       });
@@ -272,7 +278,13 @@ const FGShipmentPickingReport: React.FC = () => {
     const totalShipments = new Set(filteredData.map(item => item.shipment_no))
       .size;
     const totalItems = new Set(filteredData.map(item => item.item_code)).size;
-    const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
+    // Count unique shipment_lot_no and picked_lot_no
+    const lotSet = new Set<string>();
+    filteredData.forEach(item => {
+      if (item.shipment_lot_no) lotSet.add(item.shipment_lot_no);
+      if (item.picked_lot_no) lotSet.add(item.picked_lot_no);
+    });
+    const totalLots = lotSet.size;
     const totalQuantity = filteredData.reduce(
       (sum, item) => sum + item.picked_quantity,
       0
@@ -503,7 +515,8 @@ const FGShipmentPickingReport: React.FC = () => {
                       <TableHead>Shipment No</TableHead>
                       <TableHead>Item Code</TableHead>
                       <TableHead>Item Description</TableHead>
-                      <TableHead>Lot No</TableHead>
+                      <TableHead>Shipment Lot No</TableHead>
+                      <TableHead>Picked Lot No</TableHead>
                       <TableHead>Serial No</TableHead>
                       <TableHead>Picked Qty</TableHead>
                       <TableHead>Picked By</TableHead>
@@ -517,7 +530,8 @@ const FGShipmentPickingReport: React.FC = () => {
                         <TableCell>{row.shipment_no}</TableCell>
                         <TableCell>{row.item_code}</TableCell>
                         <TableCell>{row.item_description || '-'}</TableCell>
-                        <TableCell>{row.lot_no}</TableCell>
+                        <TableCell>{row.shipment_lot_no}</TableCell>
+                        <TableCell>{row.picked_lot_no}</TableCell>
                         <TableCell>{row.serial_no}</TableCell>
                         <TableCell>{row.picked_quantity}</TableCell>
                         <TableCell>{row.picked_by}</TableCell>

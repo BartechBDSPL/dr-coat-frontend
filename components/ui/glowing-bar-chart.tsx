@@ -23,6 +23,7 @@ interface GlowingBarChartProps {
   title?: string;
   description?: string;
   dataKey?: string;
+  dataKeys?: string[];
   monthKey?: string;
 }
 
@@ -31,24 +32,52 @@ export function GlowingBarChart({
   title = 'Bar Chart',
   description = 'Monthly data',
   dataKey = 'desktop',
+  dataKeys,
   monthKey = 'month',
 }: GlowingBarChartProps) {
-  const chartData = data.map(item => ({
-    month: item[monthKey],
-    count: item[dataKey] || 0,
-  }));
+  const isMultiBar = dataKeys && dataKeys.length > 1;
 
-  const chartConfig = {
-    count: {
-      label: 'Count',
-      color: 'hsl(var(--chart-1))',
-    },
-  } satisfies ChartConfig;
+  const chartData = data.map(item => {
+    if (isMultiBar) {
+      const result: any = { month: item[monthKey] };
+      dataKeys.forEach(key => {
+        result[key] = item[key] || 0;
+      });
+      return result;
+    } else {
+      return {
+        month: item[monthKey],
+        count: item[dataKey] || 0,
+      };
+    }
+  });
 
-  const totalCount = chartData.reduce(
-    (sum, item) => sum + (item.count || 0),
-    0
-  );
+  const chartConfig: ChartConfig = isMultiBar
+    ? {
+        StockTransferCount: {
+          label: 'Stock Transfer',
+          color: 'hsl(var(--chart-1))',
+        },
+        ShipmentCount: {
+          label: 'Shipment',
+          color: 'hsl(var(--chart-2))',
+        },
+      }
+    : {
+        count: {
+          label: 'Count',
+          color: 'hsl(var(--chart-1))',
+        },
+      };
+
+  const totalCount = isMultiBar
+    ? chartData.reduce(
+        (sum, item) =>
+          sum +
+          (dataKeys?.reduce((acc, key) => acc + (item[key] || 0), 0) || 0),
+        0
+      )
+    : chartData.reduce((sum, item) => sum + (item.count || 0), 0);
 
   return (
     <Card>
@@ -92,13 +121,30 @@ export function GlowingBarChart({
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar
-              barSize={24}
-              dataKey="count"
-              fill="var(--color-count)"
-              radius={6}
-              background={{ fill: 'hsl(var(--muted))', radius: 6 }}
-            />
+            {isMultiBar && dataKeys ? (
+              dataKeys.map((key, index) => (
+                <Bar
+                  key={key}
+                  barSize={24}
+                  dataKey={key}
+                  fill={`var(--color-${key})`}
+                  radius={6}
+                  background={
+                    index === 0
+                      ? { fill: 'hsl(var(--muted))', radius: 6 }
+                      : undefined
+                  }
+                />
+              ))
+            ) : (
+              <Bar
+                barSize={24}
+                dataKey="count"
+                fill="var(--color-count)"
+                radius={6}
+                background={{ fill: 'hsl(var(--muted))', radius: 6 }}
+              />
+            )}
           </BarChart>
         </ChartContainer>
       </CardContent>

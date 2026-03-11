@@ -40,6 +40,15 @@ import { Calendar } from '@/components/ui/calendar';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { AlertTriangle } from 'lucide-react';
 
 interface StockTransferDetails {
   Status: string;
@@ -56,6 +65,7 @@ interface StockTransferDetails {
   quantity_shipped: number;
   quantity_received: number;
   assign_user?: string;
+  type?: string;
   created_by: string;
   created_date: string | null;
   updated_by: string;
@@ -99,6 +109,7 @@ const StockTransferOrder: React.FC = () => {
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [lineItemUsers, setLineItemUsers] = useState<LineItemUsers>({});
+  const [lineItemTypes, setLineItemTypes] = useState<{[lineNo: number]: string}>({});
   const [activeUsers, setActiveUsers] = useState<DropdownOption[]>([]);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [warehouses, setWarehouses] = useState<DropdownOption[]>([]);
@@ -111,6 +122,7 @@ const StockTransferOrder: React.FC = () => {
     []
   );
   const [isFetchingOrders, setIsFetchingOrders] = useState(false);
+  const [showReassignDialog, setShowReassignDialog] = useState(false);
   const orderNoRef = useRef<HTMLInputElement>(null);
   const token = Cookies.get('token');
 
@@ -191,6 +203,7 @@ const StockTransferOrder: React.FC = () => {
     setSelectedWarehouse(warehouseCode);
     setSelectedUsers([]);
     setLineItemUsers({});
+    setLineItemTypes({});
     fetchUsersByWarehouse(warehouseCode);
   };
 
@@ -310,31 +323,56 @@ const StockTransferOrder: React.FC = () => {
       }
 
       if (Array.isArray(data) && data.length > 0) {
-        setOrderDetails(data);
+        // Check if any items already have assigned users
+        const hasAssignedUsers = data.some(
+          item => item.assign_user && item.assign_user.trim() !== ''
+        );
 
-        const initialLineItemUsers: LineItemUsers = {};
-        const allAssignedUsers = new Set<string>();
+        if (hasAssignedUsers) {
+          // Show reassign dialog
+          setOrderDetails(data);
 
-        data.forEach(item => {
-          if (item.assign_user) {
-            const users = item.assign_user
-              .split(',')
-              .map((u: string) => u.trim());
-            initialLineItemUsers[item.line_no] = users;
+          const initialLineItemUsers: LineItemUsers = {};
+          const initialLineItemTypes: {[lineNo: number]: string} = {};
+          const allAssignedUsers = new Set<string>();
 
-            users.forEach((user: string) => allAssignedUsers.add(user));
-          } else {
-            initialLineItemUsers[item.line_no] = [];
+          data.forEach(item => {
+            if (item.assign_user) {
+              const users = item.assign_user
+                .split(',')
+                .map((u: string) => u.trim());
+              initialLineItemUsers[item.line_no] = users;
+
+              users.forEach((user: string) => allAssignedUsers.add(user));
+            } else {
+              initialLineItemUsers[item.line_no] = [];
+            }
+            initialLineItemTypes[item.line_no] = item.type || '';
+          });
+
+          setLineItemUsers(initialLineItemUsers);
+          setLineItemTypes(initialLineItemTypes);
+
+          if (allAssignedUsers.size > 0) {
+            setSelectedUsers(Array.from(allAssignedUsers));
           }
-        });
 
-        setLineItemUsers(initialLineItemUsers);
+          setShowReassignDialog(true);
+        } else {
+          // No assigned users, proceed normally
+          setOrderDetails(data);
 
-        if (allAssignedUsers.size > 0) {
-          setSelectedUsers(Array.from(allAssignedUsers));
+          const initialLineItemUsers: LineItemUsers = {};
+          const initialLineItemTypes: {[lineNo: number]: string} = {};
+          data.forEach(item => {
+            initialLineItemUsers[item.line_no] = [];
+            initialLineItemTypes[item.line_no] = item.type || '';
+          });
+
+          setLineItemUsers(initialLineItemUsers);
+          setLineItemTypes(initialLineItemTypes);
+          toast.success(`Found ${data.length} items in transfer order`);
         }
-
-        toast.success(`Found ${data.length} items in transfer order`);
       } else {
         toast.warning('No items found for this transfer order');
         setOrderDetails([]);
@@ -356,10 +394,10 @@ const StockTransferOrder: React.FC = () => {
     }
 
     const allAssigned = orderDetails.every(
-      item => (lineItemUsers[item.line_no] || []).length > 0
+      item => (lineItemUsers[item.line_no] || []).length > 0 && (lineItemTypes[item.line_no] || '').trim() !== ''
     );
     if (!allAssigned) {
-      toast.error('Please assign at least one user to each line item');
+      toast.error('Please assign at least one user and select a type for each line item');
       return;
     }
 
@@ -378,6 +416,7 @@ const StockTransferOrder: React.FC = () => {
           }
 
           const assignedUsers = lineUsers.join(',');
+          const assignedType = lineItemTypes[item.line_no] || '';
 
           const response = await fetch(
             `/api/transactions/stock-transfer-order/insert`,
@@ -401,6 +440,7 @@ const StockTransferOrder: React.FC = () => {
                 quantity_received: item.quantity_received,
                 line_no: item.line_no.toString(),
                 assign_user: assignedUsers,
+                type: assignedType,
                 created_by: getUserID(),
               }),
             }
@@ -450,6 +490,7 @@ const StockTransferOrder: React.FC = () => {
     setOrderDetails([]);
     setSelectedUsers([]);
     setLineItemUsers({});
+    setLineItemTypes({});
     orderNoRef.current?.focus();
   };
 
@@ -457,6 +498,13 @@ const StockTransferOrder: React.FC = () => {
     setLineItemUsers(prev => ({
       ...prev,
       [lineNo]: users,
+    }));
+  };
+
+  const handleLineItemTypeChange = (lineNo: number, type: string) => {
+    setLineItemTypes(prev => ({
+      ...prev,
+      [lineNo]: type,
     }));
   };
 
@@ -617,6 +665,19 @@ const StockTransferOrder: React.FC = () => {
               </div>
             </div>
 
+            {!selectedWarehouse && orderDetails.length > 0 && (
+              <div className="rounded-md border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-950/30">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <strong>Action Required:</strong>
+                </div>
+                <p className="ml-6 mt-1">
+                  Please select a warehouse code above to load available users
+                  before assigning.
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
               <div className="lg:col-span-5">
                 <Label htmlFor="transferOrderNo">
@@ -688,7 +749,11 @@ const StockTransferOrder: React.FC = () => {
                       ? 'cursor-not-allowed opacity-50'
                       : ''
                   }
-                  disabled={!selectedWarehouse || isLoadingUsers}
+                  disabled={
+                    !selectedWarehouse ||
+                    isLoadingUsers ||
+                    orderDetails.length === 0
+                  }
                 />
               </div>
 
@@ -699,7 +764,7 @@ const StockTransferOrder: React.FC = () => {
                     orderDetails.length === 0 ||
                     isAssigning ||
                     !orderDetails.every(
-                      item => (lineItemUsers[item.line_no] || []).length > 0
+                      item => (lineItemUsers[item.line_no] || []).length > 0 && (lineItemTypes[item.line_no] || '').trim() !== ''
                     )
                   }
                   className="flex-1"
@@ -788,9 +853,12 @@ const StockTransferOrder: React.FC = () => {
                     <TableHead>Item Description</TableHead>
                     <TableHead>Lot No</TableHead>
                     <TableHead className="text-right">Quantity</TableHead>
-                    <TableHead className="text-right">Shipped</TableHead>
-                    <TableHead className="text-right">Received</TableHead>
+                    {/* <TableHead className="text-right">Shipped</TableHead>
+                    <TableHead className="text-right">Received</TableHead> */}
                     <TableHead className="text-right">Line No</TableHead>
+                    <TableHead className="min-w-[150px]">
+                      Type *
+                    </TableHead>
                     <TableHead className="min-w-[250px]">
                       Assign to Users (Optional)
                       <div className="mt-1 text-xs font-normal text-muted-foreground">
@@ -811,14 +879,28 @@ const StockTransferOrder: React.FC = () => {
                       <TableCell className="text-right">
                         <Badge variant="secondary">{item.quantity}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      {/* <TableCell className="text-right">
                         {item.quantity_shipped}
                       </TableCell>
                       <TableCell className="text-right">
                         {item.quantity_received}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell className="text-right">
                         {item.line_no}
+                      </TableCell>
+                      <TableCell>
+                        <CustomDropdown
+                          options={[
+                            { value: 'RM', label: 'RM' },
+                            { value: 'FG', label: 'FG' },
+                            { value: 'Trading', label: 'Trading' },
+                          ]}
+                          value={lineItemTypes[item.line_no] || ''}
+                          onValueChange={(value) => handleLineItemTypeChange(item.line_no, value)}
+                          placeholder="Select Type"
+                          searchPlaceholder="Search type..."
+                          emptyText="No types"
+                        />
                       </TableCell>
                       <TableCell>
                         <MultiSelect
@@ -860,30 +942,22 @@ const StockTransferOrder: React.FC = () => {
                 </div>
               )}
 
-              {Object.keys(lineItemUsers).length > 0 && (
+              {Object.keys(lineItemTypes).length > 0 && (
                 <div className="border-t pt-2">
                   <div className="mb-2 text-sm font-medium">
-                    Users by Line Item:
+                    Types by Line Item:
                   </div>
                   <div className="space-y-2 text-xs">
-                    {Object.entries(lineItemUsers)
-                      .filter(([_, users]) => users.length > 0)
-                      .map(([lineNo, users]) => (
+                    {Object.entries(lineItemTypes)
+                      .filter(([_, type]) => type.trim() !== '')
+                      .map(([lineNo, type]) => (
                         <div key={lineNo} className="flex items-center gap-2">
                           <span className="text-muted-foreground">
                             Line {lineNo}:
                           </span>
-                          <div className="flex flex-wrap gap-1">
-                            {users.map((user: string) => (
-                              <Badge
-                                key={user}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {user}
-                              </Badge>
-                            ))}
-                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {type}
+                          </Badge>
                         </div>
                       ))}
                   </div>
@@ -1009,6 +1083,54 @@ const StockTransferOrder: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={showReassignDialog} onOpenChange={setShowReassignDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Items Already Assigned
+            </DialogTitle>
+            <DialogDescription className="space-y-2">
+              <p>
+                All line items in this transfer order have already been assigned
+                to users.
+              </p>
+              <p className="font-medium text-foreground">
+                Do you want to reassign users to these items?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Click &quot;Reassign&quot; to update the user assignments, or
+                &quot;Cancel&quot; to go back.
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowReassignDialog(false);
+                setTransferOrderNo('');
+                setOrderDetails([]);
+                setSelectedUsers([]);
+                setLineItemUsers({});
+                setLineItemTypes({});
+                orderNoRef.current?.focus();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setShowReassignDialog(false);
+                toast.info('You can now reassign users to the items');
+              }}
+            >
+              Reassign
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -14,7 +14,7 @@ export default function DemoLayout({
         <ThemeProviderLightDark>
           {children}
 
-          <Toaster />
+          <Toaster richColors />
         </ThemeProviderLightDark>
       </ThemeProvider>
     </SessionProvider>

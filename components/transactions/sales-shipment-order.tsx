@@ -65,6 +65,13 @@ interface ShipmentDetails {
   truck_no: string;
   driver_name: string;
   driver_contact_no: string;
+  sell_to_customer_no: string;
+  sell_to_customer_name: string;
+  external_document_no: string;
+  entry_no: number;
+  location_code: string;
+  order_date: string;
+  variant_code: string;
 }
 
 interface ApiResponse {
@@ -564,18 +571,19 @@ const SalesShipmentOrder: React.FC = () => {
                   Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
-                  entry_no: '',
+                  entry_no: item.entry_no || '',
                   order_no: item.order_no,
                   shipment_no: item.shipment_no,
-                  sell_to_customer_no: '',
-                  sell_to_customer_name: '',
-                  order_date: '',
+                  sell_to_customer_no: item.sell_to_customer_no || '',
+                  sell_to_customer_name: item.sell_to_customer_name || '',
+                  order_date: item.order_date || '',
                   posting_date: DateTime.now().toFormat('yyyy-MM-dd'),
-                  external_document_no: '',
+                  external_document_no: item.external_document_no || '',
                   item_code: item.item_code,
                   item_description: item.item_description,
-                  variant_code: '',
-                  location_code: '',
+                  variant_code: item.variant_code || '',
+                  item_reference_number: item.item_reference_number || '',
+                  location_code: item.location_code || '',
                   quantity: item.quantity,
                   packing_details: item.packing_details || '',
                   uom: 'KGS',
@@ -1014,7 +1022,7 @@ const SalesShipmentOrder: React.FC = () => {
             <div className="space-y-4">
               <CardTitle>Shipment Order Details</CardTitle>
 
-              <div className="grid grid-cols-1 gap-4 rounded-lg bg-muted/50 p-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 rounded-lg bg-muted/50 p-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
                   <Label className="text-xs text-muted-foreground">
                     Shipment Number
@@ -1031,6 +1039,52 @@ const SalesShipmentOrder: React.FC = () => {
                   </Label>
                   <Input
                     value={shipmentDetails[0].order_no}
+                    disabled
+                    className="mt-1 font-medium"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">
+                    Order Date
+                  </Label>
+                  <Input
+                    value={
+                      shipmentDetails[0].order_date
+                        ? DateTime.fromISO(
+                            shipmentDetails[0].order_date
+                          ).toFormat('dd-MM-yyyy')
+                        : '-'
+                    }
+                    disabled
+                    className="mt-1 font-medium"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">
+                    External Document No
+                  </Label>
+                  <Input
+                    value={shipmentDetails[0].external_document_no || '-'}
+                    disabled
+                    className="mt-1 font-medium"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">
+                    Location Code
+                  </Label>
+                  <Input
+                    value={shipmentDetails[0].location_code || '-'}
+                    disabled
+                    className="mt-1 font-medium"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">
+                    Entry No
+                  </Label>
+                  <Input
+                    value={shipmentDetails[0].entry_no || '-'}
                     disabled
                     className="mt-1 font-medium"
                   />

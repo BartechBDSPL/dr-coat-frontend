@@ -53,7 +53,9 @@ interface ReportData {
   lot_no: string;
   serial_no: string;
   quantity: number;
-  print_quantity: number;
+  base_weight: number;
+  tare_weight: number;
+  gross_weight: number;
   print_by: string;
   print_date: string;
 }
@@ -167,7 +169,9 @@ const FGLabelPrintingReport: React.FC = () => {
         'Lot No': row.lot_no,
         'Serial No': row.serial_no,
         Quantity: row.quantity,
-        'Print Quantity': row.print_quantity,
+        'Base Weight': row.base_weight,
+        'Tare Weight': row.tare_weight,
+        'Gross Weight': row.gross_weight,
         'Print By': row.print_by,
         'Print Date': DateTime.fromISO(row.print_date)
           .setZone('GMT')
@@ -187,7 +191,7 @@ const FGLabelPrintingReport: React.FC = () => {
 
   const exportToPdf = (): void => {
     try {
-      const doc = new jsPDF('l', 'mm', 'a4') as any;
+      const doc = new jsPDF('l', 'mm', 'a3') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Production Order No', dataKey: 'production_order_no' },
@@ -196,7 +200,9 @@ const FGLabelPrintingReport: React.FC = () => {
         { header: 'Lot No', dataKey: 'lot_no' },
         { header: 'Serial No', dataKey: 'serial_no' },
         { header: 'Quantity', dataKey: 'quantity' },
-        { header: 'Print Qty', dataKey: 'print_quantity' },
+        { header: 'Base Weight', dataKey: 'base_weight' },
+        { header: 'Tare Weight', dataKey: 'tare_weight' },
+        { header: 'Gross Weight', dataKey: 'gross_weight' },
         { header: 'Print By', dataKey: 'print_by' },
         { header: 'Print Date', dataKey: 'print_date' },
       ];
@@ -209,7 +215,9 @@ const FGLabelPrintingReport: React.FC = () => {
         lot_no: row.lot_no,
         serial_no: row.serial_no,
         quantity: row.quantity,
-        print_quantity: row.print_quantity,
+        base_weight: row.base_weight,
+        tare_weight: row.tare_weight,
+        gross_weight: row.gross_weight,
         print_by: row.print_by,
         print_date: DateTime.fromISO(row.print_date)
           .setZone('GMT')
@@ -233,8 +241,10 @@ const FGLabelPrintingReport: React.FC = () => {
           5: { cellWidth: 35 },
           6: { cellWidth: 18 },
           7: { cellWidth: 18 },
-          8: { cellWidth: 20 },
-          9: { cellWidth: 32 },
+          8: { cellWidth: 18 },
+          9: { cellWidth: 18 },
+          10: { cellWidth: 20 },
+          11: { cellWidth: 32 },
         },
         headStyles: { fillColor: [66, 66, 66] },
       });
@@ -504,7 +514,9 @@ const FGLabelPrintingReport: React.FC = () => {
                       <TableHead>Lot No</TableHead>
                       <TableHead>Serial No</TableHead>
                       <TableHead className="text-right">Quantity</TableHead>
-                      <TableHead className="text-right">Print Qty</TableHead>
+                      <TableHead className="text-right">Base Weight</TableHead>
+                      <TableHead className="text-right">Tare Weight</TableHead>
+                      <TableHead className="text-right">Gross Weight</TableHead>
                       <TableHead>Print By</TableHead>
                       <TableHead>Print Date</TableHead>
                     </TableRow>
@@ -526,9 +538,13 @@ const FGLabelPrintingReport: React.FC = () => {
                           <Badge variant="secondary">{row.quantity}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge variant="secondary">
-                            {row.print_quantity}
-                          </Badge>
+                          <Badge variant="secondary">{row.base_weight}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="secondary">{row.tare_weight}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="secondary">{row.gross_weight}</Badge>
                         </TableCell>
                         <TableCell>{row.print_by}</TableCell>
                         <TableCell>

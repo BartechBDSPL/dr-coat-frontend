@@ -194,28 +194,32 @@ const OverviewTab: React.FC = () => {
   const getMetricStyle = (index: number) => {
     const styles = [
       {
-        gradient: 'from-emerald-500/10 via-emerald-500/5 to-transparent',
-        border: 'border-emerald-500/20',
-        iconBg: 'bg-emerald-500/10',
-        iconColor: 'text-emerald-600 dark:text-emerald-400',
+        gradient:
+          'from-[hsl(var(--chart-1))]/10 via-[hsl(var(--chart-1))]/5 to-transparent',
+        border: 'border-[hsl(var(--chart-1))]/20',
+        iconBg: 'bg-[hsl(var(--chart-1))]/10',
+        iconColor: 'text-[hsl(var(--chart-1))]',
       },
       {
-        gradient: 'from-blue-500/10 via-blue-500/5 to-transparent',
-        border: 'border-blue-500/20',
-        iconBg: 'bg-blue-500/10',
-        iconColor: 'text-blue-600 dark:text-blue-400',
+        gradient:
+          'from-[hsl(var(--chart-2))]/10 via-[hsl(var(--chart-2))]/5 to-transparent',
+        border: 'border-[hsl(var(--chart-2))]/20',
+        iconBg: 'bg-[hsl(var(--chart-2))]/10',
+        iconColor: 'text-[hsl(var(--chart-2))]',
       },
       {
-        gradient: 'from-violet-500/10 via-violet-500/5 to-transparent',
-        border: 'border-violet-500/20',
-        iconBg: 'bg-violet-500/10',
-        iconColor: 'text-violet-600 dark:text-violet-400',
+        gradient:
+          'from-[hsl(var(--chart-3))]/10 via-[hsl(var(--chart-3))]/5 to-transparent',
+        border: 'border-[hsl(var(--chart-3))]/20',
+        iconBg: 'bg-[hsl(var(--chart-3))]/10',
+        iconColor: 'text-[hsl(var(--chart-3))]',
       },
       {
-        gradient: 'from-amber-500/10 via-amber-500/5 to-transparent',
-        border: 'border-amber-500/20',
-        iconBg: 'bg-amber-500/10',
-        iconColor: 'text-amber-600 dark:text-amber-400',
+        gradient:
+          'from-[hsl(var(--chart-4))]/10 via-[hsl(var(--chart-4))]/5 to-transparent',
+        border: 'border-[hsl(var(--chart-4))]/20',
+        iconBg: 'bg-[hsl(var(--chart-4))]/10',
+        iconColor: 'text-[hsl(var(--chart-4))]',
       },
     ];
     return styles[index % styles.length];
@@ -409,7 +413,7 @@ const OverviewTab: React.FC = () => {
                 data={chartData?.reworkCounts || []}
                 title="Stock Transfer vs Shipment"
                 description="Monthly stock transfer and shipment comparison"
-                dataKey="StockTransferCount"
+                dataKeys={['StockTransferCount', 'ShipmentCount']}
                 monthKey="month_name"
               />
             </div>

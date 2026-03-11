@@ -445,6 +445,9 @@ const ReprintApproval: React.FC = () => {
                       <TableHead className="hidden font-semibold text-foreground sm:table-cell">
                         Requested By
                       </TableHead>
+                      <TableHead className="hidden font-semibold text-foreground sm:table-cell">
+                        Reprint Reason
+                      </TableHead>
                       <TableHead className="hidden font-semibold text-foreground md:table-cell">
                         Request Date
                       </TableHead>
@@ -480,6 +483,9 @@ const ReprintApproval: React.FC = () => {
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                           {request.request_by}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          {request.reprint_reason}
                         </TableCell>
                         <TableCell className="hidden text-sm md:table-cell">
                           {DateTime.fromISO(request.request_date)

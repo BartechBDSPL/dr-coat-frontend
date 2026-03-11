@@ -27,25 +27,21 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 
-const multiSelectVariants = cva(
-  'm-1 transition ease-in-out delay-150 hover:-translate-y-1 hover:scale-110 duration-300',
-  {
-    variants: {
-      variant: {
-        default:
-          'border-foreground/10 text-foreground bg-card hover:bg-card/80',
-        secondary:
-          'border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        inverted: 'inverted dark:text-slate-900',
-      },
+const multiSelectVariants = cva('m-1', {
+  variants: {
+    variant: {
+      default: 'border-foreground/10 text-foreground bg-card hover:bg-card/80',
+      secondary:
+        'border-foreground/10 bg-secondary text-secondary-foreground hover:bg-secondary/80',
+      destructive:
+        'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
+      inverted: 'inverted dark:text-slate-900',
     },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
+  },
+  defaultVariants: {
+    variant: 'default',
+  },
+});
 
 interface MultiSelectProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -160,9 +156,10 @@ export const MultiSelect = React.forwardRef<
           <Button
             ref={ref}
             {...props}
+            type="button"
             onClick={handleTogglePopover}
             className={cn(
-              'flex h-auto min-h-10 w-full items-center justify-between rounded-md border bg-inherit p-1 hover:bg-inherit',
+              'flex h-auto min-h-10 w-full items-center justify-between rounded-md border bg-inherit p-1 hover:bg-inherit [&_*]:pointer-events-auto',
               className
             )}
           >
@@ -185,13 +182,16 @@ export const MultiSelect = React.forwardRef<
                           <IconComponent className="mr-2 h-4 w-4" />
                         )}
                         {option?.label}
-                        <XCircle
-                          className="ml-2 h-4 w-4 cursor-pointer"
+                        <span
+                          className="ml-2 cursor-pointer rounded p-1 hover:bg-muted hover:text-destructive"
                           onClick={event => {
+                            event.preventDefault();
                             event.stopPropagation();
                             toggleOption(value);
                           }}
-                        />
+                        >
+                          <XCircle className="h-4 w-4 shrink-0" />
+                        </span>
                       </Badge>
                     );
                   })}
@@ -205,24 +205,30 @@ export const MultiSelect = React.forwardRef<
                       style={{ animationDuration: `${animation}s` }}
                     >
                       {`+ ${selectedValues.length - maxCount} more`}
-                      <XCircle
-                        className="ml-2 h-4 w-4 cursor-pointer"
+                      <span
+                        className="ml-2 cursor-pointer rounded p-1 hover:bg-muted hover:text-destructive"
                         onClick={event => {
+                          event.preventDefault();
                           event.stopPropagation();
                           clearExtraOptions();
                         }}
-                      />
+                      >
+                        <XCircle className="h-4 w-4 shrink-0" />
+                      </span>
                     </Badge>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
-                  <XIcon
-                    className="mx-2 h-4 cursor-pointer text-muted-foreground"
+                  <span
+                    className="mx-2 cursor-pointer rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
                     onClick={event => {
+                      event.preventDefault();
                       event.stopPropagation();
                       handleClear();
                     }}
-                  />
+                  >
+                    <XIcon className="h-4 w-4 shrink-0" />
+                  </span>
                   <Separator
                     orientation="vertical"
                     className="flex h-full min-h-6"

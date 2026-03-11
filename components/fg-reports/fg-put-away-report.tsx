@@ -52,7 +52,9 @@ interface ReportData {
   item_description: string | null;
   lot_no: string;
   serial_no: string;
+  warehouse_code: string;
   put_location: string;
+  put_quantity: number;
   put_by: string;
   put_date: string;
 }
@@ -80,6 +82,7 @@ const FGPutAwayReport: React.FC = () => {
         'lot_no',
         'serial_no',
         'put_location',
+        'warehouse_code',
         'put_by',
       ];
       return searchableFields.some(key => {
@@ -168,6 +171,8 @@ const FGPutAwayReport: React.FC = () => {
         'Lot No': row.lot_no,
         'Serial No': row.serial_no,
         Location: row.put_location,
+        'Warehouse Code': row.warehouse_code || '-',
+        'Put Quantity': row.put_quantity ?? 0,
         'Put By': row.put_by,
         'Put Date': DateTime.fromISO(row.put_date)
           .setZone('GMT')
@@ -184,7 +189,7 @@ const FGPutAwayReport: React.FC = () => {
 
   const exportToPdf = (): void => {
     try {
-      const doc = new jsPDF('l', 'mm', 'a4') as any;
+      const doc = new jsPDF('l', 'mm', 'a3') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Production Order No', dataKey: 'production_order_no' },
@@ -193,6 +198,8 @@ const FGPutAwayReport: React.FC = () => {
         { header: 'Lot No', dataKey: 'lot_no' },
         { header: 'Serial No', dataKey: 'serial_no' },
         { header: 'Location', dataKey: 'location' },
+        { header: 'Warehouse', dataKey: 'warehouse_code' },
+        { header: 'Put Quantity', dataKey: 'put_quantity' },
         { header: 'Put By', dataKey: 'put_by' },
         { header: 'Put Date', dataKey: 'put_date' },
       ];
@@ -205,6 +212,8 @@ const FGPutAwayReport: React.FC = () => {
         lot_no: row.lot_no,
         serial_no: row.serial_no,
         location: row.put_location,
+        warehouse_code: row.warehouse_code || '-',
+        put_quantity: row.put_quantity ?? 0,
         put_by: row.put_by,
         put_date: DateTime.fromISO(row.put_date)
           .setZone('GMT')
@@ -228,7 +237,9 @@ const FGPutAwayReport: React.FC = () => {
           5: { cellWidth: 35 },
           6: { cellWidth: 20 },
           7: { cellWidth: 20 },
-          8: { cellWidth: 35 },
+          8: { cellWidth: 20 },
+          9: { cellWidth: 20 },
+          10: { cellWidth: 35 },
         },
         headStyles: { fillColor: [66, 66, 66] },
       });
@@ -269,8 +280,19 @@ const FGPutAwayReport: React.FC = () => {
     const totalLocations = new Set(filteredData.map(item => item.put_location))
       .size;
     const totalBoxes = filteredData.length;
+    const totalQuantity = filteredData.reduce(
+      (sum, item) => sum + (item.put_quantity ?? 0),
+      0
+    );
 
-    return { totalOrders, totalItems, totalLots, totalLocations, totalBoxes };
+    return {
+      totalOrders,
+      totalItems,
+      totalLots,
+      totalLocations,
+      totalBoxes,
+      totalQuantity,
+    };
   };
 
   const stats = getDashboardStats();
@@ -506,6 +528,8 @@ const FGPutAwayReport: React.FC = () => {
                       <TableHead>Lot No</TableHead>
                       <TableHead>Serial No</TableHead>
                       <TableHead>Location</TableHead>
+                      <TableHead>Warehouse</TableHead>
+                      <TableHead>Put Quantity</TableHead>
                       <TableHead>Put By</TableHead>
                       <TableHead>Put Date</TableHead>
                     </TableRow>
@@ -525,6 +549,16 @@ const FGPutAwayReport: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">{row.put_location}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-mono">
+                            {row.warehouse_code || '-'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {new Intl.NumberFormat().format(
+                            row.put_quantity ?? 0
+                          )}
                         </TableCell>
                         <TableCell>{row.put_by}</TableCell>
                         <TableCell>

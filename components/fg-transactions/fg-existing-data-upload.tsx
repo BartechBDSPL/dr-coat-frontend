@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import Cookies from 'js-cookie';
+import axios from '@/lib/axios-config';
 import {
   Loader2,
   Upload,
@@ -164,6 +165,13 @@ const FGExistingDataUpload: React.FC = () => {
   const serialNumbersCardRef = useRef<HTMLDivElement>(null);
   const baseWeightRef = useRef<HTMLInputElement>(null);
   const tareWeightRef = useRef<HTMLInputElement>(null);
+  const itemCodeRef = useRef<HTMLDivElement>(null);
+  const lotNoRef = useRef<HTMLDivElement>(null);
+  const totalQtyRef = useRef<HTMLInputElement>(null);
+  const mfgDateRef = useRef<HTMLButtonElement>(null);
+  const expDateRef = useRef<HTMLButtonElement>(null);
+  const printerRef = useRef<HTMLDivElement>(null);
+  const putLocationRef = useRef<HTMLButtonElement>(null);
 
   const token = Cookies.get('token');
 
@@ -180,8 +188,6 @@ const FGExistingDataUpload: React.FC = () => {
 
   useEffect(() => {
     if (selectedItemCode) {
-      fetchLotNumbers(selectedItemCode);
-      setLotNumbers([]);
       setSelectedLotNo('');
       setItemDetails(null);
       setSerialNumbers([]);
@@ -192,6 +198,10 @@ const FGExistingDataUpload: React.FC = () => {
       setSelectedExpDate(undefined);
       setMfgDate('');
       setExpDate('');
+      fetchLotNumbers(selectedItemCode);
+    } else {
+      setLotNumbers([]);
+      setSelectedLotNo('');
     }
   }, [selectedItemCode]);
 
@@ -226,18 +236,12 @@ const FGExistingDataUpload: React.FC = () => {
   const fetchItemCodes = async () => {
     setIsFetchingItemCodes(true);
     try {
-      const response = await fetch(
-        `/api/existing-data/get-item-codes?t=${Date.now()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-          },
-          cache: 'no-store',
-        }
-      );
-      const data = await response.json();
+      const { data } = await axios.get('/api/existing-data/get-item-codes', {
+        params: { t: Date.now() },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (data.Status === 'T') {
         const options = data.data.map((item: any) => ({
           value: item.item_code,
@@ -255,15 +259,17 @@ const FGExistingDataUpload: React.FC = () => {
   const fetchLotNumbers = async (itemCode: string) => {
     setIsFetchingLotNumbers(true);
     try {
-      const response = await fetch('/api/existing-data/get-lot-numbers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const { data } = await axios.post(
+        '/api/existing-data/get-lot-numbers',
+        {
+          item_code: itemCode,
         },
-        body: JSON.stringify({ item_code: itemCode }),
-      });
-      const data = await response.json();
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (data.Status === 'T') {
         const options = data.data.map((item: any) => ({
           value: item.lot_no,
@@ -280,15 +286,18 @@ const FGExistingDataUpload: React.FC = () => {
 
   const fetchDetails = async (itemCode: string, lotNo: string) => {
     try {
-      const response = await fetch('/api/existing-data/get-details', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+      const { data } = await axios.post(
+        '/api/existing-data/get-details',
+        {
+          item_code: itemCode,
+          lot_no: lotNo,
         },
-        body: JSON.stringify({ item_code: itemCode, lot_no: lotNo }),
-      });
-      const data = await response.json();
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (data.Status === 'T') {
         setItemDetails(data.data);
         setTotalQty(data.data.remaining_quantity.toString());
@@ -304,10 +313,9 @@ const FGExistingDataUpload: React.FC = () => {
   const fetchPrinters = async () => {
     setIsFetchingPrinters(true);
     try {
-      const response = await fetch(`/api/hht/printer-data`, {
+      const { data } = await axios.get('/api/hht/printer-data', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await response.json();
       if (Array.isArray(data)) {
         setPrinters(data);
         const options = data.map((printer: any) => ({
@@ -326,8 +334,7 @@ const FGExistingDataUpload: React.FC = () => {
   const fetchWarehouses = async () => {
     setIsFetchingWarehouses(true);
     try {
-      const response = await fetch('/api/master/get-all-wh-code');
-      const data = await response.json();
+      const { data } = await axios.get('/api/master/get-all-wh-code');
 
       if (Array.isArray(data)) {
         const options = data.map((wh: WarehouseData) => ({
@@ -352,18 +359,18 @@ const FGExistingDataUpload: React.FC = () => {
   const fetchBinSuggestions = async (warehouseCode: string) => {
     setIsFetchingBins(true);
     try {
-      const response = await fetch('/api/hht/fg-put-away-location-suggestion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const { data } = await axios.post(
+        '/api/hht/fg-put-away-location-suggestion',
+        {
           warehouse_code: warehouseCode,
           item_code: selectedItemCode,
-        }),
-      });
-      const data = await response.json();
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (Array.isArray(data)) {
         if (data.length > 0) {
           setBinSuggestions(data);
@@ -420,14 +427,15 @@ const FGExistingDataUpload: React.FC = () => {
     formData.append('uploaded_by', getUserID() || 'System');
 
     try {
-      const response = await fetch('/api/existing-data/upload-excel', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-      const data = await response.json();
+      const { data } = await axios.post(
+        '/api/existing-data/upload-excel',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (data.Status === 'T') {
         toast.success(data.Message);
@@ -466,10 +474,18 @@ const FGExistingDataUpload: React.FC = () => {
     }
 
     const totalQtyNum = Number(totalQty);
+    const remainingQty = itemDetails.remaining_quantity;
 
     if (baseWeightValue > totalQtyNum) {
       toast.error(
         `Base weight cannot be greater than total quantity (${totalQtyNum})`
+      );
+      return;
+    }
+
+    if (baseWeightValue > remainingQty) {
+      toast.error(
+        `Base weight cannot be greater than remaining quantity (${remainingQty})`
       );
       return;
     }
@@ -563,18 +579,18 @@ const FGExistingDataUpload: React.FC = () => {
 
     setIsGeneratingSerials(true);
     try {
-      const response = await fetch('/api/existing-data/find-serial-number', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const { data } = await axios.post(
+        '/api/existing-data/find-serial-number',
+        {
           item_code: selectedItemCode,
           lot_no: selectedLotNo,
-        }),
-      });
-      const data = await response.json();
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       let startSerial = 1;
       if (data.Status === 'T' && data.data) {
@@ -684,6 +700,7 @@ const FGExistingDataUpload: React.FC = () => {
     if (!selectedMfgDate) missingFields.push('mfgDate');
     if (!selectedExpDate) missingFields.push('expDate');
     if (!selectedPrinter) missingFields.push('printer');
+    if (selectedWarehouse && !selectedBin) missingFields.push('putLocation');
 
     setInvalidFields(new Set(missingFields));
 
@@ -697,10 +714,78 @@ const FGExistingDataUpload: React.FC = () => {
         mfgDate: 'Manufacturing Date',
         expDate: 'Expiry Date',
         printer: 'Assign Printer',
+        putLocation: 'Bin Location (warehouse selected — location required)',
       };
       toast.error(
         `Please fill the following required fields: ${missingFields.map(f => fieldLabels[f]).join(', ')}`
       );
+      // Smooth scroll and focus the first invalid field for improved UX
+      const firstInvalid = missingFields[0];
+      switch (firstInvalid) {
+        case 'itemCode':
+          itemCodeRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          itemCodeRef.current?.focus();
+          break;
+        case 'lotNo':
+          lotNoRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          lotNoRef.current?.focus();
+          break;
+        case 'baseWeight':
+          baseWeightRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          baseWeightRef.current?.focus();
+          break;
+        case 'tareWeight':
+          tareWeightRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          tareWeightRef.current?.focus();
+          break;
+        case 'totalQty':
+          totalQtyRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          totalQtyRef.current?.focus();
+          break;
+        case 'mfgDate':
+          mfgDateRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          mfgDateRef.current?.focus();
+          break;
+        case 'expDate':
+          expDateRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          expDateRef.current?.focus();
+          break;
+        case 'printer':
+          printerRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          printerRef.current?.focus();
+          break;
+        case 'putLocation':
+          putLocationRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          putLocationRef.current?.focus();
+          break;
+      }
       return;
     }
 
@@ -718,8 +803,8 @@ const FGExistingDataUpload: React.FC = () => {
 
     setIsPrinting(true);
     try {
-      const serialsStr = serialNumbers.map(s => s.serialNo).join('$');
-      const qtysStr = serialNumbers.map(s => s.qty).join('$');
+      const serialNo = serialNumbers.map(s => s.serialNo).join('$');
+      const printQuantity = serialNumbers.map(s => s.qty.toString()).join('$');
 
       const payload = {
         item_code: itemDetails?.item_code,
@@ -727,10 +812,12 @@ const FGExistingDataUpload: React.FC = () => {
         lot_no: itemDetails?.lot_no,
         quantity: parseFloat(totalQty),
         uom: itemDetails?.uom || 'KG',
-        serial_no: serialsStr,
-        print_quantity: qtysStr,
+        serial_no: serialNo,
+        print_quantity: printQuantity,
         mfg_date: mfgDate,
         exp_date: expDate,
+        printed_qty: parseFloat(totalQty),
+        remaining_qty: itemDetails!.remaining_quantity - parseFloat(totalQty),
         warehouse_code: selectedWarehouse || '',
         put_location: selectedBin?.bin || '',
         print_by: getUserID() || 'Admin',
@@ -741,20 +828,24 @@ const FGExistingDataUpload: React.FC = () => {
         total_weight: Number(totalWeight),
       };
 
-      const response = await fetch('/api/existing-data/insert-label-printing', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+      console.log('Payload:', payload);
 
-      const data = await response.json();
+      const { data } = await axios.post(
+        '/api/existing-data/insert-label-printing',
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (data.Status === 'T') {
         toast.success(data.Message || 'Labels printed successfully!');
 
+        setSelectedItemCode('');
+        setSelectedLotNo('');
+        setItemDetails(null);
         setSerialNumbers([]);
         setBaseWeight('');
         setTareWeight('');
@@ -767,7 +858,7 @@ const FGExistingDataUpload: React.FC = () => {
         setInvalidFields(new Set());
         setSelectedWarehouse('');
         setSelectedBin(null);
-        fetchDetails(selectedItemCode, selectedLotNo);
+        fetchItemCodes();
       } else {
         toast.error(data.Message || 'Printing failed');
       }
@@ -826,13 +917,19 @@ const FGExistingDataUpload: React.FC = () => {
               border-color: hsl(var(--input));
             }
             50% {
-              opacity: 0.8;
-              background-color: rgba(239, 68, 68, 0.15);
-              border-color: rgb(239, 68, 68);
+              opacity: 1;
+              background-color: rgba(255, 0, 0, 0.3);
+              border-color: #ff0000;
+              box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
             }
           }
           .field-blink {
-            animation: field-blink 1s ease-in-out 3;
+            animation: field-blink 0.7s ease-in-out 8;
+            border-width: 1px;
+          }
+          .field-blink:focus {
+            outline: 3px solid rgba(255, 0, 0, 0.25);
+            outline-offset: 2px;
           }
         `,
         }}
@@ -943,6 +1040,7 @@ const FGExistingDataUpload: React.FC = () => {
                 Item Code <span className="text-red-500">*</span>
               </Label>
               <div
+                ref={itemCodeRef}
                 className={invalidFields.has('itemCode') ? 'field-blink' : ''}
               >
                 <CustomDropdown
@@ -961,7 +1059,10 @@ const FGExistingDataUpload: React.FC = () => {
               <Label>
                 Lot Number <span className="text-red-500">*</span>
               </Label>
-              <div className={invalidFields.has('lotNo') ? 'field-blink' : ''}>
+              <div
+                className={invalidFields.has('lotNo') ? 'field-blink' : ''}
+                ref={lotNoRef}
+              >
                 <CustomDropdown
                   options={lotNumbers}
                   value={selectedLotNo}
@@ -1069,6 +1170,7 @@ const FGExistingDataUpload: React.FC = () => {
                       <TableCell>
                         <Input
                           id="totalQty"
+                          ref={totalQtyRef}
                           type="number"
                           min="0.01"
                           step="0.01"
@@ -1171,6 +1273,7 @@ const FGExistingDataUpload: React.FC = () => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      ref={mfgDateRef}
                       className={cn(
                         'w-full justify-start text-left font-normal',
                         !selectedMfgDate && 'text-muted-foreground',
@@ -1208,6 +1311,8 @@ const FGExistingDataUpload: React.FC = () => {
                       }}
                       disableFutureDates={true}
                       initialFocus
+                      fromYear={1900}
+                      toYear={2050}
                     />
                   </PopoverContent>
                 </Popover>
@@ -1220,6 +1325,7 @@ const FGExistingDataUpload: React.FC = () => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
+                      ref={expDateRef}
                       disabled={!selectedMfgDate}
                       className={cn(
                         'w-full justify-start text-left font-normal',
@@ -1266,6 +1372,7 @@ const FGExistingDataUpload: React.FC = () => {
                   Assign Printer <span className="text-red-500">*</span>
                 </Label>
                 <div
+                  ref={printerRef}
                   className={invalidFields.has('printer') ? 'field-blink' : ''}
                 >
                   <CustomDropdown
@@ -1335,6 +1442,7 @@ const FGExistingDataUpload: React.FC = () => {
               <div className="space-y-2">
                 <Label htmlFor="bin">Bin Location</Label>
                 <Button
+                  ref={putLocationRef}
                   variant="outline"
                   className="w-full justify-start text-left font-normal"
                   onClick={() => {
@@ -1602,60 +1710,135 @@ const FGExistingDataUpload: React.FC = () => {
       )}
 
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
+        <DialogContent
+          className="w-full rounded-lg p-6 shadow-xl sm:max-w-2xl"
+          role="alertdialog"
+          aria-labelledby="confirm-print-title"
+        >
           <DialogHeader>
-            <DialogTitle>Confirm Print Labels</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to print the labels?
-            </DialogDescription>
+            <div className="flex items-start gap-3">
+              <Printer className="h-6 w-6 text-primary" />
+              <div>
+                <DialogTitle
+                  id="confirm-print-title"
+                  className="flex items-center gap-2"
+                >
+                  Confirm Print Labels
+                </DialogTitle>
+                <DialogDescription>
+                  Please verify the details below before printing. This action
+                  will update stock and print labels to the selected printer.
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-2">
-            <p>
-              <strong>Item Code:</strong> {itemDetails?.item_code}
-            </p>
-            <p>
-              <strong>Lot No:</strong> {itemDetails?.lot_no}
-            </p>
-            <p>
-              <strong>Base Weight:</strong> {baseWeight} {uomDisplay}
-            </p>
-            <p>
-              <strong>Tare Weight:</strong> {tareWeight} {uomDisplay}
-            </p>
-            <p>
-              <strong>Total Weight:</strong> {totalWeight} {uomDisplay}
-            </p>
-            <p>
-              <strong>Manufacturing Date:</strong>{' '}
-              {selectedMfgDate
-                ? DateTime.fromJSDate(selectedMfgDate).toLocaleString(
-                    DateTime.DATE_FULL
-                  )
-                : '-'}
-            </p>
-            <p>
-              <strong>Expiry Date:</strong>{' '}
-              {selectedExpDate
-                ? DateTime.fromJSDate(selectedExpDate).toLocaleString(
-                    DateTime.DATE_FULL
-                  )
-                : '-'}
-            </p>
-            <p>
-              <strong>Total Serial Numbers:</strong> {serialNumbers.length}
-            </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Tare Weight</p>
+              <p className="text-base font-medium">
+                {tareWeight} {uomDisplay}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Total Weight</p>
+              <p className="text-base font-medium">
+                {totalWeight} {uomDisplay}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Base Weight</p>
+              <p className="text-base font-medium">
+                {baseWeight} {uomDisplay}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Serials to Print</p>
+              <p className="text-base font-medium">{serialNumbers.length}</p>
+            </div>
+          </div>
+          <div className="mt-4 rounded-md bg-muted p-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Item Code</p>
+                <p className="font-medium">{itemDetails?.item_code}</p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Lot No</p>
+                <p className="font-medium">{itemDetails?.lot_no}</p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Total Qty</p>
+                <p className="font-medium">
+                  {totalQty} {uomDisplay}
+                </p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">
+                  Manufacturing Date
+                </p>
+                <p className="font-medium">
+                  {selectedMfgDate
+                    ? DateTime.fromJSDate(selectedMfgDate).toLocaleString(
+                        DateTime.DATE_FULL
+                      )
+                    : '-'}
+                </p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Expiry Date</p>
+                <p className="font-medium">
+                  {selectedExpDate
+                    ? DateTime.fromJSDate(selectedExpDate).toLocaleString(
+                        DateTime.DATE_FULL
+                      )
+                    : '-'}
+                </p>
+              </div>
+              <div className="space-y-0">
+                <p className="text-xs text-muted-foreground">Printer</p>
+                <p className="font-medium">
+                  {printers.find(p => p.printer_ip === selectedPrinter)
+                    ?.printer_name || selectedPrinter}
+                </p>
+              </div>
+              {selectedWarehouse && (
+                <div className="space-y-0">
+                  <p className="text-xs text-muted-foreground">Warehouse</p>
+                  <p className="font-medium">{selectedWarehouse}</p>
+                </div>
+              )}
+              {selectedBin && (
+                <div className="space-y-0">
+                  <p className="text-xs text-muted-foreground">Bin Location</p>
+                  <p className="font-medium">
+                    {selectedBin.bin} ({selectedBin.rack})
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsConfirmDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={confirmPrintLabels} disabled={isPrinting}>
-              {isPrinting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Print
-            </Button>
+            <div className="flex w-full items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsConfirmDialogOpen(false)}
+                aria-label="Cancel print"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmPrintLabels}
+                disabled={isPrinting}
+                aria-label="Confirm and print"
+                autoFocus
+              >
+                {isPrinting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Print
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

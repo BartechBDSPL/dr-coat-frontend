@@ -226,14 +226,14 @@ const LoginForm = () => {
   return (
     <>
       {/* Production Testing Note */}
-      <Card className="mx-auto mt-5 w-full max-w-md border-red-200/50 bg-red-50/30 backdrop-blur-sm">
+      <Card className="mx-auto mt-5 w-full max-w-md border-green-200/50 bg-green-50/30 shadow-[0_10px_30px_rgba(34,197,94,0.18)] ring-1 ring-green-300/30 backdrop-blur-sm">
         <CardContent className="pb-3 pt-3">
           <div className="flex items-center justify-center space-x-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-red-400/60"></div>
-            <p className="text-xs font-medium text-red-600/80">
-              Testing Environment
+            <div className="h-1.5 w-1.5 rounded-full bg-green-400/70 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+            <p className="text-xs font-medium text-green-700/90 drop-shadow-[0_2px_10px_rgba(16,185,129,0.25)]">
+              Production (Live) Environment
             </p>
-            <div className="h-1.5 w-1.5 rounded-full bg-red-400/60"></div>
+            <div className="h-1.5 w-1.5 rounded-full bg-green-400/70 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 const DEFAULT_DIRS = ['components', 'app', 'lib', 'utils', 'hooks'];
 const EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx'];
@@ -9,7 +9,6 @@ function removeComments(content) {
   let i = 0;
   let inString = false;
   let stringChar = '';
-  let inTemplateString = false;
   let inSingleLineComment = false;
   let inMultiLineComment = false;
   let inJSXComment = false;
@@ -25,10 +24,8 @@ function removeComments(content) {
         if (!inString) {
           inString = true;
           stringChar = char;
-          if (char === '`') inTemplateString = true;
         } else if (char === stringChar) {
           inString = false;
-          inTemplateString = false;
           stringChar = '';
         }
         result += char;

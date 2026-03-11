@@ -68,15 +68,11 @@ const Cell: React.FC<{ data: CellData }> = ({ data }) => {
             <h3 className="mb-1 font-bold text-foreground">{data.label}</h3>
             <div className="flex flex-col space-y-1 text-muted-foreground">
               <p>
-                <span className="font-medium text-foreground">
-                  Total Put Qty:
-                </span>{' '}
+                <span className="font-medium text-foreground">Total Put:</span>{' '}
                 {data.customData.TotalPutQty}
               </p>
               <p>
-                <span className="font-medium text-foreground">
-                  Total Pick Qty:
-                </span>{' '}
+                <span className="font-medium text-foreground">Total Pick:</span>{' '}
                 {data.customData.TotalPickQty}
               </p>
               <p>

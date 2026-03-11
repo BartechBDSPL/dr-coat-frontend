@@ -6,13 +6,6 @@ export async function POST(req: NextRequest) {
     const token = req.cookies.get('token')?.value || '';
     const body = await req.json();
 
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authorization token is required' },
-        { status: 401 }
-      );
-    }
-
     const response = await fetch(
       `${BACKEND_URL}/api/master/existing-data/insert-label-printing`,
       {

@@ -451,25 +451,57 @@ const ReprintRequest: React.FC = () => {
           printer_name: printerData.printer_name,
           printer_ip: printerData.printer_ip,
           serial_no: selectedPrintRequest.serial_no,
+          reprint_reason: selectedPrintRequest.reprint_reason,
         }),
       });
 
-      if (!response.ok) throw new Error('Network response was not ok');
       const result = await response.json();
 
+      // Handle failure responses (Status: 'F')
       if (result.Status === 'F') {
         toast.error(result.Message || 'Failed to print labels');
         return;
       }
 
-      toast.success(result.Message || 'Labels printed successfully');
-      setShowPrintDialog(false);
-      setSelectedPrintRequest(null);
-      setSelectedPrinter('');
-      fetchApprovedRequests();
+      // Handle success responses (Status: 'T')
+      if (result.Status === 'T') {
+        // Check if printing was successful
+        if (result.printed === true) {
+          toast.success(
+            result.Message ||
+              `Successfully printed ${result.labels_count} label(s)`
+          );
+        } else if (result.printed === false && result.error) {
+          // Transaction succeeded but printing failed
+          toast.warning(
+            result.error ||
+              result.Message ||
+              'Transaction completed but printing failed'
+          );
+        } else {
+          // Transaction succeeded without printing attempt
+          toast.success(
+            result.Message ||
+              `Transaction completed for ${result.labels_count} label(s)`
+          );
+        }
+
+        setShowPrintDialog(false);
+        setSelectedPrintRequest(null);
+        setSelectedPrinter('');
+        fetchApprovedRequests();
+        return;
+      }
+
+      // Unexpected response format
+      toast.error('Unexpected response from server');
     } catch (error) {
       console.error('Error printing labels:', error);
-      toast.error('Failed to print labels');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to communicate with server'
+      );
     } finally {
       setIsPrinting(false);
     }
@@ -631,7 +663,7 @@ const ReprintRequest: React.FC = () => {
 
       {reportData.length > 0 ? (
         <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -676,7 +708,7 @@ const ReprintRequest: React.FC = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            {/* <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Unique Customers
@@ -687,7 +719,7 @@ const ReprintRequest: React.FC = () => {
                   {stats.uniqueCustomers}
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
 
           <Card>

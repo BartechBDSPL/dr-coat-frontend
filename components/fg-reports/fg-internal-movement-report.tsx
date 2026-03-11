@@ -189,7 +189,7 @@ const FGInternalMovementReport: React.FC = () => {
 
   const exportToPdf = (): void => {
     try {
-      const doc = new jsPDF('l', 'mm', 'a4') as any;
+      const doc = new jsPDF('l', 'mm', 'a3') as any;
       const columns = [
         { header: 'Sr No', dataKey: 'srno' },
         { header: 'Production Order No', dataKey: 'production_order_no' },

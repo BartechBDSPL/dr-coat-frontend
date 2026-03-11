@@ -404,7 +404,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       const generatedSerials: SerialNumber[] = [];
 
       for (let i = 0; i < numFullLabels; i++) {
-        const serialNo = `${orderDetails.production_order_no}|${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + i}`;
+        const serialNo = `${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + i}`;
 
         generatedSerials.push({
           serialNo,
@@ -413,7 +413,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       }
 
       if (remainder > 0) {
-        const serialNo = `${orderDetails.production_order_no}|${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + numFullLabels}`;
+        const serialNo = `${orderDetails.item_code}|${orderDetails.lot_no}|${startingSerialNo + numFullLabels}`;
 
         generatedSerials.push({
           serialNo,
@@ -715,17 +715,17 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
             }
             50% {
               opacity: 1;
-              background-color: rgba(255, 0, 0, 0.16);
+              background-color: rgba(255, 0, 0, 0.3);
               border-color: #ff0000;
-              box-shadow: 0 0 12px rgba(255, 0, 0, 0.2);
+              box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
             }
           }
           .field-blink {
-            animation: field-blink 0.7s ease-in-out 6;
+            animation: field-blink 0.7s ease-in-out 8;
             border-width: 1px;
           }
           .field-blink:focus {
-            outline: 3px solid rgba(255, 0, 0, 0.18);
+            outline: 3px solid rgba(255, 0, 0, 0.25);
             outline-offset: 2px;
           }
         `,
