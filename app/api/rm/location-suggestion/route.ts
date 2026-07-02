@@ -17,19 +17,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/rm/location-suggestion`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-        cache: 'no-store',
-        next: { revalidate: 0 },
-      }
-    );
+    const response = await fetch(`${BACKEND_URL}/api/rm/location-suggestion`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+      next: { revalidate: 0 },
+    });
 
     const data = await response.json();
 

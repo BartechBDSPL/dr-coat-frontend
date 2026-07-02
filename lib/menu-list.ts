@@ -90,12 +90,12 @@ export function getMenuList(pathname: string): Group[] {
               active: pathname === '/wh-location-master',
               value: '2_6',
             },
-            {
-              href: '/material-master',
-              label: 'Material Master',
-              active: pathname === '/material-master',
-              value: '2_7',
-            },
+            // {
+            //   href: '/material-master',
+            //   label: 'Material Master',
+            //   active: pathname === '/material-master',
+            //   value: '2_7',
+            // },
             {
               href: '/item-packing-master',
               label: 'Item Packing Master',
@@ -182,6 +182,18 @@ export function getMenuList(pathname: string): Group[] {
               active: pathname === '/fg-material-return-report',
               value: '4_8',
             },
+            {
+              href: '/fg-stock-take-report',
+              label: 'FG Stock Take Report',
+              active: pathname === '/fg-stock-take-report',
+              value: '4_9',
+            },
+            {
+              href: '/fg-stock-adjustment-report',
+              label: 'FG Stock Adjustment Report',
+              active: pathname === '/fg-stock-adjustment-report',
+              value: '4_10',
+            },
           ],
         },
         {
@@ -244,6 +256,30 @@ export function getMenuList(pathname: string): Group[] {
               label: 'RM Warehouse Return Report',
               active: pathname === '/rm-warehouse-return-report',
               value: '11_9',
+            },
+            {
+              href: '/rm-material-receipt-report',
+              label: 'RM Material Receipt Report',
+              active: pathname === '/rm-material-receipt-report',
+              value: '11_10',
+            },
+            {
+              href: '/rm-material-consumption-report',
+              label: 'RM Material Consumption Report',
+              active: pathname === '/rm-material-consumption-report',
+              value: '11_11',
+            },
+            {
+              href: '/rm-stock-take-report',
+              label: 'RM Stock Take Report',
+              active: pathname === '/rm-stock-take-report',
+              value: '11_12',
+            },
+            {
+              href: '/rm-stock-adjustment-report',
+              label: 'RM Stock Adjustment Report',
+              active: pathname === '/rm-stock-adjustment-report',
+              value: '11_13',
             },
           ],
         },

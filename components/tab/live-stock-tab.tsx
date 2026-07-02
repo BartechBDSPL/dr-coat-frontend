@@ -11,7 +11,6 @@ import {
   FileSpreadsheet,
   Info,
   Download,
-  ChevronDown,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,12 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
 import CustomDropdown from '@/components/CustomDropdown';
 import {
   Table,
@@ -64,7 +58,9 @@ interface LiveStockItem {
   lot_no: string;
   warehouse_code: string;
   put_location: string;
-  Available_Stock: number;
+  uom: string;
+  sku_count: number;
+  qty: number;
   cleanItemCode?: string; // Store item code for display
 }
 
@@ -264,10 +260,7 @@ const LiveStockTab: React.FC = () => {
 
   // Calculate stats for each warehouse
   const getWarehouseStats = (items: LiveStockItem[]) => {
-    const totalStock = items.reduce(
-      (sum, item) => sum + item.Available_Stock,
-      0
-    );
+    const totalStock = items.reduce((sum, item) => sum + item.qty, 0);
     const uniqueItems = new Set(items.map(item => item.item_code)).size;
     const uniqueLots = new Set(items.map(item => item.lot_no)).size;
     const uniqueLocations = new Set(items.map(item => item.put_location)).size;
@@ -284,7 +277,7 @@ const LiveStockTab: React.FC = () => {
   // Calculate overall stats with useMemo optimization
   const getTotalStats = useMemo(() => {
     const totalStock = filteredDataForCards.reduce(
-      (sum, item) => sum + item.Available_Stock,
+      (sum, item) => sum + item.qty,
       0
     );
     const uniqueItems = new Set(
@@ -308,118 +301,6 @@ const LiveStockTab: React.FC = () => {
       itemCount: filteredDataForCards.length,
     };
   }, [filteredDataForCards]);
-
-  const exportToCSV = useCallback(async () => {
-    if (filteredDataForTable.length === 0) {
-      toast.error('No data to export');
-      return;
-    }
-
-    const toastId = toast.loading('Initializing CSV export...', {
-      description: `Processing ${filteredDataForTable.length.toLocaleString()} records`,
-    });
-
-    try {
-      setIsExporting(true);
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      toast.loading('Processing data...', {
-        id: toastId,
-        description: 'Building CSV content',
-      });
-
-      // CSV headers
-      const headers = [
-        'Item Code',
-        'Description',
-        'Lot Number',
-        'Warehouse Code',
-        'Put Location',
-        'Available Quantity',
-      ];
-
-      // Escape CSV values properly (handle commas, quotes, newlines, and special chars)
-      const escapeCSV = (value: any): string => {
-        if (value === null || value === undefined) return 'NA';
-        const stringValue = String(value);
-        // Always wrap in quotes for safety and escape internal quotes
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      };
-
-      // Build CSV content in chunks for better performance
-      const CHUNK_SIZE = 5000;
-      let csvContent = headers.join(',') + '\n';
-
-      for (let i = 0; i < filteredDataForTable.length; i += CHUNK_SIZE) {
-        const chunk = filteredDataForTable.slice(i, i + CHUNK_SIZE);
-
-        const csvChunk = chunk
-          .map(item =>
-            [
-              escapeCSV(item.item_code.replace(/^0+/, '')),
-              escapeCSV(item.item_description),
-              escapeCSV(item.lot_no),
-              escapeCSV(item.warehouse_code),
-              escapeCSV(item.put_location),
-              escapeCSV(item.Available_Stock),
-            ].join(',')
-          )
-          .join('\n');
-
-        csvContent += csvChunk + '\n';
-
-        const progress = Math.round(
-          ((i + CHUNK_SIZE) / filteredDataForTable.length) * 100
-        );
-        toast.loading(`Processing... ${Math.min(progress, 100)}%`, {
-          id: toastId,
-          description: `${Math.min(i + CHUNK_SIZE, filteredDataForTable.length).toLocaleString()} of ${filteredDataForTable.length.toLocaleString()} rows`,
-        });
-
-        // Allow UI to breathe every 10k rows
-        if (i > 0 && i % (CHUNK_SIZE * 2) === 0) {
-          await new Promise(resolve => setTimeout(resolve, 10));
-        }
-      }
-
-      toast.loading('Generating file...', {
-        id: toastId,
-        description: 'Creating CSV file',
-      });
-
-      // Create and download CSV with BOM for proper Excel compatibility
-      const BOM = '\uFEFF'; // UTF-8 BOM for Excel
-      const blob = new Blob([BOM + csvContent], {
-        type: 'text/csv;charset=utf-8;',
-      });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      const fileName = `live-stock-${new Date().toISOString().split('T')[0]}.csv`;
-
-      link.setAttribute('href', url);
-      link.setAttribute('download', fileName);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast.success('CSV export completed!', {
-        id: toastId,
-        description: `${filteredDataForTable.length.toLocaleString()} rows exported • No data truncation`,
-      });
-    } catch (error) {
-      console.error('CSV export failed:', error);
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error('Export failed', {
-        id: toastId,
-        description: errorMessage,
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  }, [filteredDataForTable]);
 
   const exportToExcel = useCallback(async () => {
     if (filteredDataForTable.length === 0) {
@@ -476,7 +357,9 @@ const LiveStockTab: React.FC = () => {
             'Lot Number': item.lot_no,
             'Warehouse Code': item.warehouse_code,
             'Put Location': item.put_location,
-            'Available Quantity': item.Available_Stock,
+            UOM: item.uom,
+            'SKU Count': item.sku_count,
+            Quantity: item.qty,
           };
         });
 
@@ -513,7 +396,9 @@ const LiveStockTab: React.FC = () => {
         'Lot Number',
         'Warehouse Code',
         'Put Location',
-        'Available Quantity',
+        'UOM',
+        'SKU Count',
+        'Quantity',
       ];
 
       const dataArray = [
@@ -524,7 +409,9 @@ const LiveStockTab: React.FC = () => {
           row['Lot Number'],
           row['Warehouse Code'],
           row['Put Location'],
-          row['Available Quantity'],
+          row['UOM'],
+          row['SKU Count'],
+          row['Quantity'],
         ]),
       ];
 
@@ -537,7 +424,9 @@ const LiveStockTab: React.FC = () => {
         { wch: 15 }, // Lot Number
         { wch: 15 }, // Warehouse Code
         { wch: 15 }, // Put Location
-        { wch: 18 }, // Available Quantity
+        { wch: 10 }, // UOM
+        { wch: 12 }, // SKU Count
+        { wch: 18 }, // Quantity
       ];
 
       // Add the worksheet to workbook
@@ -994,7 +883,7 @@ const LiveStockTab: React.FC = () => {
                               {item.put_location}
                             </TableCell>
                             <TableCell className="px-3 py-2 text-right text-sm font-semibold text-chart-1">
-                              {item.Available_Stock.toLocaleString()}
+                              {item.qty.toLocaleString()}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1015,57 +904,25 @@ const LiveStockTab: React.FC = () => {
                 <FileSpreadsheet className="h-5 w-5 text-chart-2" />
                 Material Details
               </CardTitle>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2 border-chart-2 text-chart-2 transition-colors hover:bg-chart-2 hover:text-primary"
-                    disabled={isExporting}
-                  >
-                    {isExporting ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-chart-2 border-t-transparent" />
-                        Exporting...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4" />
-                        Export
-                        <ChevronDown className="h-3 w-3" />
-                      </>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem
-                    onClick={exportToCSV}
-                    disabled={isExporting}
-                    className="cursor-pointer"
-                  >
-                    <FileSpreadsheet className="mr-2 h-4 w-4 text-chart-1" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">Export to CSV</span>
-                      <span className="text-xs text-muted-foreground">
-                        No size limit • Full data
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={exportToExcel}
-                    disabled={isExporting}
-                    className="cursor-pointer"
-                  >
-                    <FileSpreadsheet className="mr-2 h-4 w-4 text-chart-2" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">Export to Excel</span>
-                      <span className="text-xs text-muted-foreground">
-                        Long text truncated
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-chart-2 text-chart-2 transition-colors hover:bg-chart-2 hover:text-primary"
+                disabled={isExporting}
+                onClick={exportToExcel}
+              >
+                {isExporting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-chart-2 border-t-transparent" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Export to Excel
+                  </>
+                )}
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -1117,8 +974,14 @@ const LiveStockTab: React.FC = () => {
                     <TableHead className="px-4 py-3 text-sm font-medium">
                       Put Location
                     </TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      UOM
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      SKU Count
+                    </TableHead>
                     <TableHead className="px-4 py-3 text-right text-sm font-medium">
-                      Available Stock
+                      Quantity
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1147,15 +1010,21 @@ const LiveStockTab: React.FC = () => {
                         <TableCell className="px-4 py-2.5 text-sm">
                           {item.put_location}
                         </TableCell>
+                        <TableCell className="px-4 py-2.5 text-sm">
+                          {item.uom}
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5 text-sm">
+                          {item.sku_count}
+                        </TableCell>
                         <TableCell className="px-4 py-2.5 text-right text-sm font-semibold text-chart-1">
-                          {item.Available_Stock.toLocaleString()}
+                          {item.qty.toLocaleString()}
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={6}
+                        colSpan={8}
                         className="py-8 text-center text-slate-500 dark:text-slate-400"
                       >
                         No data found

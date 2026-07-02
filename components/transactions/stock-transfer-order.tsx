@@ -109,7 +109,9 @@ const StockTransferOrder: React.FC = () => {
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [lineItemUsers, setLineItemUsers] = useState<LineItemUsers>({});
-  const [lineItemTypes, setLineItemTypes] = useState<{[lineNo: number]: string}>({});
+  const [lineItemTypes, setLineItemTypes] = useState<{
+    [lineNo: number]: string;
+  }>({});
   const [activeUsers, setActiveUsers] = useState<DropdownOption[]>([]);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [warehouses, setWarehouses] = useState<DropdownOption[]>([]);
@@ -333,7 +335,7 @@ const StockTransferOrder: React.FC = () => {
           setOrderDetails(data);
 
           const initialLineItemUsers: LineItemUsers = {};
-          const initialLineItemTypes: {[lineNo: number]: string} = {};
+          const initialLineItemTypes: { [lineNo: number]: string } = {};
           const allAssignedUsers = new Set<string>();
 
           data.forEach(item => {
@@ -363,7 +365,7 @@ const StockTransferOrder: React.FC = () => {
           setOrderDetails(data);
 
           const initialLineItemUsers: LineItemUsers = {};
-          const initialLineItemTypes: {[lineNo: number]: string} = {};
+          const initialLineItemTypes: { [lineNo: number]: string } = {};
           data.forEach(item => {
             initialLineItemUsers[item.line_no] = [];
             initialLineItemTypes[item.line_no] = item.type || '';
@@ -394,10 +396,14 @@ const StockTransferOrder: React.FC = () => {
     }
 
     const allAssigned = orderDetails.every(
-      item => (lineItemUsers[item.line_no] || []).length > 0 && (lineItemTypes[item.line_no] || '').trim() !== ''
+      item =>
+        (lineItemUsers[item.line_no] || []).length > 0 &&
+        (lineItemTypes[item.line_no] || '').trim() !== ''
     );
     if (!allAssigned) {
-      toast.error('Please assign at least one user and select a type for each line item');
+      toast.error(
+        'Please assign at least one user and select a type for each line item'
+      );
       return;
     }
 
@@ -764,7 +770,9 @@ const StockTransferOrder: React.FC = () => {
                     orderDetails.length === 0 ||
                     isAssigning ||
                     !orderDetails.every(
-                      item => (lineItemUsers[item.line_no] || []).length > 0 && (lineItemTypes[item.line_no] || '').trim() !== ''
+                      item =>
+                        (lineItemUsers[item.line_no] || []).length > 0 &&
+                        (lineItemTypes[item.line_no] || '').trim() !== ''
                     )
                   }
                   className="flex-1"
@@ -856,9 +864,7 @@ const StockTransferOrder: React.FC = () => {
                     {/* <TableHead className="text-right">Shipped</TableHead>
                     <TableHead className="text-right">Received</TableHead> */}
                     <TableHead className="text-right">Line No</TableHead>
-                    <TableHead className="min-w-[150px]">
-                      Type *
-                    </TableHead>
+                    <TableHead className="min-w-[150px]">Type *</TableHead>
                     <TableHead className="min-w-[250px]">
                       Assign to Users (Optional)
                       <div className="mt-1 text-xs font-normal text-muted-foreground">
@@ -896,7 +902,9 @@ const StockTransferOrder: React.FC = () => {
                             { value: 'Trading', label: 'Trading' },
                           ]}
                           value={lineItemTypes[item.line_no] || ''}
-                          onValueChange={(value) => handleLineItemTypeChange(item.line_no, value)}
+                          onValueChange={value =>
+                            handleLineItemTypeChange(item.line_no, value)
+                          }
                           placeholder="Select Type"
                           searchPlaceholder="Search type..."
                           emptyText="No types"

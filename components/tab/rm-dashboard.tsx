@@ -30,13 +30,22 @@ const RMDashboard: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="duration-200 animate-in fade-in-50">
+        <TabsContent
+          value="overview"
+          className="duration-200 animate-in fade-in-50"
+        >
           <RMOverviewTab />
         </TabsContent>
-        <TabsContent value="live-stock" className="duration-200 animate-in fade-in-50">
+        <TabsContent
+          value="live-stock"
+          className="duration-200 animate-in fade-in-50"
+        >
           <RMLiveStockTab />
         </TabsContent>
-        <TabsContent value="location" className="duration-200 animate-in fade-in-50">
+        <TabsContent
+          value="location"
+          className="duration-200 animate-in fade-in-50"
+        >
           <RMLocationHeatmaps />
         </TabsContent>
       </Tabs>

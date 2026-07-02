@@ -81,11 +81,15 @@ const Cell: React.FC<{ data: CellData }> = ({ data }) => {
             </div>
             {data.customData.ItemQtyDetails && (
               <div className="mt-2">
-                <h4 className="font-semibold text-foreground">Material Qty Details:</h4>
+                <h4 className="font-semibold text-foreground">
+                  Material Qty Details:
+                </h4>
                 <div className="text-muted-foreground">
-                  {data.customData.ItemQtyDetails.split(', ').map((item, index) => (
-                    <p key={index}>{item}</p>
-                  ))}
+                  {data.customData.ItemQtyDetails.split(', ').map(
+                    (item, index) => (
+                      <p key={index}>{item}</p>
+                    )
+                  )}
                 </div>
               </div>
             )}
@@ -200,7 +204,10 @@ export default function RMLocationHeatmaps() {
     }
   };
 
-  const processData = (data: LocationData[], warehouseCode: string): CellData[] => {
+  const processData = (
+    data: LocationData[],
+    warehouseCode: string
+  ): CellData[] => {
     return data
       .filter(item => item.warehouse_code === warehouseCode)
       .map(item => ({

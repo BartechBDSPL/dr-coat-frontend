@@ -180,9 +180,16 @@ const RMPurchaseReturnReport: React.FC = () => {
     );
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'RM Purchase Return Report');
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'RM Purchase Return Report'
+    );
     const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
-    XLSX.writeFile(workbook, `RM_PURCHASE_RETURN_REPORT_${formattedDateTime}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `RM_PURCHASE_RETURN_REPORT_${formattedDateTime}.xlsx`
+    );
     toast.success('Excel exported successfully');
   };
 
@@ -272,12 +279,20 @@ const RMPurchaseReturnReport: React.FC = () => {
 
   const getDashboardStats = () => {
     const totalGRNs = new Set(filteredData.map(item => item.grn_no)).size;
-    const totalItemsCount = new Set(filteredData.map(item => item.item_code)).size;
+    const totalItemsCount = new Set(filteredData.map(item => item.item_code))
+      .size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
-    const totalVendors = new Set(filteredData.map(item => item.vendor_code)).size;
+    const totalVendors = new Set(filteredData.map(item => item.vendor_code))
+      .size;
     const totalRecords = filteredData.length;
 
-    return { totalGRNs, totalItems: totalItemsCount, totalLots, totalVendors, totalRecords };
+    return {
+      totalGRNs,
+      totalItems: totalItemsCount,
+      totalLots,
+      totalVendors,
+      totalRecords,
+    };
   };
 
   const stats = getDashboardStats();
@@ -523,7 +538,9 @@ const RMPurchaseReturnReport: React.FC = () => {
                     {currentData.map((row, index) => (
                       <TableRow key={index}>
                         <TableCell>{startIndex + index + 1}</TableCell>
-                        <TableCell className="font-medium">{row.grn_no}</TableCell>
+                        <TableCell className="font-medium">
+                          {row.grn_no}
+                        </TableCell>
                         <TableCell>{row.item_code}</TableCell>
                         <TableCell>{row.item_description || '-'}</TableCell>
                         <TableCell>{row.lot_no}</TableCell>

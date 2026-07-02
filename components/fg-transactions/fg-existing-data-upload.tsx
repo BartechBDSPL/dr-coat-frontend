@@ -15,7 +15,6 @@ import {
   RefreshCw,
   Download,
   Info,
-  CalendarIcon,
   Warehouse,
   MapPin,
   Package,
@@ -63,12 +62,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+
 import { cn } from '@/lib/utils';
 import { DateTime } from 'luxon';
 import { getUserID } from '@/utils/getFromSession';
@@ -120,6 +114,7 @@ const FGExistingDataUpload: React.FC = () => {
     'item_description',
     'lot_no',
     'quantity',
+    'uom',
   ];
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -152,6 +147,7 @@ const FGExistingDataUpload: React.FC = () => {
   const [expDate, setExpDate] = useState('');
   const [selectedMfgDate, setSelectedMfgDate] = useState<Date | undefined>();
   const [selectedExpDate, setSelectedExpDate] = useState<Date | undefined>();
+  const [expCalendarMonth, setExpCalendarMonth] = useState<Date | undefined>();
 
   const [enablePutAway, setEnablePutAway] = useState(false);
   const [warehouses, setWarehouses] = useState<DropdownOption[]>([]);
@@ -168,8 +164,8 @@ const FGExistingDataUpload: React.FC = () => {
   const itemCodeRef = useRef<HTMLDivElement>(null);
   const lotNoRef = useRef<HTMLDivElement>(null);
   const totalQtyRef = useRef<HTMLInputElement>(null);
-  const mfgDateRef = useRef<HTMLButtonElement>(null);
-  const expDateRef = useRef<HTMLButtonElement>(null);
+  const mfgDateRef = useRef<HTMLInputElement>(null);
+  const expDateRef = useRef<HTMLInputElement>(null);
   const printerRef = useRef<HTMLDivElement>(null);
   const putLocationRef = useRef<HTMLButtonElement>(null);
 
@@ -217,6 +213,9 @@ const FGExistingDataUpload: React.FC = () => {
       const month = String(selectedMfgDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedMfgDate.getDate()).padStart(2, '0');
       setMfgDate(`${year}-${month}-${day}`);
+      const autoExp = new Date(selectedMfgDate);
+      autoExp.setFullYear(autoExp.getFullYear() + 1);
+      setSelectedExpDate(autoExp);
     } else {
       setMfgDate('');
     }
@@ -228,8 +227,10 @@ const FGExistingDataUpload: React.FC = () => {
       const month = String(selectedExpDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedExpDate.getDate()).padStart(2, '0');
       setExpDate(`${year}-${month}-${day}`);
+      setExpCalendarMonth(selectedExpDate);
     } else {
       setExpDate('');
+      setExpCalendarMonth(undefined);
     }
   }, [selectedExpDate]);
 
@@ -1127,6 +1128,12 @@ const FGExistingDataUpload: React.FC = () => {
                   disabled
                 />
               </div>
+              {itemDetails.uom && (
+                <div className="space-y-2">
+                  <Label htmlFor="uom">UOM</Label>
+                  <Input id="uom" value={itemDetails.uom} disabled />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1269,103 +1276,59 @@ const FGExistingDataUpload: React.FC = () => {
                 <Label htmlFor="mfgDate">
                   Manufacturing Date <span className="text-red-500">*</span>
                 </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      ref={mfgDateRef}
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !selectedMfgDate && 'text-muted-foreground',
-                        invalidFields.has('mfgDate') && 'field-blink'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedMfgDate ? (
-                        DateTime.fromJSDate(selectedMfgDate).toLocaleString(
-                          DateTime.DATE_FULL
-                        )
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedMfgDate}
-                      onSelect={date => {
-                        setSelectedMfgDate(date);
-                        if (date && selectedExpDate) {
-                          const mfg = new Date(date);
-                          mfg.setHours(0, 0, 0, 0);
-                          const exp = new Date(selectedExpDate);
-                          exp.setHours(0, 0, 0, 0);
-                          if (exp < mfg) {
-                            setSelectedExpDate(undefined);
-                            toast.error(
-                              'Expiry date reset as it was before the new manufacturing date'
-                            );
-                          }
+                <input
+                  type="date"
+                  ref={mfgDateRef}
+                  value={mfgDate}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val) {
+                      const date = new Date(val + 'T00:00:00');
+                      setSelectedMfgDate(date);
+                      if (selectedExpDate) {
+                        const exp = new Date(selectedExpDate);
+                        exp.setHours(0, 0, 0, 0);
+                        if (exp < date) {
+                          setSelectedExpDate(undefined);
+                          toast.error(
+                            'Expiry date reset as it was before the new manufacturing date'
+                          );
                         }
-                      }}
-                      disableFutureDates={true}
-                      initialFocus
-                      fromYear={1900}
-                      toYear={2050}
-                    />
-                  </PopoverContent>
-                </Popover>
+                      }
+                    } else {
+                      setSelectedMfgDate(undefined);
+                    }
+                  }}
+                  className={cn(
+                    'h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    invalidFields.has('mfgDate') && 'field-blink'
+                  )}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="expDate">
                   Expiry Date <span className="text-red-500">*</span>
                 </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      ref={expDateRef}
-                      disabled={!selectedMfgDate}
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !selectedExpDate && 'text-muted-foreground',
-                        invalidFields.has('expDate') && 'field-blink',
-                        !selectedMfgDate && 'cursor-not-allowed opacity-50'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedExpDate ? (
-                        DateTime.fromJSDate(selectedExpDate).toLocaleString(
-                          DateTime.DATE_FULL
-                        )
-                      ) : (
-                        <span>
-                          {selectedMfgDate
-                            ? 'Pick a date'
-                            : 'Select manufacturing date first'}
-                        </span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedExpDate}
-                      onSelect={setSelectedExpDate}
-                      disabled={date => {
-                        if (!selectedMfgDate) return true;
-                        const mfg = new Date(selectedMfgDate);
-                        mfg.setHours(0, 0, 0, 0);
-                        const checkDate = new Date(date);
-                        checkDate.setHours(0, 0, 0, 0);
-                        return checkDate < mfg;
-                      }}
-                      fromDate={selectedMfgDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <input
+                  type="date"
+                  ref={expDateRef}
+                  value={expDate}
+                  min={mfgDate}
+                  disabled={!selectedMfgDate}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val) {
+                      setSelectedExpDate(new Date(val + 'T00:00:00'));
+                    } else {
+                      setSelectedExpDate(undefined);
+                    }
+                  }}
+                  className={cn(
+                    'h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                    invalidFields.has('expDate') && 'field-blink'
+                  )}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="printer">

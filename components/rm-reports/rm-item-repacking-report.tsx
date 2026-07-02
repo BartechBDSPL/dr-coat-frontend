@@ -171,9 +171,16 @@ const RMItemRepackingReport: React.FC = () => {
     );
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'RM Item Repacking Report');
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'RM Item Repacking Report'
+    );
     const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
-    XLSX.writeFile(workbook, `RM_ITEM_REPACKING_REPORT_${formattedDateTime}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `RM_ITEM_REPACKING_REPORT_${formattedDateTime}.xlsx`
+    );
     toast.success('Excel exported successfully');
   };
 
@@ -258,7 +265,8 @@ const RMItemRepackingReport: React.FC = () => {
   const currentData = filteredData.slice(startIndex, endIndex);
 
   const getDashboardStats = () => {
-    const totalItemsCount = new Set(filteredData.map(item => item.item_code)).size;
+    const totalItemsCount = new Set(filteredData.map(item => item.item_code))
+      .size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
     const totalQuantity = filteredData.reduce(
       (sum, item) => sum + (item.quantity ?? 0),
@@ -530,7 +538,9 @@ const RMItemRepackingReport: React.FC = () => {
                           {new Intl.NumberFormat().format(row.quantity ?? 0)}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {new Intl.NumberFormat().format(row.repacked_quantity ?? 0)}
+                          {new Intl.NumberFormat().format(
+                            row.repacked_quantity ?? 0
+                          )}
                         </TableCell>
                         <TableCell>{row.repacked_by}</TableCell>
                         <TableCell>

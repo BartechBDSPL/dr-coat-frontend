@@ -174,9 +174,16 @@ const RMItemSplittingReport: React.FC = () => {
     );
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'RM Item Splitting Report');
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'RM Item Splitting Report'
+    );
     const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
-    XLSX.writeFile(workbook, `RM_ITEM_SPLITTING_REPORT_${formattedDateTime}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `RM_ITEM_SPLITTING_REPORT_${formattedDateTime}.xlsx`
+    );
     toast.success('Excel exported successfully');
   };
 
@@ -262,16 +269,24 @@ const RMItemSplittingReport: React.FC = () => {
   const currentData = filteredData.slice(startIndex, endIndex);
 
   const getDashboardStats = () => {
-    const totalItemsCount = new Set(filteredData.map(item => item.item_code)).size;
+    const totalItemsCount = new Set(filteredData.map(item => item.item_code))
+      .size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
-    const totalLocations = new Set(filteredData.map(item => item.put_location)).size;
+    const totalLocations = new Set(filteredData.map(item => item.put_location))
+      .size;
     const totalQuantity = filteredData.reduce(
       (sum, item) => sum + (item.put_quantity ?? 0),
       0
     );
     const totalRecords = filteredData.length;
 
-    return { totalItems: totalItemsCount, totalLots, totalLocations, totalQuantity, totalRecords };
+    return {
+      totalItems: totalItemsCount,
+      totalLots,
+      totalLocations,
+      totalQuantity,
+      totalRecords,
+    };
   };
 
   const stats = getDashboardStats();
@@ -525,7 +540,9 @@ const RMItemSplittingReport: React.FC = () => {
                           <Badge variant="outline">{row.put_location}</Badge>
                         </TableCell>
                         <TableCell className="font-medium">
-                          {new Intl.NumberFormat().format(row.put_quantity ?? 0)}
+                          {new Intl.NumberFormat().format(
+                            row.put_quantity ?? 0
+                          )}
                         </TableCell>
                         <TableCell>{row.split_by}</TableCell>
                         <TableCell>

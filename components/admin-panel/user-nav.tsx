@@ -262,7 +262,11 @@ export function UserNav() {
                     </CardHeader>
                     <CardContent>
                       <Progress
-                        max={userInfo.web_menu_access ? userInfo.web_menu_access.split(',').length : 0  }
+                        max={
+                          userInfo.web_menu_access
+                            ? userInfo.web_menu_access.split(',').length
+                            : 0
+                        }
                         value={
                           userInfo.web_menu_access
                             ? userInfo.web_menu_access.split(',').length

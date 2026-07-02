@@ -81,16 +81,34 @@ const generateWebAccessOptions = () => {
 const webAccessOptions = generateWebAccessOptions();
 
 const hhtAccessOptions = [
+  // Common Modules
   { label: 'Stock Transfer', value: '2_1' },
-  { label: 'Stock Transfer Receipt', value: '2_2' },
+
+  // FG Modules
   { label: 'FG Put Away', value: '2_3' },
   { label: 'FG Internal Movement', value: '2_4' },
-  { label: 'Shipment Dispatch', value: '2_5' },
-  { label: 'Shipment Return', value: '2_6' },
-  { label: 'StockTake', value: '2_7' },
-  { label: 'Material Split', value: '2_8' },
-  { label: 'Material Repacking', value: '2_9' },
-  { label: 'Printer Settings', value: '2_10' },
+  { label: 'FG Receipt', value: '2_2' },
+  { label: 'FG Shipment Dispatch', value: '2_5' },
+  { label: 'FG Shipment Return', value: '2_6' },
+  { label: 'FG StockTake', value: '2_7' },
+  { label: 'FG Material Split', value: '2_8' },
+  { label: 'FG Material Repacking', value: '2_9' },
+  { label: 'FG Stock Adjustment', value: '2_11' },
+  { label: 'FG Printer Settings', value: '2_10' },
+
+  // RM Modules
+  //  { label: 'RM Quality Check', value: '3_1' },
+  { label: 'RM Put Away', value: '3_2' },
+  { label: 'RM Internal Movement', value: '3_3' },
+  { label: 'RM Purchase Return', value: '3_4' },
+  //  { label: 'RM Warehouse Return', value: '3_5' },
+  { label: 'RM Receipt', value: '3_9' },
+  { label: 'RM Consumption', value: '3_10' },
+  { label: 'RM Material Split', value: '3_6' },
+  { label: 'RM Material Repacking', value: '3_7' },
+  { label: 'RM Stock Take', value: '3_11' },
+  { label: 'RM Stock Adjustment', value: '3_12' },
+  { label: 'RM Printer Settings', value: '3_8' },
 ];
 
 const UserRoleMaster: React.FC = () => {

@@ -38,8 +38,8 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       disabled={disableFutureDates ? { after: today } : props.disabled}
-      fromYear={fromYear}
-      toYear={toYear}
+      startMonth={fromYear ? new Date(fromYear, 0) : undefined}
+      endMonth={toYear ? new Date(toYear, 11) : undefined}
       className={cn(
         'group/calendar bg-background p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,

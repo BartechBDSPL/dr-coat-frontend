@@ -182,9 +182,16 @@ const RMLabelPrintingReport: React.FC = () => {
     );
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'RM Label Printing Report');
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'RM Label Printing Report'
+    );
     const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
-    XLSX.writeFile(workbook, `RM_LABEL_PRINTING_REPORT_${formattedDateTime}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `RM_LABEL_PRINTING_REPORT_${formattedDateTime}.xlsx`
+    );
     toast.success('Excel exported successfully');
   };
 
@@ -281,7 +288,8 @@ const RMLabelPrintingReport: React.FC = () => {
   const getDashboardStats = () => {
     const totalPOs = new Set(filteredData.map(item => item.po_no)).size;
     const totalGRNs = new Set(filteredData.map(item => item.grn_no)).size;
-    const totalItemsCount = new Set(filteredData.map(item => item.item_code)).size;
+    const totalItemsCount = new Set(filteredData.map(item => item.item_code))
+      .size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
     const totalLabels = filteredData.length;
     const totalQuantity = filteredData.reduce(
@@ -289,7 +297,14 @@ const RMLabelPrintingReport: React.FC = () => {
       0
     );
 
-    return { totalPOs, totalGRNs, totalItems: totalItemsCount, totalLots, totalLabels, totalQuantity };
+    return {
+      totalPOs,
+      totalGRNs,
+      totalItems: totalItemsCount,
+      totalLots,
+      totalLabels,
+      totalQuantity,
+    };
   };
 
   const stats = getDashboardStats();
@@ -473,8 +488,6 @@ const RMLabelPrintingReport: React.FC = () => {
                 <div className="text-2xl font-bold">{stats.totalLabels}</div>
               </CardContent>
             </Card>
-
-          
           </div>
 
           <Card>

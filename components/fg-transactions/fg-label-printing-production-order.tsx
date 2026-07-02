@@ -32,14 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+
 import { cn } from '@/lib/utils';
-import { DateTime } from 'luxon';
 import { getUserID } from '@/utils/getFromSession';
 import {
   Dialog,
@@ -125,6 +119,7 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   const [expDate, setExpDate] = useState('');
   const [selectedMfgDate, setSelectedMfgDate] = useState<Date | undefined>();
   const [selectedExpDate, setSelectedExpDate] = useState<Date | undefined>();
+  const [expCalendarMonth, setExpCalendarMonth] = useState<Date | undefined>();
   const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
   const [isPrinting, setIsPrinting] = useState(false);
   const [printers, setPrinters] = useState<PrinterData[]>([]);
@@ -132,8 +127,8 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
   const [printerOptions, setPrinterOptions] = useState<DropdownOption[]>([]);
   const [isFetchingPrinters, setIsFetchingPrinters] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const mfgDateRef = useRef<HTMLButtonElement | null>(null);
-  const expDateRef = useRef<HTMLButtonElement | null>(null);
+  const mfgDateRef = useRef<HTMLInputElement | null>(null);
+  const expDateRef = useRef<HTMLInputElement | null>(null);
   const printerRef = useRef<HTMLButtonElement | null>(null);
   const orderNoRef = useRef<HTMLButtonElement | null>(null);
   const baseWeightRef = useRef<HTMLInputElement>(null);
@@ -158,6 +153,9 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       const month = String(selectedMfgDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedMfgDate.getDate()).padStart(2, '0');
       setMfgDate(`${year}-${month}-${day}`);
+      const autoExp = new Date(selectedMfgDate);
+      autoExp.setFullYear(autoExp.getFullYear() + 1);
+      setSelectedExpDate(autoExp);
     } else {
       setMfgDate('');
     }
@@ -169,8 +167,10 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
       const month = String(selectedExpDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedExpDate.getDate()).padStart(2, '0');
       setExpDate(`${year}-${month}-${day}`);
+      setExpCalendarMonth(selectedExpDate);
     } else {
       setExpDate('');
+      setExpCalendarMonth(undefined);
     }
   }, [selectedExpDate]);
 
@@ -339,6 +339,37 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
     }
 
     setTareWeight(value);
+    setSerialNumbers([]);
+  };
+
+  const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const qtyValue = Number(value);
+
+    if (value === '') {
+      setQty('');
+      setSerialNumbers([]);
+      return;
+    }
+
+    if (qtyValue <= 0) {
+      toast.error('Total quantity must be greater than 0');
+      return;
+    }
+
+    if (!orderDetails) {
+      toast.error('Please fetch order details first');
+      return;
+    }
+
+    if (qtyValue > orderDetails.remaining_qty) {
+      toast.error(
+        `Total quantity cannot exceed remaining print quantity (${orderDetails.remaining_qty})`
+      );
+      return;
+    }
+
+    setQty(value);
     setSerialNumbers([]);
   };
 
@@ -911,9 +942,16 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                         <Input
                           id="qty"
                           type="number"
+                          min="0.01"
+                          step="0.01"
                           value={qty}
-                          disabled
-                          className="w-32 bg-muted"
+                          onChange={handleQtyChange}
+                          onWheel={e => e.currentTarget.blur()}
+                          placeholder="Enter total qty"
+                          className={cn(
+                            'w-32',
+                            invalidFields.has('qty') ? 'field-blink' : ''
+                          )}
                         />
                       </TableCell>
                       <TableCell>
@@ -1001,105 +1039,59 @@ const FGLabelPrintingProductionOrder: React.FC = () => {
                 <Label htmlFor="mfgDate">
                   Manufacturing Date <span className="text-red-500">*</span>
                 </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      aria-invalid={invalidFields.has('mfgDate')}
-                      ref={mfgDateRef}
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !selectedMfgDate && 'text-muted-foreground',
-                        invalidFields.has('mfgDate') && 'field-blink'
-                      )}
-                    >
-                      {selectedMfgDate ? (
-                        DateTime.fromJSDate(selectedMfgDate).toLocaleString(
-                          DateTime.DATE_FULL
-                        )
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedMfgDate}
-                      onSelect={date => {
-                        setSelectedMfgDate(date);
-                        if (date && selectedExpDate) {
-                          const mfg = new Date(date);
-                          mfg.setHours(0, 0, 0, 0);
-                          const exp = new Date(selectedExpDate);
-                          exp.setHours(0, 0, 0, 0);
-                          if (exp < mfg) {
-                            setSelectedExpDate(undefined);
-                            toast.error(
-                              'Expiry date reset as it was before the new manufacturing date'
-                            );
-                          }
+                <input
+                  type="date"
+                  ref={mfgDateRef}
+                  value={mfgDate}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val) {
+                      const date = new Date(val + 'T00:00:00');
+                      setSelectedMfgDate(date);
+                      if (selectedExpDate) {
+                        const exp = new Date(selectedExpDate);
+                        exp.setHours(0, 0, 0, 0);
+                        if (exp < date) {
+                          setSelectedExpDate(undefined);
+                          toast.error(
+                            'Expiry date reset as it was before the new manufacturing date'
+                          );
                         }
-                      }}
-                      disableFutureDates={true}
-                      fromYear={1900}
-                      toYear={2050}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                      }
+                    } else {
+                      setSelectedMfgDate(undefined);
+                    }
+                  }}
+                  className={cn(
+                    'h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    invalidFields.has('mfgDate') && 'field-blink'
+                  )}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="expDate">
                   Expiry Date <span className="text-red-500">*</span>
                 </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      aria-invalid={invalidFields.has('expDate')}
-                      ref={expDateRef}
-                      disabled={!selectedMfgDate}
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !selectedExpDate && 'text-muted-foreground',
-                        invalidFields.has('expDate') && 'field-blink',
-                        !selectedMfgDate && 'cursor-not-allowed opacity-50'
-                      )}
-                    >
-                      {selectedExpDate ? (
-                        DateTime.fromJSDate(selectedExpDate).toLocaleString(
-                          DateTime.DATE_FULL
-                        )
-                      ) : (
-                        <span>
-                          {selectedMfgDate
-                            ? 'Pick a date'
-                            : 'Select manufacturing date first'}
-                        </span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedExpDate}
-                      onSelect={setSelectedExpDate}
-                      disabled={date => {
-                        if (!selectedMfgDate) return true;
-                        const mfg = new Date(selectedMfgDate);
-                        mfg.setHours(0, 0, 0, 0);
-                        const checkDate = new Date(date);
-                        checkDate.setHours(0, 0, 0, 0);
-                        return checkDate < mfg;
-                      }}
-                      fromDate={selectedMfgDate}
-                      fromYear={1900}
-                      toYear={2050}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <input
+                  type="date"
+                  ref={expDateRef}
+                  value={expDate}
+                  min={mfgDate}
+                  disabled={!selectedMfgDate}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val) {
+                      setSelectedExpDate(new Date(val + 'T00:00:00'));
+                    } else {
+                      setSelectedExpDate(undefined);
+                    }
+                  }}
+                  className={cn(
+                    'h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+                    invalidFields.has('expDate') && 'field-blink'
+                  )}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="printer">

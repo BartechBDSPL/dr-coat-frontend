@@ -171,9 +171,16 @@ const RMWarehouseReturnReport: React.FC = () => {
     );
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'RM Warehouse Return Report');
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'RM Warehouse Return Report'
+    );
     const formattedDateTime = DateTime.now().toFormat('yyyy-MM-dd_HH-mm-ss');
-    XLSX.writeFile(workbook, `RM_WAREHOUSE_RETURN_REPORT_${formattedDateTime}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `RM_WAREHOUSE_RETURN_REPORT_${formattedDateTime}.xlsx`
+    );
     toast.success('Excel exported successfully');
   };
 
@@ -256,11 +263,17 @@ const RMWarehouseReturnReport: React.FC = () => {
     const totalTransfers = new Set(
       filteredData.map(item => item.stock_transfer_number)
     ).size;
-    const totalItemsCount = new Set(filteredData.map(item => item.item_code)).size;
+    const totalItemsCount = new Set(filteredData.map(item => item.item_code))
+      .size;
     const totalLots = new Set(filteredData.map(item => item.lot_no)).size;
     const totalRecords = filteredData.length;
 
-    return { totalTransfers, totalItems: totalItemsCount, totalLots, totalRecords };
+    return {
+      totalTransfers,
+      totalItems: totalItemsCount,
+      totalLots,
+      totalRecords,
+    };
   };
 
   const stats = getDashboardStats();

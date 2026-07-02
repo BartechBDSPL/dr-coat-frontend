@@ -91,7 +91,9 @@ const RMOverviewTab: React.FC = () => {
   const [toDate, setToDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingCharts, setIsLoadingCharts] = useState(true);
-  const [dashboardDetails, setDashboardDetails] = useState<DashboardDetail[]>([]);
+  const [dashboardDetails, setDashboardDetails] = useState<DashboardDetail[]>(
+    []
+  );
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const token = Cookies.get('token');
 
@@ -177,19 +179,22 @@ const RMOverviewTab: React.FC = () => {
   const getMetricStyle = (index: number) => {
     const styles = [
       {
-        gradient: 'from-[hsl(var(--chart-1))]/10 via-[hsl(var(--chart-1))]/5 to-transparent',
+        gradient:
+          'from-[hsl(var(--chart-1))]/10 via-[hsl(var(--chart-1))]/5 to-transparent',
         border: 'border-[hsl(var(--chart-1))]/20',
         iconBg: 'bg-[hsl(var(--chart-1))]/10',
         iconColor: 'text-[hsl(var(--chart-1))]',
       },
       {
-        gradient: 'from-[hsl(var(--chart-2))]/10 via-[hsl(var(--chart-2))]/5 to-transparent',
+        gradient:
+          'from-[hsl(var(--chart-2))]/10 via-[hsl(var(--chart-2))]/5 to-transparent',
         border: 'border-[hsl(var(--chart-2))]/20',
         iconBg: 'bg-[hsl(var(--chart-2))]/10',
         iconColor: 'text-[hsl(var(--chart-2))]',
       },
       {
-        gradient: 'from-[hsl(var(--chart-3))]/10 via-[hsl(var(--chart-3))]/5 to-transparent',
+        gradient:
+          'from-[hsl(var(--chart-3))]/10 via-[hsl(var(--chart-3))]/5 to-transparent',
         border: 'border-[hsl(var(--chart-3))]/20',
         iconBg: 'bg-[hsl(var(--chart-3))]/10',
         iconColor: 'text-[hsl(var(--chart-3))]',
@@ -246,13 +251,21 @@ const RMOverviewTab: React.FC = () => {
               <label className="text-xs font-medium text-muted-foreground sm:text-sm">
                 From Date
               </label>
-              <DatePicker date={fromDate} onChange={setFromDate} label="Select from date" />
+              <DatePicker
+                date={fromDate}
+                onChange={setFromDate}
+                label="Select from date"
+              />
             </div>
             <div className="flex-1 space-y-1.5 sm:space-y-2">
               <label className="text-xs font-medium text-muted-foreground sm:text-sm">
                 To Date
               </label>
-              <DatePicker date={toDate} onChange={setToDate} label="Select to date" />
+              <DatePicker
+                date={toDate}
+                onChange={setToDate}
+                label="Select to date"
+              />
             </div>
             <div className="flex w-full gap-2 sm:w-auto">
               <Button
@@ -313,7 +326,8 @@ const RMOverviewTab: React.FC = () => {
                   </div>
                   <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                     <CalendarIcon className="h-3 w-3" />
-                    {format(fromDate, 'MMM dd')} – {format(toDate, 'MMM dd, yyyy')}
+                    {format(fromDate, 'MMM dd')} –{' '}
+                    {format(toDate, 'MMM dd, yyyy')}
                   </p>
                 </CardContent>
               </Card>

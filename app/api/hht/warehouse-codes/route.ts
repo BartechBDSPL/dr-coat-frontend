@@ -16,18 +16,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const response = await fetch(
-      `${BACKEND_URL}/api/hht/warehouse-codes`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          authorization: token,
-        },
-        cache: 'no-store',
-        next: { revalidate: 0 },
-      }
-    );
+    const response = await fetch(`${BACKEND_URL}/api/hht/warehouse-codes`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        authorization: token,
+      },
+      cache: 'no-store',
+      next: { revalidate: 0 },
+    });
 
     const data = await response.json();
 

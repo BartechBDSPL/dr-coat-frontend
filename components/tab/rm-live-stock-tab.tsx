@@ -11,12 +11,10 @@ import {
   FileSpreadsheet,
   Info,
   Download,
-  ChevronDown,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import TableSearch from '@/utils/tableSearch';
-import Cookies from 'js-cookie';
 import {
   Select,
   SelectContent,
@@ -32,12 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
 import CustomDropdown from '@/components/CustomDropdown';
 import {
   Table,
@@ -64,7 +57,9 @@ interface LiveStockItem {
   lot_no: string;
   warehouse_code: string;
   put_location: string;
-  Available_Stock: number;
+  uom: string;
+  sku_count: number;
+  qty: number;
   cleanItemCode?: string;
 }
 
@@ -249,110 +244,46 @@ const RMLiveStockTab: React.FC = () => {
   }, [filteredDataForCards]);
 
   const getWarehouseStats = (items: LiveStockItem[]) => {
-    const totalStock = items.reduce(
-      (sum, item) => sum + item.Available_Stock,
-      0
-    );
+    const totalStock = items.reduce((sum, item) => sum + item.qty, 0);
     const uniqueItems = new Set(items.map(item => item.item_code)).size;
     const uniqueLots = new Set(items.map(item => item.lot_no)).size;
     const uniqueLocations = new Set(items.map(item => item.put_location)).size;
 
-    return { totalStock, uniqueItems, uniqueLots, uniqueLocations, itemCount: items.length };
+    return {
+      totalStock,
+      uniqueItems,
+      uniqueLots,
+      uniqueLocations,
+      itemCount: items.length,
+    };
   };
 
   const getTotalStats = useMemo(() => {
     const totalStock = filteredDataForCards.reduce(
-      (sum, item) => sum + item.Available_Stock,
+      (sum, item) => sum + item.qty,
       0
     );
-    const uniqueItems = new Set(filteredDataForCards.map(item => item.item_code)).size;
-    const uniqueLots = new Set(filteredDataForCards.map(item => item.lot_no)).size;
-    const uniqueWarehouses = new Set(filteredDataForCards.map(item => item.warehouse_code)).size;
-    const uniqueLocations = new Set(filteredDataForCards.map(item => item.put_location)).size;
+    const uniqueItems = new Set(
+      filteredDataForCards.map(item => item.item_code)
+    ).size;
+    const uniqueLots = new Set(filteredDataForCards.map(item => item.lot_no))
+      .size;
+    const uniqueWarehouses = new Set(
+      filteredDataForCards.map(item => item.warehouse_code)
+    ).size;
+    const uniqueLocations = new Set(
+      filteredDataForCards.map(item => item.put_location)
+    ).size;
 
-    return { totalStock, uniqueItems, uniqueLots, uniqueWarehouses, uniqueLocations, itemCount: filteredDataForCards.length };
+    return {
+      totalStock,
+      uniqueItems,
+      uniqueLots,
+      uniqueWarehouses,
+      uniqueLocations,
+      itemCount: filteredDataForCards.length,
+    };
   }, [filteredDataForCards]);
-
-  const exportToCSV = useCallback(async () => {
-    if (filteredDataForTable.length === 0) {
-      toast.error('No data to export');
-      return;
-    }
-
-    const toastId = toast.loading('Initializing CSV export...', {
-      description: `Processing ${filteredDataForTable.length.toLocaleString()} records`,
-    });
-
-    try {
-      setIsExporting(true);
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      toast.loading('Processing data...', { id: toastId, description: 'Building CSV content' });
-
-      const headers = ['Item Code', 'Description', 'Lot Number', 'Warehouse Code', 'Put Location', 'Available Quantity'];
-
-      const escapeCSV = (value: any): string => {
-        if (value === null || value === undefined) return 'NA';
-        return `"${String(value).replace(/"/g, '""')}"`;
-      };
-
-      const CHUNK_SIZE = 5000;
-      let csvContent = headers.join(',') + '\n';
-
-      for (let i = 0; i < filteredDataForTable.length; i += CHUNK_SIZE) {
-        const chunk = filteredDataForTable.slice(i, i + CHUNK_SIZE);
-        csvContent += chunk
-          .map(item =>
-            [
-              escapeCSV(item.item_code.replace(/^0+/, '')),
-              escapeCSV(item.item_description),
-              escapeCSV(item.lot_no),
-              escapeCSV(item.warehouse_code),
-              escapeCSV(item.put_location),
-              escapeCSV(item.Available_Stock),
-            ].join(',')
-          )
-          .join('\n') + '\n';
-
-        const progress = Math.round(((i + CHUNK_SIZE) / filteredDataForTable.length) * 100);
-        toast.loading(`Processing... ${Math.min(progress, 100)}%`, {
-          id: toastId,
-          description: `${Math.min(i + CHUNK_SIZE, filteredDataForTable.length).toLocaleString()} of ${filteredDataForTable.length.toLocaleString()} rows`,
-        });
-
-        if (i > 0 && i % (CHUNK_SIZE * 2) === 0) {
-          await new Promise(resolve => setTimeout(resolve, 10));
-        }
-      }
-
-      toast.loading('Generating file...', { id: toastId, description: 'Creating CSV file' });
-
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      const fileName = `rm-live-stock-${new Date().toISOString().split('T')[0]}.csv`;
-
-      link.setAttribute('href', url);
-      link.setAttribute('download', fileName);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast.success('CSV export completed!', {
-        id: toastId,
-        description: `${filteredDataForTable.length.toLocaleString()} rows exported • No data truncation`,
-      });
-    } catch (error) {
-      console.error('CSV export failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      toast.error('Export failed', { id: toastId, description: errorMessage });
-    } finally {
-      setIsExporting(false);
-    }
-  }, [filteredDataForTable]);
 
   const exportToExcel = useCallback(async () => {
     if (filteredDataForTable.length === 0) {
@@ -368,7 +299,10 @@ const RMLiveStockTab: React.FC = () => {
       setIsExporting(true);
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      toast.loading('Loading Excel library...', { id: toastId, description: 'Please wait...' });
+      toast.loading('Loading Excel library...', {
+        id: toastId,
+        description: 'Please wait...',
+      });
 
       const XLSX = await import('xlsx');
 
@@ -383,23 +317,32 @@ const RMLiveStockTab: React.FC = () => {
       for (let i = 0; i < filteredDataForTable.length; i += CHUNK_SIZE) {
         const chunk = filteredDataForTable.slice(i, i + CHUNK_SIZE);
         const processedChunk = chunk.map(item => {
-          const truncateText = (text: string | null | undefined, maxLength = 32700): string => {
+          const truncateText = (
+            text: string | null | undefined,
+            maxLength = 32700
+          ): string => {
             if (!text) return 'NA';
-            if (typeof text === 'string' && text.length > maxLength) return text.substring(0, maxLength) + '...';
+            if (typeof text === 'string' && text.length > maxLength)
+              return text.substring(0, maxLength) + '...';
             return text;
           };
           return {
             'Item Code': item.item_code.replace(/^0+/, ''),
-            'Description': truncateText(item.item_description),
+            Description: truncateText(item.item_description),
             'Lot Number': item.lot_no,
             'Warehouse Code': item.warehouse_code,
             'Put Location': item.put_location,
-            'Available Quantity': item.Available_Stock,
+            UOM: item.uom,
+            'SKU Count': item.sku_count,
+            Quantity: item.qty,
           };
         });
         excelData.push(...processedChunk);
 
-        const progress = Math.min(100, Math.round(((i + CHUNK_SIZE) / filteredDataForTable.length) * 50));
+        const progress = Math.min(
+          100,
+          Math.round(((i + CHUNK_SIZE) / filteredDataForTable.length) * 50)
+        );
         toast.loading(`Processing data... ${progress}%`, {
           id: toastId,
           description: `${Math.min(i + CHUNK_SIZE, filteredDataForTable.length).toLocaleString()} of ${filteredDataForTable.length.toLocaleString()} rows`,
@@ -410,30 +353,62 @@ const RMLiveStockTab: React.FC = () => {
         }
       }
 
-      toast.loading('Creating workbook...', { id: toastId, description: 'Building Excel structure' });
+      toast.loading('Creating workbook...', {
+        id: toastId,
+        description: 'Building Excel structure',
+      });
 
       const workbook = XLSX.utils.book_new();
-      const headers = ['Item Code', 'Description', 'Lot Number', 'Warehouse Code', 'Put Location', 'Available Quantity'];
+      const headers = [
+        'Item Code',
+        'Description',
+        'Lot Number',
+        'Warehouse Code',
+        'Put Location',
+        'UOM',
+        'SKU Count',
+        'Quantity',
+      ];
 
       const dataArray = [
         headers,
         ...excelData.map(row => [
-          row['Item Code'], row['Description'], row['Lot Number'],
-          row['Warehouse Code'], row['Put Location'], row['Available Quantity'],
+          row['Item Code'],
+          row['Description'],
+          row['Lot Number'],
+          row['Warehouse Code'],
+          row['Put Location'],
+          row['UOM'],
+          row['SKU Count'],
+          row['Quantity'],
         ]),
       ];
 
       const worksheet = XLSX.utils.aoa_to_sheet(dataArray);
       worksheet['!cols'] = [
-        { wch: 15 }, { wch: 40 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 18 },
+        { wch: 15 }, // Item Code
+        { wch: 40 }, // Description
+        { wch: 15 }, // Lot Number
+        { wch: 15 }, // Warehouse Code
+        { wch: 15 }, // Put Location
+        { wch: 10 }, // UOM
+        { wch: 12 }, // SKU Count
+        { wch: 18 }, // Quantity
       ];
 
       XLSX.utils.book_append_sheet(workbook, worksheet, 'RM Live Stock Data');
 
-      toast.loading('Generating file...', { id: toastId, description: 'Creating Excel file' });
+      toast.loading('Generating file...', {
+        id: toastId,
+        description: 'Creating Excel file',
+      });
 
       const fileName = `rm-live-stock-${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName, { bookType: 'xlsx', type: 'binary', compression: true });
+      XLSX.writeFile(workbook, fileName, {
+        bookType: 'xlsx',
+        type: 'binary',
+        compression: true,
+      });
 
       toast.success('Export completed successfully!', {
         id: toastId,
@@ -441,14 +416,16 @@ const RMLiveStockTab: React.FC = () => {
       });
     } catch (error) {
       console.error('Export failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred';
       toast.error('Export failed', { id: toastId, description: errorMessage });
     } finally {
       setIsExporting(false);
     }
   }, [filteredDataForTable]);
 
-  const formatIndianNumber = (num: number): string => num.toLocaleString('en-IN');
+  const formatIndianNumber = (num: number): string =>
+    num.toLocaleString('en-IN');
 
   const getReadableFormat = (num: number): string => {
     if (num >= 10000000) return `${(num / 10000000).toFixed(2)} Cr`;
@@ -529,7 +506,10 @@ const RMLiveStockTab: React.FC = () => {
 
             {filterOption === 'lot' && (
               <CustomDropdown
-                options={uniqueOptions.lots.map(lot => ({ value: lot, label: lot }))}
+                options={uniqueOptions.lots.map(lot => ({
+                  value: lot,
+                  label: lot,
+                }))}
                 value={filterValue}
                 onValueChange={setFilterValue}
                 placeholder="Select Lot"
@@ -541,7 +521,10 @@ const RMLiveStockTab: React.FC = () => {
 
             {filterOption === 'warehouse' && (
               <CustomDropdown
-                options={uniqueOptions.warehouses.map(warehouse => ({ value: warehouse, label: warehouse }))}
+                options={uniqueOptions.warehouses.map(warehouse => ({
+                  value: warehouse,
+                  label: warehouse,
+                }))}
                 value={filterValue}
                 onValueChange={setFilterValue}
                 placeholder="Select Warehouse"
@@ -563,7 +546,9 @@ const RMLiveStockTab: React.FC = () => {
               </CardTitle>
               <div className="flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-xs text-slate-500 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-slate-400">
                 <Info className="h-3 w-3" />
-                <span>K = Thousand, L = Lakh, Cr = Crore • Hover for exact values</span>
+                <span>
+                  K = Thousand, L = Lakh, Cr = Crore • Hover for exact values
+                </span>
               </div>
             </div>
           </CardHeader>
@@ -573,7 +558,9 @@ const RMLiveStockTab: React.FC = () => {
                 <TooltipTrigger asChild>
                   <div className="flex min-w-0 cursor-help flex-col items-center rounded-lg border border-amber-100 bg-white p-3 shadow-sm transition-all hover:shadow-md dark:border-amber-800/30 dark:bg-slate-800">
                     <Package className="mb-2 h-5 w-5 flex-shrink-0 text-amber-500" />
-                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">Total Stock</span>
+                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">
+                      Total Stock
+                    </span>
                     <span className="break-all text-center text-sm font-bold leading-tight text-slate-800 dark:text-slate-100 sm:text-base">
                       {getReadableFormat(getTotalStats.totalStock)}
                     </span>
@@ -581,8 +568,12 @@ const RMLiveStockTab: React.FC = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="text-center">
-                    <p className="font-semibold">{formatIndianNumber(getTotalStats.totalStock)}</p>
-                    <p className="mt-1 text-xs text-slate-400">Exact stock count</p>
+                    <p className="font-semibold">
+                      {formatIndianNumber(getTotalStats.totalStock)}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Exact stock count
+                    </p>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -591,7 +582,9 @@ const RMLiveStockTab: React.FC = () => {
                 <TooltipTrigger asChild>
                   <div className="flex min-w-0 cursor-help flex-col items-center rounded-lg border border-amber-100 bg-white p-3 shadow-sm transition-all hover:shadow-md dark:border-amber-800/30 dark:bg-slate-800">
                     <Archive className="mb-2 h-5 w-5 flex-shrink-0 text-orange-500" />
-                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">Items</span>
+                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">
+                      Items
+                    </span>
                     <span className="break-all text-center text-sm font-bold leading-tight text-slate-800 dark:text-slate-100 sm:text-base">
                       {getReadableFormat(getTotalStats.uniqueItems)}
                     </span>
@@ -599,8 +592,12 @@ const RMLiveStockTab: React.FC = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="text-center">
-                    <p className="font-semibold">{formatIndianNumber(getTotalStats.uniqueItems)} Items</p>
-                    <p className="mt-1 text-xs text-slate-400">Total unique items</p>
+                    <p className="font-semibold">
+                      {formatIndianNumber(getTotalStats.uniqueItems)} Items
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Total unique items
+                    </p>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -609,7 +606,9 @@ const RMLiveStockTab: React.FC = () => {
                 <TooltipTrigger asChild>
                   <div className="flex min-w-0 cursor-help flex-col items-center rounded-lg border border-amber-100 bg-white p-3 shadow-sm transition-all hover:shadow-md dark:border-amber-800/30 dark:bg-slate-800">
                     <Hash className="mb-2 h-5 w-5 flex-shrink-0 text-yellow-500" />
-                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">Lots</span>
+                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">
+                      Lots
+                    </span>
                     <span className="break-all text-center text-sm font-bold leading-tight text-slate-800 dark:text-slate-100 sm:text-base">
                       {getReadableFormat(getTotalStats.uniqueLots)}
                     </span>
@@ -617,8 +616,12 @@ const RMLiveStockTab: React.FC = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="text-center">
-                    <p className="font-semibold">{formatIndianNumber(getTotalStats.uniqueLots)} Lots</p>
-                    <p className="mt-1 text-xs text-slate-400">Total unique lots</p>
+                    <p className="font-semibold">
+                      {formatIndianNumber(getTotalStats.uniqueLots)} Lots
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Total unique lots
+                    </p>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -627,7 +630,9 @@ const RMLiveStockTab: React.FC = () => {
                 <TooltipTrigger asChild>
                   <div className="flex min-w-0 cursor-help flex-col items-center rounded-lg border border-amber-100 bg-white p-3 shadow-sm transition-all hover:shadow-md dark:border-amber-800/30 dark:bg-slate-800">
                     <MapPin className="mb-2 h-5 w-5 flex-shrink-0 text-red-400" />
-                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">Warehouses</span>
+                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">
+                      Warehouses
+                    </span>
                     <span className="break-all text-center text-sm font-bold leading-tight text-slate-800 dark:text-slate-100 sm:text-base">
                       {getReadableFormat(getTotalStats.uniqueWarehouses)}
                     </span>
@@ -635,8 +640,13 @@ const RMLiveStockTab: React.FC = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="text-center">
-                    <p className="font-semibold">{formatIndianNumber(getTotalStats.uniqueWarehouses)} Warehouses</p>
-                    <p className="mt-1 text-xs text-slate-400">Total warehouses</p>
+                    <p className="font-semibold">
+                      {formatIndianNumber(getTotalStats.uniqueWarehouses)}{' '}
+                      Warehouses
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Total warehouses
+                    </p>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -645,7 +655,9 @@ const RMLiveStockTab: React.FC = () => {
                 <TooltipTrigger asChild>
                   <div className="flex min-w-0 cursor-help flex-col items-center rounded-lg border border-amber-100 bg-white p-3 shadow-sm transition-all hover:shadow-md dark:border-amber-800/30 dark:bg-slate-800">
                     <MapPin className="mb-2 h-5 w-5 flex-shrink-0 text-rose-400" />
-                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">Put Locations</span>
+                    <span className="mb-1 text-center text-xs text-slate-500 dark:text-slate-400">
+                      Put Locations
+                    </span>
                     <span className="break-all text-center text-sm font-bold leading-tight text-slate-800 dark:text-slate-100 sm:text-base">
                       {getReadableFormat(getTotalStats.uniqueLocations)}
                     </span>
@@ -653,8 +665,13 @@ const RMLiveStockTab: React.FC = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <div className="text-center">
-                    <p className="font-semibold">{formatIndianNumber(getTotalStats.uniqueLocations)} Put Locations</p>
-                    <p className="mt-1 text-xs text-slate-400">Total put locations</p>
+                    <p className="font-semibold">
+                      {formatIndianNumber(getTotalStats.uniqueLocations)} Put
+                      Locations
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Total put locations
+                    </p>
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -685,7 +702,9 @@ const RMLiveStockTab: React.FC = () => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="min-w-0 cursor-help rounded border bg-white p-2 text-center dark:bg-slate-800">
-                          <div className="mb-1 text-xs text-slate-500 dark:text-slate-400">Stock</div>
+                          <div className="mb-1 text-xs text-slate-500 dark:text-slate-400">
+                            Stock
+                          </div>
                           <div className="break-all text-xs font-bold leading-tight text-slate-800 dark:text-slate-100">
                             {getReadableFormat(stats.totalStock)}
                           </div>
@@ -693,15 +712,21 @@ const RMLiveStockTab: React.FC = () => {
                       </TooltipTrigger>
                       <TooltipContent>
                         <div className="text-center">
-                          <p className="font-semibold">{formatIndianNumber(stats.totalStock)}</p>
-                          <p className="mt-1 text-xs text-slate-400">Exact stock count</p>
+                          <p className="font-semibold">
+                            {formatIndianNumber(stats.totalStock)}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            Exact stock count
+                          </p>
                         </div>
                       </TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="min-w-0 cursor-help rounded border bg-white p-2 text-center dark:bg-slate-800">
-                          <div className="mb-1 text-xs text-slate-500 dark:text-slate-400">Items</div>
+                          <div className="mb-1 text-xs text-slate-500 dark:text-slate-400">
+                            Items
+                          </div>
                           <div className="break-all text-xs font-bold leading-tight text-slate-800 dark:text-slate-100">
                             {getReadableFormat(stats.uniqueItems)}
                           </div>
@@ -709,15 +734,21 @@ const RMLiveStockTab: React.FC = () => {
                       </TooltipTrigger>
                       <TooltipContent>
                         <div className="text-center">
-                          <p className="font-semibold">{formatIndianNumber(stats.uniqueItems)} Items</p>
-                          <p className="mt-1 text-xs text-slate-400">Unique items</p>
+                          <p className="font-semibold">
+                            {formatIndianNumber(stats.uniqueItems)} Items
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            Unique items
+                          </p>
                         </div>
                       </TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="min-w-0 cursor-help rounded border bg-white p-2 text-center dark:bg-slate-800">
-                          <div className="mb-1 text-xs text-slate-500 dark:text-slate-400">Lots</div>
+                          <div className="mb-1 text-xs text-slate-500 dark:text-slate-400">
+                            Lots
+                          </div>
                           <div className="break-all text-xs font-bold leading-tight text-slate-800 dark:text-slate-100">
                             {getReadableFormat(stats.uniqueLots)}
                           </div>
@@ -725,15 +756,21 @@ const RMLiveStockTab: React.FC = () => {
                       </TooltipTrigger>
                       <TooltipContent>
                         <div className="text-center">
-                          <p className="font-semibold">{formatIndianNumber(stats.uniqueLots)} Lots</p>
-                          <p className="mt-1 text-xs text-slate-400">Unique lots</p>
+                          <p className="font-semibold">
+                            {formatIndianNumber(stats.uniqueLots)} Lots
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            Unique lots
+                          </p>
                         </div>
                       </TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="min-w-0 cursor-help rounded border bg-white p-2 text-center dark:bg-slate-800">
-                          <div className="mb-1 text-xs text-slate-500 dark:text-slate-400">Locations</div>
+                          <div className="mb-1 text-xs text-slate-500 dark:text-slate-400">
+                            Locations
+                          </div>
                           <div className="break-all text-xs font-bold leading-tight text-slate-800 dark:text-slate-100">
                             {getReadableFormat(stats.uniqueLocations)}
                           </div>
@@ -741,8 +778,13 @@ const RMLiveStockTab: React.FC = () => {
                       </TooltipTrigger>
                       <TooltipContent>
                         <div className="text-center">
-                          <p className="font-semibold">{formatIndianNumber(stats.uniqueLocations)} Locations</p>
-                          <p className="mt-1 text-xs text-slate-400">Bin positions</p>
+                          <p className="font-semibold">
+                            {formatIndianNumber(stats.uniqueLocations)}{' '}
+                            Locations
+                          </p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            Bin positions
+                          </p>
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -753,10 +795,18 @@ const RMLiveStockTab: React.FC = () => {
                     <Table>
                       <TableHeader className="sticky top-0 border-b bg-white dark:bg-slate-800">
                         <TableRow>
-                          <TableHead className="px-3 py-2 text-xs font-medium">Item</TableHead>
-                          <TableHead className="px-3 py-2 text-xs font-medium">Lot</TableHead>
-                          <TableHead className="px-3 py-2 text-xs font-medium">Location</TableHead>
-                          <TableHead className="px-3 py-2 text-right text-xs font-medium">Stock</TableHead>
+                          <TableHead className="px-3 py-2 text-xs font-medium">
+                            Item
+                          </TableHead>
+                          <TableHead className="px-3 py-2 text-xs font-medium">
+                            Lot
+                          </TableHead>
+                          <TableHead className="px-3 py-2 text-xs font-medium">
+                            Location
+                          </TableHead>
+                          <TableHead className="px-3 py-2 text-right text-xs font-medium">
+                            Stock
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -765,13 +815,20 @@ const RMLiveStockTab: React.FC = () => {
                             key={`${item.item_code}-${item.lot_no}-${item.put_location}-${idx}`}
                             className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30"
                           >
-                            <TableCell className="px-3 py-2 text-sm font-medium" title={item.item_description}>
+                            <TableCell
+                              className="px-3 py-2 text-sm font-medium"
+                              title={item.item_description}
+                            >
                               {item.item_code.replace(/^0+/, '')}
                             </TableCell>
-                            <TableCell className="px-3 py-2 text-sm">{item.lot_no}</TableCell>
-                            <TableCell className="px-3 py-2 text-sm">{item.put_location}</TableCell>
+                            <TableCell className="px-3 py-2 text-sm">
+                              {item.lot_no}
+                            </TableCell>
+                            <TableCell className="px-3 py-2 text-sm">
+                              {item.put_location}
+                            </TableCell>
                             <TableCell className="px-3 py-2 text-right text-sm font-semibold text-amber-600">
-                              {item.Available_Stock.toLocaleString()}
+                              {item.qty.toLocaleString()}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -792,52 +849,37 @@ const RMLiveStockTab: React.FC = () => {
                 <FileSpreadsheet className="h-5 w-5 text-amber-500" />
                 RM Material Details
               </CardTitle>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2 border-amber-500 text-amber-600 transition-colors hover:bg-amber-500 hover:text-white"
-                    disabled={isExporting}
-                  >
-                    {isExporting ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
-                        Exporting...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4" />
-                        Export
-                        <ChevronDown className="h-3 w-3" />
-                      </>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={exportToCSV} disabled={isExporting} className="cursor-pointer">
-                    <FileSpreadsheet className="mr-2 h-4 w-4 text-amber-500" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">Export to CSV</span>
-                      <span className="text-xs text-muted-foreground">No size limit • Full data</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={exportToExcel} disabled={isExporting} className="cursor-pointer">
-                    <FileSpreadsheet className="mr-2 h-4 w-4 text-orange-500" />
-                    <div className="flex flex-col">
-                      <span className="font-medium">Export to Excel</span>
-                      <span className="text-xs text-muted-foreground">Long text truncated</span>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-amber-500 text-amber-600 transition-colors hover:bg-amber-500 hover:text-white"
+                disabled={isExporting}
+                onClick={exportToExcel}
+              >
+                {isExporting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Export to Excel
+                  </>
+                )}
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="flex items-center justify-between border-b p-4">
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-slate-600 dark:text-slate-400">Show</span>
-                <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  Show
+                </span>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={handleItemsPerPageChange}
+                >
                   <SelectTrigger className="w-[70px]">
                     <SelectValue placeholder={itemsPerPage.toString()} />
                   </SelectTrigger>
@@ -848,7 +890,9 @@ const RMLiveStockTab: React.FC = () => {
                     <SelectItem value="50">50</SelectItem>
                   </SelectContent>
                 </Select>
-                <span className="text-sm text-slate-600 dark:text-slate-400">entries</span>
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  entries
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <TableSearch onSearch={handleTableSearch} />
@@ -859,12 +903,30 @@ const RMLiveStockTab: React.FC = () => {
               <Table>
                 <TableHeader className="bg-slate-50 dark:bg-slate-700">
                   <TableRow>
-                    <TableHead className="px-4 py-3 text-sm font-medium">Item Code</TableHead>
-                    <TableHead className="px-4 py-3 text-sm font-medium">Description</TableHead>
-                    <TableHead className="px-4 py-3 text-sm font-medium">Lot Number</TableHead>
-                    <TableHead className="px-4 py-3 text-sm font-medium">Warehouse</TableHead>
-                    <TableHead className="px-4 py-3 text-sm font-medium">Put Location</TableHead>
-                    <TableHead className="px-4 py-3 text-right text-sm font-medium">Available Stock</TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      Item Code
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      Description
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      Lot Number
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      Warehouse
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      Put Location
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      UOM
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-sm font-medium">
+                      SKU Count
+                    </TableHead>
+                    <TableHead className="px-4 py-3 text-right text-sm font-medium">
+                      Quantity
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -877,20 +939,38 @@ const RMLiveStockTab: React.FC = () => {
                         <TableCell className="px-4 py-2.5 text-sm font-medium">
                           {item.item_code.replace(/^0+/, '')}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate px-4 py-2.5 text-sm" title={item.item_description}>
+                        <TableCell
+                          className="max-w-xs truncate px-4 py-2.5 text-sm"
+                          title={item.item_description}
+                        >
                           {item.item_description}
                         </TableCell>
-                        <TableCell className="px-4 py-2.5 text-sm">{item.lot_no}</TableCell>
-                        <TableCell className="px-4 py-2.5 text-sm">{item.warehouse_code}</TableCell>
-                        <TableCell className="px-4 py-2.5 text-sm">{item.put_location}</TableCell>
+                        <TableCell className="px-4 py-2.5 text-sm">
+                          {item.lot_no}
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5 text-sm">
+                          {item.warehouse_code}
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5 text-sm">
+                          {item.put_location}
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5 text-sm">
+                          {item.uom}
+                        </TableCell>
+                        <TableCell className="px-4 py-2.5 text-sm">
+                          {item.sku_count}
+                        </TableCell>
                         <TableCell className="px-4 py-2.5 text-right text-sm font-semibold text-amber-600">
-                          {item.Available_Stock.toLocaleString()}
+                          {item.qty.toLocaleString()}
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-400">
+                      <TableCell
+                        colSpan={8}
+                        className="py-8 text-center text-slate-500 dark:text-slate-400"
+                      >
                         No data found
                       </TableCell>
                     </TableRow>
@@ -911,7 +991,11 @@ const RMLiveStockTab: React.FC = () => {
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => handlePageChange(currentPage - 1)}
-                        className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        className={
+                          currentPage === 1
+                            ? 'pointer-events-none opacity-50'
+                            : 'cursor-pointer'
+                        }
                       />
                     </PaginationItem>
                     {[...Array(totalPages)].map((_, index) => {
@@ -919,7 +1003,8 @@ const RMLiveStockTab: React.FC = () => {
                       if (
                         pageNumber === 1 ||
                         pageNumber === totalPages ||
-                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                        (pageNumber >= currentPage - 1 &&
+                          pageNumber <= currentPage + 1)
                       ) {
                         return (
                           <PaginationItem key={pageNumber}>
@@ -932,7 +1017,10 @@ const RMLiveStockTab: React.FC = () => {
                             </PaginationLink>
                           </PaginationItem>
                         );
-                      } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                      } else if (
+                        pageNumber === currentPage - 2 ||
+                        pageNumber === currentPage + 2
+                      ) {
                         return <PaginationEllipsis key={pageNumber} />;
                       }
                       return null;
@@ -940,7 +1028,11 @@ const RMLiveStockTab: React.FC = () => {
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => handlePageChange(currentPage + 1)}
-                        className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        className={
+                          currentPage === totalPages
+                            ? 'pointer-events-none opacity-50'
+                            : 'cursor-pointer'
+                        }
                       />
                     </PaginationItem>
                   </PaginationContent>
