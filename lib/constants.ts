@@ -2,7 +2,7 @@ const BACKEND_PORT = 4001;
 const getBackendURL = (): string => {
   if (typeof window === 'undefined') {
     return `http://localhost:${BACKEND_PORT}`;
-  }
+  } 
   const hostname = window.location.hostname;
   return `http://${hostname}:${BACKEND_PORT}`;
 };
