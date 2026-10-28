@@ -1,4 +1,4 @@
-const BACKEND_PORT = 4001;
+const BACKEND_PORT = 4040;
 const getBackendURL = (): string => {
   if (typeof window === 'undefined') {
     return `http://localhost:${BACKEND_PORT}`;
